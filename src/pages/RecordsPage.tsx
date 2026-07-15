@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getClassements } from '../api/athletes'
 import type { Sexe } from '../api/types'
@@ -14,15 +14,36 @@ export function RecordsPage() {
   const [discipline, setDiscipline] = useState('')
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['classements', sexe, periode, discipline],
+    queryKey: ['classements', sexe, periode],
     queryFn: () =>
       getClassements({
         sexe,
         homologue: true,
         saison: periode === 'saison' ? SAISON_EN_COURS : undefined,
-        discipline: discipline.trim() || undefined,
       }),
   })
+
+  // Options du filtre : toutes les disciplines ayant au moins un résultat, triées.
+  const disciplines = useMemo(
+    () =>
+      (data ?? [])
+        .filter((d) => d.classement.length > 0)
+        .map((d) => d.discipline)
+        .sort(),
+    [data],
+  )
+
+  // Si la discipline sélectionnée n'existe plus (changement de sexe/période),
+  // on retombe proprement sur « Toutes les disciplines ».
+  const effectiveDiscipline = disciplines.includes(discipline) ? discipline : ''
+
+  const filteredData = useMemo(
+    () =>
+      (data ?? []).filter(
+        (d) => !effectiveDiscipline || d.discipline === effectiveDiscipline,
+      ),
+    [data, effectiveDiscipline],
+  )
 
   return (
     <div className="animate-rise">
@@ -71,18 +92,24 @@ export function RecordsPage() {
           </button>
         </div>
 
-        <input
-          type="text"
-          value={discipline}
+        <select
+          value={effectiveDiscipline}
           onChange={(e) => setDiscipline(e.target.value)}
-          placeholder="Filtrer par discipline (ex: 100m)"
-          className="rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm transition focus:border-club-primary focus:outline-none focus:ring-2 focus:ring-club-primary/30 dark:border-slate-800 dark:bg-slate-900"
-        />
+          className="select"
+          aria-label="Filtrer par discipline"
+        >
+          <option value="">Toutes les disciplines</option>
+          {disciplines.map((d) => (
+            <option key={d} value={d}>
+              {d}
+            </option>
+          ))}
+        </select>
       </div>
 
       {isLoading && <Loading />}
       {isError && <ErrorMessage message="Impossible de charger les records." />}
-      {data && <RecordsTable data={data} />}
+      {data && <RecordsTable data={filteredData} />}
     </div>
   )
 }

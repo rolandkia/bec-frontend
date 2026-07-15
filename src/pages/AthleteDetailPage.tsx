@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { getAthlete, getNiveau, getResultats, getRP } from '../api/athletes'
 import { PerformanceTable } from '../components/athletes/PerformanceTable'
 import { PerformanceChart } from '../components/athletes/PerformanceChart'
+import { LevelBadge } from '../components/athletes/LevelBadge'
 import { Loading, ErrorMessage, NotFound } from '../components/ui/Status'
 
 const TOUTES_SAISONS = ''
@@ -78,9 +79,6 @@ export function AthleteDetailPage() {
   const athlete = athleteQuery.data
   if (!athlete) return null
 
-  const selectClass =
-    'rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm transition focus:border-club-primary focus:outline-none focus:ring-2 focus:ring-club-primary/30 dark:border-slate-800 dark:bg-slate-900'
-
   return (
     <div className="animate-rise">
       <Link
@@ -130,13 +128,20 @@ export function AthleteDetailPage() {
       {niveauQuery.data && niveauQuery.data.length > 0 && (
         <section className="mb-10">
           <h2 className="section-title mb-4">Niveau par saison</h2>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-3">
             {niveauQuery.data.map((n) => (
               <span
                 key={n.saison}
-                className="badge border border-slate-200 bg-white/60 dark:border-slate-800 dark:bg-slate-900/60"
+                className="inline-flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400"
               >
-                {n.saison} : <span className="font-bold text-club-primary dark:text-club-primary-light">{n.niveau ?? '—'}</span>
+                <span className="font-medium">{n.saison}</span>
+                {n.niveau ? (
+                  <LevelBadge niveau={n.niveau} />
+                ) : (
+                  <span className="badge bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                    —
+                  </span>
+                )}
               </span>
             ))}
           </div>
@@ -154,7 +159,7 @@ export function AthleteDetailPage() {
                   setDiscipline(e.target.value)
                   setSaison(TOUTES_SAISONS)
                 }}
-                className={selectClass}
+                className="select"
                 aria-label="Filtrer par discipline"
               >
                 {disciplines.map((d) => (
@@ -168,7 +173,7 @@ export function AthleteDetailPage() {
               <select
                 value={saison}
                 onChange={(e) => setSaison(e.target.value)}
-                className={selectClass}
+                className="select"
                 aria-label="Filtrer par saison"
               >
                 <option value={TOUTES_SAISONS}>Toutes les saisons</option>

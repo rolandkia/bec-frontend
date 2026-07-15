@@ -1,7 +1,12 @@
 import { Link } from 'react-router-dom'
 import type { AthleteOut } from '../../api/types'
+import { computeNiveauSaison } from '../../utils/niveau'
+import { currentSaison } from '../../utils/saison'
+import { LevelBadge } from './LevelBadge'
 
 export function AthleteCard({ athlete }: { athlete: AthleteOut }) {
+  const niveau = computeNiveauSaison(athlete.resultats, currentSaison())
+
   return (
     <Link
       to={`/athletes/${athlete.id}`}
@@ -17,6 +22,7 @@ export function AthleteCard({ athlete }: { athlete: AthleteOut }) {
         </p>
         <p className="text-sm capitalize text-slate-500 dark:text-slate-400">{athlete.sexe}</p>
       </div>
+      {niveau && <LevelBadge niveau={niveau} className="ml-auto shrink-0" />}
     </Link>
   )
 }

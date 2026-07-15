@@ -6,14 +6,19 @@ import { events } from '../data/events'
 import { splitEvents } from '../utils/events'
 import { EventRow } from '../components/calendar/EventRow'
 import { getClassements } from '../api/athletes'
-import type { Sexe } from '../api/types'
+import type { ClassementParDiscipline, Sexe } from '../api/types'
+import { currentSaison } from '../utils/saison'
 import { DisciplinePodium } from '../components/athletes/DisciplinePodium'
 import { listBlogs } from '../api/blogs'
 import { BlogCard } from '../components/blog/BlogCard'
 import { Loading, ErrorMessage } from '../components/ui/Status'
 
+// Disciplines mises en avant sur l'accueil, dans l'ordre d'affichage.
+const DISCIPLINES_ACCUEIL = ['100m', '200m', '400m', '400m haies']
+
 export function HomePage() {
   const [sexe, setSexe] = useState<Sexe>('homme')
+  const [periode, setPeriode] = useState<'absolu' | 'saison'>('absolu')
 
   const { data: posts, isLoading, isError } = useQuery({
     queryKey: ['blogs'],
@@ -21,16 +26,24 @@ export function HomePage() {
   })
 
   const classementsQuery = useQuery({
-    queryKey: ['classements', 'home', sexe],
-    queryFn: () => getClassements({ sexe, homologue: true }),
+    queryKey: ['classements', 'home', sexe, periode],
+    queryFn: () =>
+      getClassements({
+        sexe,
+        homologue: true,
+        saison: periode === 'saison' ? currentSaison() : undefined,
+      }),
   })
 
   const { upcoming } = splitEvents(events)
   const prochaines = upcoming.slice(0, 4)
 
-  const podiums = (classementsQuery.data ?? [])
-    .filter((d) => d.classement.length > 0)
-    .slice(0, 4)
+  const byDiscipline = new Map(
+    (classementsQuery.data ?? []).map((d) => [d.discipline, d]),
+  )
+  const podiums = DISCIPLINES_ACCUEIL.map((disc) => byDiscipline.get(disc)).filter(
+    (d): d is ClassementParDiscipline => d !== undefined && d.classement.length > 0,
+  )
 
   return (
     <div className="space-y-16">
@@ -103,7 +116,7 @@ export function HomePage() {
         <section>
           <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
             <h2 className="section-title">Classement du club</h2>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <div className="flex rounded-full border border-slate-200 p-0.5 dark:border-slate-800">
                 {(['homme', 'femme'] as const).map((s) => (
                   <button
@@ -117,6 +130,22 @@ export function HomePage() {
                     }`}
                   >
                     {s === 'homme' ? 'Hommes' : 'Femmes'}
+                  </button>
+                ))}
+              </div>
+              <div className="flex rounded-full border border-slate-200 p-0.5 dark:border-slate-800">
+                {(['absolu', 'saison'] as const).map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setPeriode(p)}
+                    className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
+                      periode === p
+                        ? 'bg-club-primary text-white shadow-sm'
+                        : 'text-slate-600 dark:text-slate-300'
+                    }`}
+                  >
+                    {p === 'absolu' ? 'All-time' : 'Saison'}
                   </button>
                 ))}
               </div>

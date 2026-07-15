@@ -74,9 +74,14 @@ export function PerformanceChart({ resultats }: { resultats: ResultatOut[] }) {
               formatter={(_value, _name, item) => [item.payload.raw ?? item.payload.valeur, 'Performance']}
               contentStyle={{
                 borderRadius: '0.75rem',
-                border: '1px solid rgba(148,163,184,0.3)',
+                border: '1px solid var(--tooltip-border)',
+                backgroundColor: 'var(--tooltip-bg)',
+                color: 'var(--tooltip-text)',
                 fontSize: '0.8rem',
+                boxShadow: '0 6px 16px rgba(0,0,0,0.15)',
               }}
+              labelStyle={{ color: 'var(--tooltip-text)', fontWeight: 600 }}
+              itemStyle={{ color: 'var(--tooltip-text)' }}
             />
             <Area
               type="monotone"

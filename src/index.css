@@ -15,6 +15,11 @@
 
 :root {
   color-scheme: light dark;
+
+  /* Infobulle des graphes (Recharts) — hors de portée des variantes Tailwind dark: */
+  --tooltip-bg: #ffffff;
+  --tooltip-text: #1e293b; /* slate-800 */
+  --tooltip-border: rgba(148, 163, 184, 0.35);
 }
 
 body {
@@ -37,6 +42,12 @@ body {
 }
 
 @media (prefers-color-scheme: dark) {
+  :root {
+    --tooltip-bg: #0f172a; /* slate-900 */
+    --tooltip-text: #e2e8f0; /* slate-200 */
+    --tooltip-border: rgba(148, 163, 184, 0.25);
+  }
+
   body {
     background:
       radial-gradient(
@@ -95,6 +106,11 @@ body {
 
   .badge {
     @apply inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold;
+  }
+
+  /* Menu déroulant natif réutilisable (clair/sombre) */
+  .select {
+    @apply rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm transition focus:border-club-primary focus:outline-none focus:ring-2 focus:ring-club-primary/30 dark:border-slate-800 dark:bg-slate-900;
   }
 }
 
