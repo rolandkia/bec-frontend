@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f2555e" />
+      <stop offset="1" stop-color="#d81f2a" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#bg)" />
+  <!-- Chevrons dorés : dynamisme / vitesse -->
+  <path d="M14 40 L28 20 L37 20 L23 40 Z" fill="#ffc247" />
+  <path d="M27 40 L41 20 L50 20 L36 40 Z" fill="#f5a623" />
+  <!-- Piste : ovale de course -->
+  <ellipse cx="32" cy="47" rx="17" ry="5" stroke="#ffffff" stroke-opacity="0.9" stroke-width="2.5" fill="none" />
+</svg>

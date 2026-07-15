@@ -1,0 +1,126 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/typography';
+
+@theme {
+  /* Couleurs du club : rouge & or, vives et joyeuses */
+  --color-club-primary: #d81f2a;
+  --color-club-primary-light: #f2555e;
+  --color-club-accent: #f5a623;
+  --color-club-accent-light: #ffc247;
+
+  /* Typographie */
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: 'Oswald', 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  color-scheme: light dark;
+}
+
+body {
+  @apply text-slate-800 dark:text-slate-100;
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  background:
+    radial-gradient(
+      1100px 550px at 100% -10%,
+      color-mix(in oklab, var(--color-club-accent) 13%, transparent),
+      transparent 60%
+    ),
+    radial-gradient(
+      900px 500px at -10% 0%,
+      color-mix(in oklab, var(--color-club-primary) 10%, transparent),
+      transparent 55%
+    ),
+    #ffffff;
+  background-attachment: fixed;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background:
+      radial-gradient(
+        1100px 550px at 100% -10%,
+        color-mix(in oklab, var(--color-club-accent) 9%, transparent),
+        transparent 60%
+      ),
+      radial-gradient(
+        900px 500px at -10% 0%,
+        color-mix(in oklab, var(--color-club-primary) 15%, transparent),
+        transparent 55%
+      ),
+      #020617;
+  }
+}
+
+@layer base {
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+}
+
+@layer components {
+  /* Carte de base réutilisable, avec support clair/sombre */
+  .card {
+    @apply rounded-2xl border border-slate-200/80 bg-white/85 shadow-sm backdrop-blur-sm transition duration-200 dark:border-slate-800 dark:bg-slate-900/70;
+  }
+
+  /* À combiner avec .card pour un effet de survol dynamique */
+  .card-hover {
+    @apply hover:-translate-y-1 hover:border-club-primary/40 hover:shadow-xl hover:shadow-club-primary/5;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition duration-200;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-club-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-club-primary/25 hover:brightness-110;
+  }
+
+  .btn-accent {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-club-accent px-5 py-2.5 text-sm font-semibold text-slate-900 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-club-accent/30 hover:brightness-105;
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition duration-200 hover:-translate-y-0.5 hover:border-club-primary hover:text-club-primary dark:border-slate-700 dark:text-slate-200 dark:hover:border-club-primary-light dark:hover:text-club-primary-light;
+  }
+
+  .section-title {
+    @apply font-display text-2xl font-bold tracking-tight text-club-primary dark:text-club-primary-light;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold;
+  }
+}
+
+/* Animation d'entrée douce */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@layer utilities {
+  .animate-rise {
+    animation: rise 0.5s ease-out both;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
