@@ -27,7 +27,32 @@ export function PerformanceTable({ resultats }: { resultats: ResultatOut[] }) {
 
   return (
     <div>
-      <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
+      {/* Liste empilée sur mobile : plus lisible qu'un tableau écrasé/à faire défiler. */}
+      <ul className="divide-y divide-slate-100 rounded-lg border border-slate-200 md:hidden dark:divide-slate-800 dark:border-slate-800">
+        {pageItems.map((r) => (
+          <li key={r.id} className="px-4 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <span className="font-medium">{r.epreuve}</span>
+              <span className="font-semibold text-slate-700 dark:text-slate-200">
+                {r.raw_performance ?? r.performance_valeur ?? '—'}
+                {r.performance_dq && (
+                  <span className="ml-1 text-red-500">({r.performance_dq})</span>
+                )}
+              </span>
+            </div>
+            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
+              {r.date && <span>{new Date(r.date).toLocaleDateString('fr-FR')}</span>}
+              {r.lieu && <span>{r.lieu}</span>}
+              {r.place != null && <span>Place {r.place}</span>}
+              {r.vent != null && <span>Vent {r.vent}</span>}
+              {r.niveau && <span>{r.niveau}</span>}
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      {/* Tableau complet à partir de md : assez de largeur pour toutes les colonnes. */}
+      <div className="hidden rounded-lg border border-slate-200 md:block dark:border-slate-800">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50 text-left text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">

@@ -2,10 +2,17 @@ import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { getAthlete, getNiveau, getResultats, getRP } from '../api/athletes'
+import type { RPOut } from '../api/types'
 import { PerformanceTable } from '../components/athletes/PerformanceTable'
 import { PerformanceChart } from '../components/athletes/PerformanceChart'
 import { LevelBadge } from '../components/athletes/LevelBadge'
 import { Loading, ErrorMessage, NotFound } from '../components/ui/Status'
+
+interface RPCard {
+  discipline: string
+  officiel: RPOut | null
+  nonHomologue: RPOut | null
+}
 
 const TOUTES_SAISONS = ''
 
@@ -22,11 +29,35 @@ export function AthleteDetailPage() {
     retry: false,
   })
 
-  const rpQuery = useQuery({
-    queryKey: ['athlete-rp', athleteId],
-    queryFn: () => getRP(athleteId),
+  const rpOfficielQuery = useQuery({
+    queryKey: ['athlete-rp', athleteId, 'officiel'],
+    queryFn: () => getRP(athleteId, { homologue: true }),
     enabled: Number.isFinite(athleteId),
   })
+
+  // homologue: false pour retrouver aussi la meilleure marque réalisée avec un
+  // vent favorable (donc non homologable), affichée en complément du record officiel.
+  const rpToutesQuery = useQuery({
+    queryKey: ['athlete-rp', athleteId, 'toutes'],
+    queryFn: () => getRP(athleteId, { homologue: false }),
+    enabled: Number.isFinite(athleteId),
+  })
+
+  const rpCards = useMemo((): RPCard[] => {
+    const officiels = new Map((rpOfficielQuery.data ?? []).map((rp) => [rp.discipline, rp]))
+    const toutes = new Map((rpToutesQuery.data ?? []).map((rp) => [rp.discipline, rp]))
+    const disciplines = new Set([...officiels.keys(), ...toutes.keys()])
+
+    return Array.from(disciplines)
+      .sort()
+      .map((discipline) => {
+        const officiel = officiels.get(discipline) ?? null
+        const meilleure = toutes.get(discipline) ?? null
+        const nonHomologue =
+          meilleure && meilleure.resultat_id !== officiel?.resultat_id ? meilleure : null
+        return { discipline, officiel, nonHomologue }
+      })
+  }, [rpOfficielQuery.data, rpToutesQuery.data])
 
   const resultatsQuery = useQuery({
     queryKey: ['athlete-resultats', athleteId],
@@ -103,24 +134,61 @@ export function AthleteDetailPage() {
 
       <section className="mb-10">
         <h2 className="section-title mb-4">Records personnels</h2>
-        {rpQuery.isLoading && <Loading />}
-        {rpQuery.isError && <ErrorMessage message="Impossible de charger les records personnels." />}
-        {rpQuery.data && rpQuery.data.length === 0 && (
-          <p className="text-slate-500 dark:text-slate-400">Aucun record personnel homologué pour le moment.</p>
+        {(rpOfficielQuery.isLoading || rpToutesQuery.isLoading) && <Loading />}
+        {(rpOfficielQuery.isError || rpToutesQuery.isError) && (
+          <ErrorMessage message="Impossible de charger les records personnels." />
         )}
-        {rpQuery.data && rpQuery.data.length > 0 && (
+        {!rpOfficielQuery.isLoading && !rpToutesQuery.isLoading && rpCards.length === 0 && (
+          <p className="text-slate-500 dark:text-slate-400">Aucun record personnel pour le moment.</p>
+        )}
+        {rpCards.length > 0 && (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {rpQuery.data.map((rp) => (
-              <div key={rp.resultat_id} className="card card-hover p-4">
-                <p className="text-sm font-semibold text-club-accent">{rp.discipline}</p>
-                <p className="mt-0.5 text-2xl font-bold text-club-primary dark:text-club-primary-light">
-                  {rp.raw_performance ?? rp.performance_valeur}
-                </p>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  {rp.date ? new Date(rp.date).toLocaleDateString('fr-FR') : '—'} · {rp.lieu ?? '—'}
-                </p>
-              </div>
-            ))}
+            {rpCards.map(({ discipline, officiel, nonHomologue }) => {
+              // Marque principale à afficher en tête : le record officiel, ou à
+              // défaut (aucune perf homologuée) la meilleure marque disponible.
+              const principale = officiel ?? nonHomologue
+              if (!principale) return null
+
+              return (
+                <div key={discipline} className="card card-hover p-4">
+                  <p className="text-sm font-semibold text-club-accent">{discipline}</p>
+                  <p className="mt-0.5 text-2xl font-bold text-club-primary dark:text-club-primary-light">
+                    {principale.raw_performance ?? principale.performance_valeur}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    {principale.date ? new Date(principale.date).toLocaleDateString('fr-FR') : '—'} ·{' '}
+                    {principale.lieu ?? '—'}
+                  </p>
+
+                  {/* Marque non homologuée (vent favorable) : affichée en escalier
+                      sous le record officiel lorsqu'elle est meilleure. */}
+                  {officiel && nonHomologue && (
+                    <div className="mt-3 ml-4 border-l-2 border-amber-300 pl-3 dark:border-amber-700/60">
+                      <span className="badge bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400">
+                        Non homologué
+                      </span>
+                      <p className="mt-1 text-lg font-bold text-slate-700 dark:text-slate-200">
+                        {nonHomologue.raw_performance ?? nonHomologue.performance_valeur}
+                      </p>
+                      <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                        {nonHomologue.date ? new Date(nonHomologue.date).toLocaleDateString('fr-FR') : '—'} ·{' '}
+                        {nonHomologue.lieu ?? '—'}
+                        {nonHomologue.vent != null && ` · vent ${nonHomologue.vent}`}
+                      </p>
+                    </div>
+                  )}
+
+                  {!officiel && nonHomologue && (
+                    <span
+                      className="badge mt-2 inline-flex bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400"
+                      title={`Non homologué (vent ${nonHomologue.vent ?? '?'} m/s)`}
+                    >
+                      Non homologué
+                    </span>
+                  )}
+                </div>
+              )
+            })}
           </div>
         )}
       </section>
