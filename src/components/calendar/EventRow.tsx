@@ -1,14 +1,14 @@
-import type { ClubEvent } from '../../data/events'
+import type { EvenementOut } from '../../api/types'
 import { isUpcoming } from '../../utils/events'
 
-const typeEmoji: Record<ClubEvent['type'], string> = {
+const typeEmoji: Record<EvenementOut['type'], string> = {
   Piste: '🏟️',
   Route: '🛣️',
   Cross: '🌿',
   Meeting: '🏅',
 }
 
-export function EventRow({ event, today }: { event: ClubEvent; today?: Date }) {
+export function EventRow({ event, today }: { event: EvenementOut; today?: Date }) {
   const date = new Date(event.date)
   const upcoming = isUpcoming(event, today)
 

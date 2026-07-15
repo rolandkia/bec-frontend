@@ -1,10 +1,12 @@
-import type { ClubEvent } from '../data/events'
-import { events } from '../data/events'
+import { useQuery } from '@tanstack/react-query'
+import type { EvenementOut } from '../api/types'
+import { listEvents } from '../api/events'
 import { splitEvents } from '../utils/events'
 import { EventRow } from '../components/calendar/EventRow'
+import { Loading, ErrorMessage } from '../components/ui/Status'
 
-function groupByMonth(items: ClubEvent[]) {
-  const groups = new Map<string, ClubEvent[]>()
+function groupByMonth(items: EvenementOut[]) {
+  const groups = new Map<string, EvenementOut[]>()
   for (const event of items) {
     const key = new Date(event.date).toLocaleDateString('fr-FR', {
       month: 'long',
@@ -26,7 +28,7 @@ function CalendarSection({
 }: {
   title: string
   count: number
-  items: ClubEvent[]
+  items: EvenementOut[]
   emptyLabel: string
   accent?: boolean
 }) {
@@ -74,7 +76,9 @@ function CalendarSection({
 }
 
 export function CalendarPage() {
-  const { upcoming, past } = splitEvents(events)
+  const eventsQuery = useQuery({ queryKey: ['events'], queryFn: listEvents })
+
+  const { upcoming, past } = splitEvents(eventsQuery.data ?? [])
 
   return (
     <div className="animate-rise space-y-12">
@@ -85,20 +89,29 @@ export function CalendarPage() {
         </p>
       </header>
 
-      <CalendarSection
-        title="À venir"
-        count={upcoming.length}
-        items={upcoming}
-        emptyLabel="Aucune compétition à venir pour le moment."
-        accent
-      />
+      {eventsQuery.isLoading && <Loading />}
+      {eventsQuery.isError && (
+        <ErrorMessage message="Impossible de charger le calendrier." />
+      )}
 
-      <CalendarSection
-        title="Passées"
-        count={past.length}
-        items={past}
-        emptyLabel="Aucune compétition passée."
-      />
+      {eventsQuery.data && (
+        <>
+          <CalendarSection
+            title="À venir"
+            count={upcoming.length}
+            items={upcoming}
+            emptyLabel="Aucune compétition à venir pour le moment."
+            accent
+          />
+
+          <CalendarSection
+            title="Passées"
+            count={past.length}
+            items={past}
+            emptyLabel="Aucune compétition passée."
+          />
+        </>
+      )}
     </div>
   )
 }

@@ -40,31 +40,31 @@ export function AthleteDetailPage() {
     enabled: Number.isFinite(athleteId),
   })
 
+  const allResultats = useMemo(() => resultatsQuery.data?.items ?? [], [resultatsQuery.data])
+
   const disciplines = useMemo(() => {
-    const set = new Set((resultatsQuery.data ?? []).map((r) => r.epreuve))
+    const set = new Set(allResultats.map((r) => r.epreuve))
     return Array.from(set).sort()
-  }, [resultatsQuery.data])
+  }, [allResultats])
 
   const selectedDiscipline = discipline ?? disciplines[0] ?? null
 
   // Saisons disponibles pour la discipline sélectionnée (les plus récentes d'abord)
   const saisons = useMemo(() => {
-    const all = resultatsQuery.data ?? []
     const relevant = selectedDiscipline
-      ? all.filter((r) => r.epreuve === selectedDiscipline)
-      : all
+      ? allResultats.filter((r) => r.epreuve === selectedDiscipline)
+      : allResultats
     const set = new Set(relevant.map((r) => r.saison).filter((s): s is string => Boolean(s)))
     return Array.from(set).sort().reverse()
-  }, [resultatsQuery.data, selectedDiscipline])
+  }, [allResultats, selectedDiscipline])
 
   const filteredResultats = useMemo(() => {
-    const all = resultatsQuery.data ?? []
-    return all.filter((r) => {
+    return allResultats.filter((r) => {
       const matchesDiscipline = !selectedDiscipline || r.epreuve === selectedDiscipline
       const matchesSaison = saison === TOUTES_SAISONS || r.saison === saison
       return matchesDiscipline && matchesSaison
     })
-  }, [resultatsQuery.data, selectedDiscipline, saison])
+  }, [allResultats, selectedDiscipline, saison])
 
   if (athleteQuery.isLoading) return <Loading />
 

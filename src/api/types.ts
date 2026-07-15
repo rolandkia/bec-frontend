@@ -16,6 +16,13 @@ export interface ResultatOut {
   points: number | null
 }
 
+export interface ResultatsPage {
+  items: ResultatOut[]
+  total: number
+  limit: number | null
+  offset: number
+}
+
 export interface AthleteOut {
   id: number
   nom: string
@@ -69,6 +76,24 @@ export interface ClassementParDiscipline {
 export interface NiveauSaisonOut {
   saison: string
   niveau: string | null
+}
+
+export interface EvenementOut {
+  id: number
+  nom: string
+  date: string
+  lieu: string
+  type: 'Piste' | 'Route' | 'Cross' | 'Meeting'
+}
+
+export interface CoachOut {
+  id: number
+  nom: string
+  prenom: string
+  role: string
+  disciplines: string[]
+  bio: string
+  photo_url: string | null
 }
 
 export interface BlogPostOut {

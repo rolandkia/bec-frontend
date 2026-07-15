@@ -2,10 +2,10 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { club } from '../data/club'
-import { events } from '../data/events'
 import { splitEvents } from '../utils/events'
 import { EventRow } from '../components/calendar/EventRow'
 import { getClassements } from '../api/athletes'
+import { listEvents } from '../api/events'
 import type { ClassementParDiscipline, Sexe } from '../api/types'
 import { currentSaison } from '../utils/saison'
 import { DisciplinePodium } from '../components/athletes/DisciplinePodium'
@@ -35,7 +35,8 @@ export function HomePage() {
       }),
   })
 
-  const { upcoming } = splitEvents(events)
+  const eventsQuery = useQuery({ queryKey: ['events'], queryFn: listEvents })
+  const { upcoming } = splitEvents(eventsQuery.data ?? [])
   const prochaines = upcoming.slice(0, 4)
 
   const byDiscipline = new Map(

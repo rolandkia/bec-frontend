@@ -1,4 +1,4 @@
-import type { ClubEvent } from '../data/events'
+import type { EvenementOut } from '../api/types'
 
 /**
  * Parse une date ISO (AAAA-MM-JJ) comme un jour calendaire *local*,
@@ -15,7 +15,7 @@ function startOfDay(date: Date): number {
 }
 
 /** Une épreuve est « à venir » si sa date est aujourd'hui ou plus tard. */
-export function isUpcoming(event: ClubEvent, today: Date = new Date()): boolean {
+export function isUpcoming(event: EvenementOut, today: Date = new Date()): boolean {
   return startOfDay(parseLocalDate(event.date)) >= startOfDay(today)
 }
 
@@ -23,9 +23,9 @@ export function isUpcoming(event: ClubEvent, today: Date = new Date()): boolean 
  * Répartit les épreuves en `upcoming` (les plus proches d'abord) et
  * `past` (les plus récentes d'abord), en comparant à la date du jour.
  */
-export function splitEvents(items: ClubEvent[], today: Date = new Date()) {
-  const upcoming: ClubEvent[] = []
-  const past: ClubEvent[] = []
+export function splitEvents(items: EvenementOut[], today: Date = new Date()) {
+  const upcoming: EvenementOut[] = []
+  const past: EvenementOut[] = []
 
   for (const event of items) {
     if (isUpcoming(event, today)) upcoming.push(event)

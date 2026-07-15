@@ -4,7 +4,7 @@ import type {
   BilanOut,
   ClassementParDiscipline,
   NiveauSaisonOut,
-  ResultatOut,
+  ResultatsPage,
   RPOut,
   Sexe,
 } from './types'
@@ -21,9 +21,9 @@ export async function getAthlete(athleteId: number): Promise<AthleteOut> {
 
 export async function getResultats(
   athleteId: number,
-  params?: { start_date?: string; end_date?: string },
-): Promise<ResultatOut[]> {
-  const { data } = await apiClient.get<ResultatOut[]>(
+  params?: { start_date?: string; end_date?: string; limit?: number; offset?: number },
+): Promise<ResultatsPage> {
+  const { data } = await apiClient.get<ResultatsPage>(
     `/athletes/${athleteId}/resultats`,
     { params },
   )
