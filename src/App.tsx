@@ -6,6 +6,8 @@ import { CalendarPage } from './pages/CalendarPage'
 import { BlogListPage } from './pages/BlogListPage'
 import { BlogDetailPage } from './pages/BlogDetailPage'
 import { BlogEditorPage } from './pages/BlogEditorPage'
+import { BlogEditPage } from './pages/BlogEditPage'
+import { BlogAdminPage } from './pages/BlogAdminPage'
 import { RecordsPage } from './pages/RecordsPage'
 import { AthletesListPage } from './pages/AthletesListPage'
 import { AthleteDetailPage } from './pages/AthleteDetailPage'
@@ -19,8 +21,10 @@ function App() {
         <Route path="coachs" element={<CoachesPage />} />
         <Route path="calendrier" element={<CalendarPage />} />
         <Route path="blog" element={<BlogListPage />} />
+        <Route path="blog/admin" element={<BlogAdminPage />} />
         <Route path="blog/nouveau" element={<BlogEditorPage />} />
         <Route path="blog/:slug" element={<BlogDetailPage />} />
+        <Route path="blog/:slug/modifier" element={<BlogEditPage />} />
         <Route path="records" element={<RecordsPage />} />
         <Route path="athletes" element={<AthletesListPage />} />
         <Route path="athletes/:id" element={<AthleteDetailPage />} />

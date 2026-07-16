@@ -6,8 +6,18 @@ export async function listBlogs(): Promise<BlogPostOut[]> {
   return data
 }
 
+export async function listAllBlogs(): Promise<BlogPostOut[]> {
+  const { data } = await apiClient.get<BlogPostOut[]>('/blogs/admin')
+  return data
+}
+
 export async function getBlogBySlug(slug: string): Promise<BlogPostOut> {
   const { data } = await apiClient.get<BlogPostOut>(`/blogs/${slug}`)
+  return data
+}
+
+export async function getBlogForEdit(slug: string): Promise<BlogPostOut> {
+  const { data } = await apiClient.get<BlogPostOut>(`/blogs/${slug}/edit`)
   return data
 }
 
@@ -19,4 +29,8 @@ export async function createBlog(payload: BlogPostCreate): Promise<BlogPostOut> 
 export async function updateBlog(slug: string, payload: BlogPostUpdate): Promise<BlogPostOut> {
   const { data } = await apiClient.put<BlogPostOut>(`/blogs/${slug}`, payload)
   return data
+}
+
+export async function deleteBlog(slug: string): Promise<void> {
+  await apiClient.delete(`/blogs/${slug}`)
 }

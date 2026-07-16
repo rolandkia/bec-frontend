@@ -96,13 +96,69 @@ export interface CoachOut {
   photo_url: string | null
 }
 
+/** Cadrage de la couverture, stocké comme chaîne `"x% y% z<zoom>"`
+ *  (p.ex. `"50% 30% z1.6"`). Le token `z…` est optionnel (zoom par défaut = 1).
+ *  Les anciennes valeurs `"50% 30%"` / `top` / `center` / `bottom` restent gérées. */
+export type CoverPosition = string
+
+/** Bornes de zoom de la couverture. */
+export const COVER_ZOOM_MIN = 1
+export const COVER_ZOOM_MAX = 4
+
+/** Normalise les mots-clés hérités en pourcentages `"x% y%"`. */
+function normalizeKeywords(value: string): string {
+  if (value === 'top') return 'center top'
+  if (value === 'bottom') return 'center bottom'
+  if (value === 'center') return '50% 50%'
+  return value
+}
+
+/** Convertit la position stockée en valeur CSS `object-position` (sans le zoom). */
+export function coverObjectPosition(position?: CoverPosition | null): string {
+  if (!position) return '50% 50%'
+  const withoutZoom = position.replace(/\s*z[\d.]+\s*$/, '').trim()
+  return normalizeKeywords(withoutZoom) || '50% 50%'
+}
+
+/** Extrait le facteur de zoom (défaut 1), borné à [MIN, MAX]. */
+export function coverZoom(position?: CoverPosition | null): number {
+  const match = position?.match(/z([\d.]+)\s*$/)
+  const zoom = match ? parseFloat(match[1]) : 1
+  if (!Number.isFinite(zoom)) return 1
+  return Math.min(COVER_ZOOM_MAX, Math.max(COVER_ZOOM_MIN, zoom))
+}
+
+/** Construit la chaîne `cover_position` à partir de la position et du zoom. */
+export function buildCoverPosition(objectPosition: string, zoom: number): string {
+  const pos = objectPosition.trim() || '50% 50%'
+  const z = Math.min(COVER_ZOOM_MAX, Math.max(COVER_ZOOM_MIN, zoom))
+  return z === 1 ? pos : `${pos} z${z.toFixed(2)}`
+}
+
+/** Styles inline partagés par le picker, l'aperçu et l'article : garantit un
+ *  recadrage identique partout (même conteneur à ratio fixe + object-cover). */
+export function coverImageStyle(position?: CoverPosition | null): {
+  objectPosition: string
+  transform: string
+  transformOrigin: string
+} {
+  const objectPosition = coverObjectPosition(position)
+  const zoom = coverZoom(position)
+  return {
+    objectPosition,
+    transform: `scale(${zoom})`,
+    transformOrigin: objectPosition,
+  }
+}
+
 export interface BlogPostOut {
   id: number
   slug: string
   title: string
   summary: string | null
   cover_image_url: string | null
-  content_markdown: string
+  cover_position: CoverPosition
+  content_html: string
   created_at: string
   updated_at: string
   published_at: string | null
@@ -112,7 +168,8 @@ export interface BlogPostCreate {
   title: string
   summary?: string | null
   cover_image_url?: string | null
-  content_markdown: string
+  cover_position?: CoverPosition
+  content_html: string
   publish?: boolean
 }
 
@@ -120,7 +177,8 @@ export interface BlogPostUpdate {
   title?: string | null
   summary?: string | null
   cover_image_url?: string | null
-  content_markdown?: string | null
+  cover_position?: CoverPosition | null
+  content_html?: string | null
   publish?: boolean | null
 }
 

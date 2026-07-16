@@ -132,6 +132,340 @@ body {
   }
 }
 
+/* ---------------------------------------------------------------------------
+   Contenu riche du blog : figures, images, vidéos, alignements & habillage.
+   Ces règles s'appliquent À LA FOIS dans l'éditeur (.ProseMirror) et dans
+   l'article rendu (.blog-rendered) pour un rendu identique.
+   --------------------------------------------------------------------------- */
+/* Titres de section du contenu : nettement plus petits que le titre de
+   l'article (h1, text-3xl ≈ 1.875rem) pour une hiérarchie claire. */
+.ProseMirror h2,
+.blog-rendered h2 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 1.5rem 0 0.5rem;
+}
+.ProseMirror h3,
+.blog-rendered h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.35;
+  margin: 1.25rem 0 0.4rem;
+}
+
+/* IMPORTANT : uniquement margin-block ici. Un `margin: 2rem 0` imposerait
+   margin-inline: 0 avec une spécificité (0,1,1) qui écraserait le centrage
+   `.fig-center { margin-inline: auto }` → figure toujours collée à gauche. */
+.ProseMirror figure,
+.blog-rendered figure {
+  margin-block: 2rem;
+  max-width: 100%;
+}
+
+.ProseMirror figure img,
+.blog-rendered figure img,
+.ProseMirror video,
+.blog-rendered video {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.75rem;
+}
+
+.ProseMirror figcaption,
+.blog-rendered figcaption {
+  margin-top: 0.4rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: rgb(100 116 139); /* slate-500 */
+}
+
+/* Alignements en bloc (l'élément se réduit à la largeur du média).
+   Sélecteurs préfixés par les conteneurs (spécificité 0,2,0) pour l'emporter
+   sur `.ProseMirror figure` (0,1,1). */
+.ProseMirror .fig-left,
+.blog-rendered .fig-left {
+  width: fit-content;
+  margin-right: auto;
+  margin-left: 0;
+}
+.ProseMirror .fig-center,
+.blog-rendered .fig-center {
+  width: fit-content;
+  margin-inline: auto;
+}
+.ProseMirror .fig-right,
+.blog-rendered .fig-right {
+  width: fit-content;
+  margin-left: auto;
+  margin-right: 0;
+}
+
+/* Habillage : le texte s'enroule autour du média. Marges généreuses pour
+   que le texte ne colle pas au média et reste lisible. */
+.ProseMirror .fig-float-left,
+.blog-rendered .fig-float-left {
+  float: left;
+  width: fit-content;
+  margin: 0.25rem 2rem 1.5rem 0;
+}
+.ProseMirror .fig-float-right,
+.blog-rendered .fig-float-right {
+  float: right;
+  width: fit-content;
+  margin: 0.25rem 0 1.5rem 2rem;
+}
+
+/* Largeurs en pourcentage (définies APRÈS les alignements pour l'emporter).
+   Deux médias flottants à 50 % s'affichent côte à côte. */
+.ProseMirror .fig-w-33,
+.blog-rendered .fig-w-33 {
+  width: 33%;
+}
+.ProseMirror .fig-w-50,
+.blog-rendered .fig-w-50 {
+  width: 50%;
+}
+.ProseMirror .fig-w-66,
+.blog-rendered .fig-w-66 {
+  width: 66%;
+}
+.ProseMirror .fig-w-100,
+.blog-rendered .fig-w-100 {
+  width: 100%;
+}
+/* Largeur libre (redimensionnement souris) : la largeur en % est portée par un
+   style inline sur la <figure>, le média interne remplit sa figure. */
+.ProseMirror figure[class*='fig-w-'] img,
+.blog-rendered figure[class*='fig-w-'] img,
+.ProseMirror figure[class*='fig-w-'] video,
+.blog-rendered figure[class*='fig-w-'] video,
+.ProseMirror figure.fig-sized img,
+.blog-rendered figure.fig-sized img,
+.ProseMirror figure.fig-sized video,
+.blog-rendered figure.fig-sized video {
+  width: 100%;
+}
+
+/* Clearfix pour contenir les flottants */
+.ProseMirror::after,
+.blog-rendered::after {
+  content: '';
+  display: block;
+  clear: both;
+}
+
+/* Listes à côté d'un média flottant : on leur donne un contexte de formatage de
+   bloc (BFC) pour qu'elles se placent PROPREMENT à côté du flottant — sinon le
+   padding et les puces de la liste glissent SOUS l'image (superposition). */
+.ProseMirror ul,
+.ProseMirror ol,
+.blog-rendered ul,
+.blog-rendered ol {
+  display: flow-root;
+}
+
+/* Sur mobile, on désactive l'habillage : le média passe en pleine largeur
+   et le texte n'est plus écrasé dans une colonne trop étroite. */
+@media (max-width: 640px) {
+  .ProseMirror .fig-float-left,
+  .blog-rendered .fig-float-left,
+  .ProseMirror .fig-float-right,
+  .blog-rendered .fig-float-right {
+    float: none;
+    margin: 1rem auto;
+  }
+  /* Sur mobile, tout média occupe la pleine largeur (pas de côte à côte). */
+  .ProseMirror figure[class*='fig-w-'],
+  .blog-rendered figure[class*='fig-w-'],
+  .ProseMirror figure.fig-sized,
+  .blog-rendered figure.fig-sized,
+  .ProseMirror figure[style*='width'],
+  .blog-rendered figure[style*='width'] {
+    width: 100% !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Habillage de l'éditeur TipTap (barre d'outils, zone d'édition, poignées).
+   --------------------------------------------------------------------------- */
+.tiptap-editor {
+  overflow: hidden;
+}
+
+.tiptap-toolbar {
+  @apply flex flex-wrap items-center gap-1 border-b border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-800 dark:bg-slate-900/60;
+}
+
+.tb-btn {
+  @apply inline-flex h-8 min-w-8 items-center justify-center rounded-md px-2 text-sm text-slate-700 transition hover:bg-slate-200 dark:text-slate-200 dark:hover:bg-slate-700;
+}
+.tb-btn.is-active {
+  @apply bg-club-primary text-white hover:bg-club-primary;
+}
+.tb-sep {
+  @apply mx-1 h-5 w-px bg-slate-300 dark:bg-slate-700;
+}
+.tb-status {
+  @apply ml-2 text-xs text-slate-500 dark:text-slate-400;
+}
+.tb-error {
+  @apply text-red-600 dark:text-red-400;
+}
+
+.tiptap-content {
+  @apply px-5 py-4;
+}
+.tiptap-content .ProseMirror {
+  min-height: 20rem;
+  outline: none;
+}
+.tiptap-content .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  @apply text-slate-400;
+}
+
+/* Conteneur du média dans l'éditeur : ancre les poignées de redimensionnement
+   aux coins du média (et non de la figure entière, légende comprise). */
+.tiptap-media-wrap {
+  position: relative;
+  display: block;
+  line-height: 0;
+}
+
+/* Média sélectionné dans l'éditeur */
+.tiptap-figure.is-selected {
+  outline: 2px solid var(--color-club-primary);
+  outline-offset: 3px;
+  border-radius: 0.75rem;
+}
+/* Glisser le média (ou sa poignée ⠿) pour le repositionner dans le flux. */
+.tiptap-media-wrap.tiptap-grab {
+  cursor: grab;
+}
+.tiptap-media-wrap.tiptap-grab:active {
+  cursor: grabbing;
+}
+
+/* Figure d'origine estompée pendant le drag pointeur. */
+.tiptap-figure.is-dragging {
+  opacity: 0.35;
+}
+
+/* Fantôme translucide qui suit la souris pendant le drag. */
+.tiptap-drag-ghost {
+  position: fixed;
+  z-index: 60;
+  width: 160px;
+  pointer-events: none;
+  opacity: 0.75;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  background: rgba(15, 23, 42, 0.75);
+  color: #fff;
+  text-align: center;
+  font-size: 0.85rem;
+  line-height: 2.2;
+}
+.tiptap-drag-ghost img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Ligne d'insertion : sa position horizontale (tiers gauche/centre/droit)
+   annonce l'habillage que prendra le média au dépôt. */
+.tiptap-drop-indicator {
+  position: fixed;
+  z-index: 60;
+  height: 4px;
+  border-radius: 9999px;
+  background: var(--color-club-primary);
+  pointer-events: none;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.6);
+}
+
+/* Poignée de déplacement, visible au survol ou quand le média est sélectionné. */
+.tiptap-drag-grip {
+  position: absolute;
+  top: 0.4rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: none;
+  padding: 0.1rem 0.55rem;
+  border-radius: 9999px;
+  background: rgba(15, 23, 42, 0.65);
+  color: #fff;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  cursor: grab;
+  user-select: none;
+}
+.tiptap-drag-grip:active {
+  cursor: grabbing;
+}
+.tiptap-figure.is-editable:hover .tiptap-drag-grip,
+.tiptap-figure.is-editable.is-selected .tiptap-drag-grip {
+  display: block;
+}
+
+/* Poignées de redimensionnement à la souris (aux 4 coins du média). */
+.tiptap-resize-handle {
+  position: absolute;
+  z-index: 10;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #fff;
+  border-radius: 9999px;
+  background: var(--color-club-primary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  touch-action: none;
+}
+.tiptap-resize-handle.nw {
+  top: -7px;
+  left: -7px;
+  cursor: nwse-resize;
+}
+.tiptap-resize-handle.ne {
+  top: -7px;
+  right: -7px;
+  cursor: nesw-resize;
+}
+.tiptap-resize-handle.sw {
+  bottom: -7px;
+  left: -7px;
+  cursor: nesw-resize;
+}
+.tiptap-resize-handle.se {
+  bottom: -7px;
+  right: -7px;
+  cursor: nwse-resize;
+}
+
+.tiptap-caption-input {
+  @apply mt-1 w-full border-none bg-transparent text-center text-sm text-slate-500 focus:outline-none dark:text-slate-400;
+  cursor: text;
+}
+
+.tiptap-node-toolbar {
+  @apply mt-2 flex flex-wrap items-center justify-center gap-1;
+}
+.tiptap-node-toolbar-sep {
+  @apply mx-1 h-5 w-px bg-slate-300 dark:bg-slate-700;
+}
+.tiptap-node-toolbar button {
+  @apply inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-300 bg-white text-xs text-slate-700 transition hover:border-club-primary dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200;
+}
+.tiptap-node-toolbar button.is-active {
+  @apply border-club-primary bg-club-primary text-white;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

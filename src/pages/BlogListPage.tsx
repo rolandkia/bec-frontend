@@ -14,8 +14,8 @@ export function BlogListPage() {
     <div className="animate-rise">
       <div className="mb-8 flex items-center justify-between">
         <h1 className="section-title text-3xl">Blog du club</h1>
-        <Link to="/blog/nouveau" className="btn-primary">
-          Nouvel article
+        <Link to="/blog/admin" className="btn-outline">
+          Gérer les articles
         </Link>
       </div>
       {isLoading && <Loading />}

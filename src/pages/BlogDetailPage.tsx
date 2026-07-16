@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { getBlogBySlug } from '../api/blogs'
+import { coverImageStyle } from '../api/types'
 import { BlogContent } from '../components/blog/BlogContent'
 import { Loading, ErrorMessage, NotFound } from '../components/ui/Status'
 
@@ -40,17 +41,23 @@ export function BlogDetailPage() {
           })}
         </p>
       )}
-      <h1 className="mb-6 text-3xl font-bold text-club-primary dark:text-club-primary-light">
+      <h1 className="mb-3 text-3xl font-bold text-club-primary dark:text-club-primary-light">
         {post.title}
       </h1>
-      {post.cover_image_url && (
-        <img
-          src={post.cover_image_url}
-          alt=""
-          className="mb-6 max-h-96 w-full rounded-lg object-cover"
-        />
+      {post.summary && (
+        <p className="mb-6 text-lg text-slate-600 dark:text-slate-300">{post.summary}</p>
       )}
-      <BlogContent markdown={post.content_markdown} />
+      {post.cover_image_url && (
+        <div className="mb-6 aspect-[5/2] w-full overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
+          <img
+            src={post.cover_image_url}
+            alt=""
+            className="h-full w-full object-cover"
+            style={coverImageStyle(post.cover_position)}
+          />
+        </div>
+      )}
+      <BlogContent html={post.content_html} />
     </article>
   )
 }
