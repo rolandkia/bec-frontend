@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { isAxiosError } from 'axios'
 import { uploadMedia } from '../../api/media'
 import { coverImageStyle, type CoverPosition } from '../../api/types'
 import { BlogEditor } from './BlogEditor'
@@ -51,8 +52,12 @@ export function BlogPostForm({
     try {
       const { url } = await uploadMedia(file)
       setCoverImageUrl(url)
-    } catch {
-      setError("Échec de l'envoi de l'image de couverture.")
+    } catch (err) {
+      setError(
+        isAxiosError(err) && err.response?.data?.detail
+          ? String(err.response.data.detail)
+          : "Échec de l'envoi de l'image de couverture.",
+      )
     } finally {
       setIsUploadingCover(false)
     }

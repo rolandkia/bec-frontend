@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { isAxiosError } from 'axios'
 import type { Editor } from '@tiptap/react'
 import { uploadMedia } from '../../api/media'
 
@@ -33,12 +34,10 @@ function ToolbarButton({
 
 export function EditorToolbar({ editor }: { editor: Editor }) {
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [uploadKind, setUploadKind] = useState<'image' | 'video' | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  function triggerUpload(kind: 'image' | 'video') {
-    setUploadKind(kind)
+  function triggerUpload() {
     setError(null)
     requestAnimationFrame(() => fileInputRef.current?.click())
   }
@@ -56,8 +55,12 @@ export function EditorToolbar({ editor }: { editor: Editor }) {
       } else {
         editor.chain().focus().setFigureImage({ src: url, alt: file.name }).run()
       }
-    } catch {
-      setError("Échec de l'envoi du fichier.")
+    } catch (err) {
+      setError(
+        isAxiosError(err) && err.response?.data?.detail
+          ? String(err.response.data.detail)
+          : "Échec de l'envoi du fichier.",
+      )
     } finally {
       setIsUploading(false)
     }
@@ -92,11 +95,8 @@ export function EditorToolbar({ editor }: { editor: Editor }) {
 
       <span className="tb-sep" />
 
-      <ToolbarButton title="Insérer une image" disabled={isUploading} onClick={() => triggerUpload('image')}>
+      <ToolbarButton title="Insérer une image ou une vidéo" disabled={isUploading} onClick={() => triggerUpload()}>
         🖼
-      </ToolbarButton>
-      <ToolbarButton title="Insérer une vidéo" disabled={isUploading} onClick={() => triggerUpload('video')}>
-        🎬
       </ToolbarButton>
 
       <span className="tb-sep" />
@@ -115,7 +115,7 @@ export function EditorToolbar({ editor }: { editor: Editor }) {
         ref={fileInputRef}
         type="file"
         className="hidden"
-        accept={uploadKind === 'video' ? 'video/*' : 'image/*'}
+        accept="image/*,video/*"
         onChange={handleFile}
       />
     </div>

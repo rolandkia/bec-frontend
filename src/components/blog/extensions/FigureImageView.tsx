@@ -1,4 +1,5 @@
-import { NodeViewWrapper, type NodeViewProps } from '@tiptap/react'
+import { NodeSelection } from '@tiptap/pm/state'
+import { NodeViewWrapper, useEditorState, type NodeViewProps } from '@tiptap/react'
 import type { FigureAlign } from './FigureImage'
 import { SIZE_OPTIONS } from './mediaSizes'
 import { MediaResizeHandles } from './MediaResizeHandles'
@@ -13,7 +14,7 @@ const ALIGN_OPTIONS: { value: FigureAlign; label: string; title: string }[] = [
 ]
 
 export function FigureImageView(props: NodeViewProps) {
-  const { node, updateAttributes, selected, editor, getPos } = props
+  const { node, updateAttributes, editor, getPos } = props
   const { src, alt, caption, width, align } = node.attrs as {
     src: string
     alt: string | null
@@ -22,19 +23,36 @@ export function FigureImageView(props: NodeViewProps) {
     align: FigureAlign
   }
 
+  // Le prop `selected` de TipTap est vrai pour tout nœud couvert par une
+  // sélection de plage : on ne veut réagir qu'à une vraie NodeSelection sur CE
+  // nœud (sinon surligner du texte « sélectionne » toutes les images).
+  const isNodeSelected = useEditorState({
+    editor,
+    selector: ({ editor }) => {
+      const sel = editor.state.selection
+      return sel instanceof NodeSelection && sel.from === getPos()
+    },
+  })
+
   const editable = editor.isEditable
   const { onPointerDown } = useMediaDrag({ editor, getPos, node })
+
+  function handleDelete() {
+    const pos = getPos()
+    if (pos === undefined) return
+    editor.chain().focus().deleteRange({ from: pos, to: pos + node.nodeSize }).run()
+  }
 
   return (
     <NodeViewWrapper
       as="figure"
-      className={`fig-${align}${width ? ' fig-sized' : ''} tiptap-figure${selected ? ' is-selected' : ''}${editable ? ' is-editable' : ''}`}
+      className={`fig-${align}${width ? ' fig-sized' : ''} tiptap-figure${isNodeSelected ? ' is-selected' : ''}${editable ? ' is-editable' : ''}`}
       style={width ? { width: `${width}%` } : undefined}
     >
       {/* Drag pointeur custom : cliquer-maintenir l'image et bouger pour la
           déplacer n'importe où (la ligne d'insertion montre l'habillage cible). */}
       <div
-        className={`tiptap-media-wrap${editable ? ' tiptap-grab' : ''}`}
+        className={`tiptap-media-wrap${isNodeSelected ? ' is-selected' : ''}${editable ? ' tiptap-grab' : ''}`}
         onPointerDown={editable ? onPointerDown : undefined}
       >
         <img src={src} alt={alt ?? ''} draggable={false} />
@@ -43,7 +61,7 @@ export function FigureImageView(props: NodeViewProps) {
             ⠿
           </span>
         )}
-        {editable && selected && (
+        {editable && isNodeSelected && (
           <MediaResizeHandles onResize={(w) => updateAttributes({ width: w })} />
         )}
       </div>
@@ -59,7 +77,7 @@ export function FigureImageView(props: NodeViewProps) {
         caption && <figcaption>{caption}</figcaption>
       )}
 
-      {editable && selected && (
+      {editable && isNodeSelected && (
         <div className="tiptap-node-toolbar" contentEditable={false}>
           {ALIGN_OPTIONS.map((opt) => (
             <button
@@ -90,6 +108,18 @@ export function FigureImageView(props: NodeViewProps) {
               {opt.label}
             </button>
           ))}
+          <span className="tiptap-node-toolbar-sep" />
+          <button
+            type="button"
+            title="Supprimer"
+            className="tiptap-node-toolbar-delete"
+            onMouseDown={(e) => {
+              e.preventDefault()
+              handleDelete()
+            }}
+          >
+            ✕
+          </button>
         </div>
       )}
     </NodeViewWrapper>

@@ -337,8 +337,14 @@ body {
   line-height: 0;
 }
 
-/* Média sélectionné dans l'éditeur */
-.tiptap-figure.is-selected {
+/* La toolbar du nœud est positionnée en absolu par rapport à la figure. */
+.tiptap-figure {
+  position: relative;
+}
+
+/* Média sélectionné dans l'éditeur : le cadre entoure le média seul
+   (via .tiptap-media-wrap), pas la légende ni la toolbar. */
+.tiptap-media-wrap.is-selected {
   outline: 2px solid var(--color-club-primary);
   outline-offset: 3px;
   border-radius: 0.75rem;
@@ -453,8 +459,18 @@ body {
   cursor: text;
 }
 
+/* En absolu sous la figure : la rangée de boutons ne participe plus à la
+   largeur de la figure (sinon une petite image en fit-content s'élargit). */
 .tiptap-node-toolbar {
-  @apply mt-2 flex flex-wrap items-center justify-center gap-1;
+  @apply flex flex-wrap items-center justify-center gap-1;
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 90vw;
+  z-index: 20;
+  margin-top: 0.5rem;
 }
 .tiptap-node-toolbar-sep {
   @apply mx-1 h-5 w-px bg-slate-300 dark:bg-slate-700;
@@ -464,6 +480,9 @@ body {
 }
 .tiptap-node-toolbar button.is-active {
   @apply border-club-primary bg-club-primary text-white;
+}
+.tiptap-node-toolbar-delete {
+  @apply hover:!border-red-500 hover:!bg-red-500 hover:!text-white;
 }
 
 @media (prefers-reduced-motion: reduce) {

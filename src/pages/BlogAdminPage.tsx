@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { deleteBlog, listAllBlogs } from '../api/blogs'
+import { exportBlogPdf } from '../lib/exportBlogPdf'
 import { Loading, ErrorMessage } from '../components/ui/Status'
 import type { BlogPostOut } from '../api/types'
 
@@ -14,6 +16,7 @@ function formatDate(iso: string) {
 
 export function BlogAdminPage() {
   const queryClient = useQueryClient()
+  const [exportingSlug, setExportingSlug] = useState<string | null>(null)
   const { data: posts, isLoading, isError } = useQuery({
     queryKey: ['blogs-admin'],
     queryFn: listAllBlogs,
@@ -24,6 +27,15 @@ export function BlogAdminPage() {
     await deleteBlog(post.slug)
     queryClient.invalidateQueries({ queryKey: ['blogs-admin'] })
     queryClient.invalidateQueries({ queryKey: ['blogs'] })
+  }
+
+  async function handleExportPdf(post: BlogPostOut) {
+    setExportingSlug(post.slug)
+    try {
+      await exportBlogPdf(post)
+    } finally {
+      setExportingSlug(null)
+    }
   }
 
   return (
@@ -81,6 +93,14 @@ export function BlogAdminPage() {
                   <Link to={`/blog/${post.slug}/modifier`} className="btn-outline px-4 py-1.5 text-sm">
                     Modifier
                   </Link>
+                  <button
+                    type="button"
+                    className="text-sm font-semibold text-slate-500 hover:underline dark:text-slate-400 disabled:opacity-50"
+                    disabled={exportingSlug === post.slug}
+                    onClick={() => handleExportPdf(post)}
+                  >
+                    {exportingSlug === post.slug ? 'Export…' : 'Exporter en PDF'}
+                  </button>
                   <button
                     type="button"
                     className="text-sm font-semibold text-red-600 hover:underline dark:text-red-400"

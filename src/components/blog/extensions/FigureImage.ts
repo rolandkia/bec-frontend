@@ -94,8 +94,8 @@ export const FigureImage = Node.create({
     return {
       setFigureImage:
         (attrs) =>
-        ({ commands }) =>
-          commands.insertContent({
+        ({ commands, tr }) =>
+          commands.insertContentAt(tr.selection.to, {
             type: this.name,
             attrs: { src: attrs.src, alt: attrs.alt ?? '' },
           }),

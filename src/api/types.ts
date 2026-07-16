@@ -5,6 +5,7 @@ export interface ResultatOut {
   date: string | null
   saison: string | null
   epreuve: string
+  tour: string | null
   raw_performance: string | null
   performance_metric: string | null
   performance_valeur: number | null

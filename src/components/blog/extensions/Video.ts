@@ -77,8 +77,8 @@ export const Video = Node.create({
     return {
       setVideo:
         (attrs) =>
-        ({ commands }) =>
-          commands.insertContent({ type: this.name, attrs: { src: attrs.src } }),
+        ({ commands, tr }) =>
+          commands.insertContentAt(tr.selection.to, { type: this.name, attrs: { src: attrs.src } }),
     }
   },
 })
