@@ -101,8 +101,30 @@ export interface BlogPostOut {
   slug: string
   title: string
   summary: string | null
+  cover_image_url: string | null
   content_markdown: string
   created_at: string
   updated_at: string
   published_at: string | null
+}
+
+export interface BlogPostCreate {
+  title: string
+  summary?: string | null
+  cover_image_url?: string | null
+  content_markdown: string
+  publish?: boolean
+}
+
+export interface BlogPostUpdate {
+  title?: string | null
+  summary?: string | null
+  cover_image_url?: string | null
+  content_markdown?: string | null
+  publish?: boolean | null
+}
+
+export interface MediaUploadOut {
+  url: string
+  resource_type: string
 }

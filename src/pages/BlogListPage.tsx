@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
 import { listBlogs } from '../api/blogs'
 import { BlogCard } from '../components/blog/BlogCard'
 import { Loading, ErrorMessage } from '../components/ui/Status'
@@ -11,7 +12,12 @@ export function BlogListPage() {
 
   return (
     <div className="animate-rise">
-      <h1 className="section-title mb-8 text-3xl">Blog du club</h1>
+      <div className="mb-8 flex items-center justify-between">
+        <h1 className="section-title text-3xl">Blog du club</h1>
+        <Link to="/blog/nouveau" className="btn-primary">
+          Nouvel article
+        </Link>
+      </div>
       {isLoading && <Loading />}
       {isError && <ErrorMessage message="Impossible de charger les articles." />}
       {posts && posts.length === 0 && (

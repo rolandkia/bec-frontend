@@ -5,6 +5,7 @@ import { CoachesPage } from './pages/CoachesPage'
 import { CalendarPage } from './pages/CalendarPage'
 import { BlogListPage } from './pages/BlogListPage'
 import { BlogDetailPage } from './pages/BlogDetailPage'
+import { BlogEditorPage } from './pages/BlogEditorPage'
 import { RecordsPage } from './pages/RecordsPage'
 import { AthletesListPage } from './pages/AthletesListPage'
 import { AthleteDetailPage } from './pages/AthleteDetailPage'
@@ -18,6 +19,7 @@ function App() {
         <Route path="coachs" element={<CoachesPage />} />
         <Route path="calendrier" element={<CalendarPage />} />
         <Route path="blog" element={<BlogListPage />} />
+        <Route path="blog/nouveau" element={<BlogEditorPage />} />
         <Route path="blog/:slug" element={<BlogDetailPage />} />
         <Route path="records" element={<RecordsPage />} />
         <Route path="athletes" element={<AthletesListPage />} />

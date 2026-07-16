@@ -12,7 +12,14 @@ function formatDate(iso: string | null) {
 
 export function BlogCard({ post }: { post: BlogPostOut }) {
   return (
-    <Link to={`/blog/${post.slug}`} className="card card-hover block p-5">
+    <Link to={`/blog/${post.slug}`} className="card card-hover block overflow-hidden p-5">
+      {post.cover_image_url && (
+        <img
+          src={post.cover_image_url}
+          alt=""
+          className="-mx-5 -mt-5 mb-4 h-40 w-[calc(100%+2.5rem)] object-cover"
+        />
+      )}
       {post.published_at && (
         <p className="mb-1 text-xs font-semibold text-club-accent">
           {formatDate(post.published_at)}

@@ -43,6 +43,13 @@ export function BlogDetailPage() {
       <h1 className="mb-6 text-3xl font-bold text-club-primary dark:text-club-primary-light">
         {post.title}
       </h1>
+      {post.cover_image_url && (
+        <img
+          src={post.cover_image_url}
+          alt=""
+          className="mb-6 max-h-96 w-full rounded-lg object-cover"
+        />
+      )}
       <BlogContent markdown={post.content_markdown} />
     </article>
   )
