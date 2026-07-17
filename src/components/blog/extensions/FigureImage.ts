@@ -3,7 +3,11 @@ import { ReactNodeViewRenderer } from '@tiptap/react'
 import { FigureImageView } from './FigureImageView'
 import { parseFigureWidth } from './mediaSizes'
 
-export type FigureAlign = 'left' | 'center' | 'right' | 'float-left' | 'float-right'
+/** `custom` : position continue (voir `offsetX`), posée en glissant l'image
+ *  horizontalement — les autres valeurs restent les préréglages de la
+ *  toolbar. Le `float` CSS, lui, ne connaît que 2 côtés : `float-left` et
+ *  `float-right` ne sont donc jamais continus. */
+export type FigureAlign = 'left' | 'center' | 'right' | 'float-left' | 'float-right' | 'custom'
 
 export interface FigureImageAttrs {
   src: string
@@ -11,6 +15,8 @@ export interface FigureImageAttrs {
   caption: string
   width: number | null
   align: FigureAlign
+  /** % de la colonne, bord gauche de la figure. Uniquement pour `align: 'custom'`. */
+  offsetX: number | null
 }
 
 declare module '@tiptap/core' {
@@ -60,8 +66,15 @@ export const FigureImage = Node.create({
         default: 'center',
         parseHTML: (element) => {
           const cls = element.getAttribute('class') ?? ''
-          const match = cls.match(/fig-(float-left|float-right|left|center|right)/)
+          const match = cls.match(/fig-(float-left|float-right|left|center|right|custom)/)
           return match ? match[1] : 'center'
+        },
+      },
+      offsetX: {
+        default: null,
+        parseHTML: (element) => {
+          const match = (element.style?.marginLeft ?? '').match(/([\d.]+)%/)
+          return match ? Math.round(parseFloat(match[1])) : null
         },
       },
     }
@@ -75,10 +88,13 @@ export const FigureImage = Node.create({
   },
 
   renderHTML({ node }) {
-    const { src, alt, caption, width, align } = node.attrs
+    const { src, alt, caption, width, align, offsetX } = node.attrs
     const className = `fig-${align}${width ? ' fig-sized' : ''}`
     const attrs: Record<string, string> = { class: className }
-    if (width) attrs.style = `width: ${width}%`
+    const style: string[] = []
+    if (width) style.push(`width: ${width}%`)
+    if (align === 'custom' && offsetX != null) style.push(`margin-left: ${offsetX}%`)
+    if (style.length) attrs.style = style.join('; ')
     return [
       'figure',
       mergeAttributes(attrs),

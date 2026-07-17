@@ -1,7 +1,7 @@
 import type { NodeViewProps } from '@tiptap/react'
 import { NodeSelection } from '@tiptap/pm/state'
 import { canJoinGrid } from './MediaGrid'
-import { computeDropTarget, type DropTarget } from './dropTarget'
+import { computeDropTarget, computeHorizontalPlacement, placementRect, type DropTarget } from './dropTarget'
 import { DragOverlay } from './dragOverlay'
 
 /** Distance (px) avant que le cliquer-maintenir ne devienne un drag. */
@@ -51,6 +51,18 @@ export function useMediaDrag({
     let dragging = false
     let overlay: DragOverlay | null = null
     let target: DropTarget | null = null
+    let lastX = startX
+    let lastAllowFloat = false
+    // % réel de la colonne occupé par la figure : `width` peut être null
+    // (taille naturelle de l'image, pas un pourcentage fixe), donc on mesure
+    // le rendu plutôt que de supposer 100 % — sinon plus aucune marge n'est
+    // possible et le placement continu retombe toujours à 0.
+    const columnRect = view.dom.getBoundingClientRect()
+    const figureRect = figure?.getBoundingClientRect()
+    const effectiveWidth =
+      figureRect && columnRect.width > 0
+        ? (figureRect.width / columnRect.width) * 100
+        : (node.attrs.width ?? 100)
 
     function startDrag() {
       dragging = true
@@ -75,6 +87,8 @@ export function useMediaDrag({
     function updateTarget(e: PointerEvent) {
       overlay?.moveGhost(e.clientX, e.clientY)
       autoScroll(e)
+      lastX = e.clientX
+      lastAllowFloat = e.altKey
       const from = getPos()
       if (typeof from !== 'number') {
         target = null
@@ -89,8 +103,10 @@ export function useMediaDrag({
           canJoinGrid(view.state.doc, { gridPos: info.gridPos, draggedPos: from }),
       })
       if (!target) overlay?.hideTargets()
-      else if (target.kind === 'gap') overlay?.showGap(target)
-      else overlay?.showCombine(target)
+      else if (target.kind === 'gap') {
+        const placement = computeHorizontalPlacement(target, e.clientX, effectiveWidth, e.altKey)
+        overlay?.showGap(target, placementRect(target, placement, effectiveWidth))
+      } else overlay?.showCombine(target)
     }
 
     function cleanup() {
@@ -105,13 +121,20 @@ export function useMediaDrag({
       overlay = null
     }
 
-    /** Déplace le nœud sur une frontière de blocs. L'habillage et la largeur
-     *  sont conservés tels quels : l'alignement ne change JAMAIS pendant un
-     *  déplacement (uniquement via la toolbar du nœud). */
-    function dropAtGap(pos: number, from: number) {
-      // Dépôt sur sa propre position : aucun changement, aucune transaction.
-      if (pos === from || pos === from + node.nodeSize) return
-      const moved = node.type.create(node.attrs, node.content, node.marks)
+    /** Déplace le nœud sur une frontière de blocs et applique le placement
+     *  horizontal (habillage ou position continue) visé au pointeur — les deux
+     *  axes du drag sont indépendants : Y choisit la ligne, X la colonne. */
+    function dropAtGap(
+      pos: number,
+      from: number,
+      placement: { align: string; offsetX: number | null },
+    ) {
+      const newAttrs = { ...node.attrs, ...placement }
+      const samePos = pos === from || pos === from + node.nodeSize
+      const sameAttrs = newAttrs.align === node.attrs.align && newAttrs.offsetX === node.attrs.offsetX
+      // Ni changement de ligne ni de colonne : aucune transaction.
+      if (samePos && sameAttrs) return
+      const moved = node.type.create(newAttrs, node.content, node.marks)
       const tr = view.state.tr
       tr.delete(from, from + node.nodeSize)
       const insertPos = tr.mapping.map(pos)
@@ -139,10 +162,10 @@ export function useMediaDrag({
           // bloc cible — jamais de non-action silencieuse.
           const topPos = t.gridPos ?? t.targetPos
           const topNode = view.state.doc.nodeAt(topPos)
-          dropAtGap(topPos + (topNode?.nodeSize ?? 0), from)
+          dropAtGap(topPos + (topNode?.nodeSize ?? 0), from, node.attrs)
           return
         }
-        dropAtGap(t.pos, from)
+        dropAtGap(t.pos, from, computeHorizontalPlacement(t, lastX, effectiveWidth, lastAllowFloat))
       } catch (err) {
         console.error('[blog-editor] échec du dépôt du média :', err)
         const pos = getPos()

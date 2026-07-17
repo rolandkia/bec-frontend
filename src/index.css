@@ -201,6 +201,13 @@ body {
   margin-left: auto;
   margin-right: 0;
 }
+/* Position continue : `margin-left` porte le % choisi en glissant l'image
+   (voir dropTarget.ts::computeHorizontalPlacement), posé en style inline. */
+.ProseMirror .fig-custom,
+.blog-rendered .fig-custom {
+  width: fit-content;
+  margin-right: auto;
+}
 
 /* Habillage : le texte s'enroule autour du média. Marges généreuses pour
    que le texte ne colle pas au média et reste lisible. */
@@ -468,8 +475,8 @@ body {
 }
 
 /* Ligne d'insertion (pleine largeur de colonne) : elle montre EXACTEMENT la
-   frontière de blocs où le média atterrira au dépôt — l'habillage, lui, ne
-   change jamais pendant un déplacement. */
+   frontière de blocs où le média atterrira au dépôt. L'habillage/la position
+   horizontale visés sont montrés séparément par .tiptap-placement-hint. */
 .tiptap-drop-indicator {
   position: fixed;
   z-index: 60;
@@ -499,6 +506,18 @@ body {
   outline: 2px solid var(--color-club-primary);
   outline-offset: 2px;
   background: color-mix(in oklab, var(--color-club-primary) 8%, transparent);
+}
+
+/* Aperçu de l'atterrissage horizontal pendant un drag sur un gap : la bande
+   gauche/droite (habillage) ou la position continue visée par le pointeur. */
+.tiptap-placement-hint {
+  position: fixed;
+  z-index: 59;
+  height: 0.5rem;
+  border-radius: 9999px;
+  pointer-events: none;
+  background: color-mix(in oklab, var(--color-club-primary) 35%, transparent);
+  outline: 1px dashed var(--color-club-primary);
 }
 
 /* Placeholder d'upload (décoration ProseMirror, jamais sérialisé dans le

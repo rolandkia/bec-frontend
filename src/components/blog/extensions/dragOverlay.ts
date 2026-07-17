@@ -10,6 +10,7 @@ export class DragOverlay {
   private gapLine: HTMLDivElement
   private combineBar: HTMLDivElement
   private combineOutline: HTMLDivElement
+  private placementHint: HTMLDivElement
 
   constructor(preview: { imageSrc?: string | null; label?: string }) {
     this.ghost = document.createElement('div')
@@ -28,8 +29,10 @@ export class DragOverlay {
     this.combineBar.className = 'tiptap-combine-indicator'
     this.combineOutline = document.createElement('div')
     this.combineOutline.className = 'tiptap-combine-outline'
+    this.placementHint = document.createElement('div')
+    this.placementHint.className = 'tiptap-placement-hint'
 
-    for (const el of [this.ghost, this.gapLine, this.combineBar, this.combineOutline]) {
+    for (const el of [this.ghost, this.gapLine, this.combineBar, this.combineOutline, this.placementHint]) {
       el.style.display = 'none'
       document.body.appendChild(el)
     }
@@ -41,18 +44,26 @@ export class DragOverlay {
     this.ghost.style.top = `${y + 14}px`
   }
 
-  /** Ligne horizontale pleine colonne, exactement sur le gap de destination. */
-  showGap(target: GapTarget) {
+  /** Ligne horizontale pleine colonne sur le gap de destination, + un
+   *  rectangle indiquant où la figure atterrira horizontalement (habillage
+   *  ou position continue selon X). */
+  showGap(target: GapTarget, hint: { left: number; width: number }) {
     this.hideCombine()
     this.gapLine.style.display = 'block'
     this.gapLine.style.left = `${target.left}px`
     this.gapLine.style.width = `${target.width}px`
     this.gapLine.style.top = `${target.y - 2}px`
+
+    this.placementHint.style.display = 'block'
+    this.placementHint.style.left = `${hint.left}px`
+    this.placementHint.style.width = `${hint.width}px`
+    this.placementHint.style.top = `${target.y + 6}px`
   }
 
   /** Barre verticale sur le bord visé du média cible + halo sur celui-ci. */
   showCombine(target: CombineTarget) {
     this.gapLine.style.display = 'none'
+    this.placementHint.style.display = 'none'
     const { rect, side } = target
     this.combineOutline.style.display = 'block'
     this.combineOutline.style.left = `${rect.left}px`
@@ -67,6 +78,7 @@ export class DragOverlay {
 
   hideTargets() {
     this.gapLine.style.display = 'none'
+    this.placementHint.style.display = 'none'
     this.hideCombine()
   }
 
@@ -80,5 +92,6 @@ export class DragOverlay {
     this.gapLine.remove()
     this.combineBar.remove()
     this.combineOutline.remove()
+    this.placementHint.remove()
   }
 }

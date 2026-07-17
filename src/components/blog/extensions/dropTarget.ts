@@ -169,3 +169,53 @@ export function computeDropTarget(
   if (combine) return combine
   return nearestGap(collectGaps(view), y)
 }
+
+/** Largeur (fraction de la colonne) des bandes gauche/droite qui déclenchent
+ *  l'habillage (`float-left`/`float-right`) plutôt qu'un placement continu. */
+const EDGE_ZONE_FRACTION = 0.15
+
+export interface HorizontalPlacement {
+  align: 'float-left' | 'float-right' | 'custom'
+  /** % de la colonne, position du bord gauche de la figure (null si float). */
+  offsetX: number | null
+}
+
+/** Traduit la position horizontale du pointeur dans un gap en placement de la
+ *  figure. Par défaut : position continue sur toute la plage, coins compris —
+ *  l'habillage (`float-left`/`float-right`, le seul état que CSS `float` sait
+ *  représenter) n'est déclenché que si `allowFloat` est vrai (touche Alt
+ *  maintenue), sinon sa bande de bord empêcherait d'atteindre les coins en
+ *  continu pour une image large (le pointeur centre l'image, donc « coin »
+ *  et « bord de la bande d'habillage » se chevauchent). */
+export function computeHorizontalPlacement(
+  gap: GapTarget,
+  x: number,
+  width: number,
+  allowFloat: boolean,
+): HorizontalPlacement {
+  if (allowFloat) {
+    const edge = gap.width * EDGE_ZONE_FRACTION
+    if (x <= gap.left + edge) return { align: 'float-left', offsetX: null }
+    if (x >= gap.left + gap.width - edge) return { align: 'float-right', offsetX: null }
+  }
+  const relX = ((x - gap.left) / gap.width) * 100
+  const maxOffset = Math.max(0, 100 - width)
+  const offsetX = Math.round(Math.min(maxOffset, Math.max(0, relX - width / 2)))
+  return { align: 'custom', offsetX }
+}
+
+/** Rect (viewport) prévisionnel de la figure pour un placement donné, utilisé
+ *  pour l'aperçu visuel pendant le drag. */
+export function placementRect(
+  gap: GapTarget,
+  placement: HorizontalPlacement,
+  width: number,
+): { left: number; width: number } {
+  if (placement.align === 'float-left') {
+    return { left: gap.left, width: gap.width * EDGE_ZONE_FRACTION }
+  }
+  if (placement.align === 'float-right') {
+    return { left: gap.left + gap.width * (1 - EDGE_ZONE_FRACTION), width: gap.width * EDGE_ZONE_FRACTION }
+  }
+  return { left: gap.left + ((placement.offsetX ?? 0) / 100) * gap.width, width: (width / 100) * gap.width }
+}

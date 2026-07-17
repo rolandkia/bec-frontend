@@ -16,12 +16,13 @@ const ALIGN_OPTIONS: { value: FigureAlign; label: string; title: string }[] = [
 
 export function FigureImageView(props: NodeViewProps) {
   const { node, updateAttributes, editor, getPos } = props
-  const { src, alt, caption, width, align } = node.attrs as {
+  const { src, alt, caption, width, align, offsetX } = node.attrs as {
     src: string
     alt: string | null
     caption: string
     width: number | null
     align: FigureAlign
+    offsetX: number | null
   }
 
   // Le prop `selected` de TipTap est vrai pour tout nœud couvert par une
@@ -75,7 +76,10 @@ export function FigureImageView(props: NodeViewProps) {
     <NodeViewWrapper
       as="figure"
       className={`fig-${align}${width ? ' fig-sized' : ''} tiptap-figure${isNodeSelected ? ' is-selected' : ''}${editable ? ' is-editable' : ''}`}
-      style={width ? { width: `${width}%` } : undefined}
+      style={{
+        ...(width ? { width: `${width}%` } : null),
+        ...(align === 'custom' && offsetX != null ? { marginLeft: `${offsetX}%` } : null),
+      }}
     >
       {/* Drag pointeur custom : cliquer-maintenir l'image et bouger pour la
           déplacer n'importe où (la ligne d'insertion montre l'habillage cible). */}
@@ -85,7 +89,11 @@ export function FigureImageView(props: NodeViewProps) {
       >
         <img src={src} alt={alt ?? ''} draggable={false} />
         {editable && (
-          <span className="tiptap-drag-grip" contentEditable={false} title="Glisser pour déplacer">
+          <span
+            className="tiptap-drag-grip"
+            contentEditable={false}
+            title="Glisser pour déplacer (Alt : habillage texte près des bords)"
+          >
             ⠿
           </span>
         )}
@@ -117,7 +125,7 @@ export function FigureImageView(props: NodeViewProps) {
                   className={align === opt.value ? 'is-active' : ''}
                   onMouseDown={(e) => {
                     e.preventDefault()
-                    updateAttributes({ align: opt.value })
+                    updateAttributes({ align: opt.value, offsetX: null })
                   }}
                 >
                   {opt.label}
