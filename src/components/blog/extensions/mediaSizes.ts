@@ -19,7 +19,7 @@ export function clampMediaWidth(width: number): number {
 
 /** Largeur minimale (en % de la rangée) d'un élément de grille média : en
  *  dessous, la vignette devient illisible et sa poignée insaisissable. */
-export const GRID_ITEM_WIDTH_MIN = 15
+export const GRID_ITEM_WIDTH_MIN = 20
 
 /** Borne la largeur d'un élément de grille dans [GRID_ITEM_WIDTH_MIN, max]
  *  (max = part restante de la paire redimensionnée) et l'arrondit à l'entier. */

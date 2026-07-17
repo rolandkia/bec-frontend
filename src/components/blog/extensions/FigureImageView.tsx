@@ -7,22 +7,19 @@ import { MediaResizeHandles } from './MediaResizeHandles'
 import { useMediaDrag } from './useMediaDrag'
 
 const ALIGN_OPTIONS: { value: FigureAlign; label: string; title: string }[] = [
-  { value: 'left', label: '⬅', title: 'Aligner à gauche' },
+  { value: 'float-left', label: '◧', title: 'À gauche, texte à droite' },
   { value: 'center', label: '⬛', title: 'Centrer' },
-  { value: 'right', label: '➡', title: 'Aligner à droite' },
-  { value: 'float-left', label: '◧', title: 'Texte à droite de l’image' },
-  { value: 'float-right', label: '◨', title: 'Texte à gauche de l’image' },
+  { value: 'float-right', label: '◨', title: 'À droite, texte à gauche' },
 ]
 
 export function FigureImageView(props: NodeViewProps) {
   const { node, updateAttributes, editor, getPos } = props
-  const { src, alt, caption, width, align, offsetX } = node.attrs as {
+  const { src, alt, caption, width, align } = node.attrs as {
     src: string
     alt: string | null
     caption: string
     width: number | null
     align: FigureAlign
-    offsetX: number | null
   }
 
   // Le prop `selected` de TipTap est vrai pour tout nœud couvert par une
@@ -76,10 +73,7 @@ export function FigureImageView(props: NodeViewProps) {
     <NodeViewWrapper
       as="figure"
       className={`fig-${align}${width ? ' fig-sized' : ''} tiptap-figure${isNodeSelected ? ' is-selected' : ''}${editable ? ' is-editable' : ''}`}
-      style={{
-        ...(width ? { width: `${width}%` } : null),
-        ...(align === 'custom' && offsetX != null ? { marginLeft: `${offsetX}%` } : null),
-      }}
+      style={width ? { width: `${width}%` } : undefined}
     >
       {/* Drag pointeur custom : cliquer-maintenir l'image et bouger pour la
           déplacer n'importe où (la ligne d'insertion montre l'habillage cible). */}
@@ -92,7 +86,7 @@ export function FigureImageView(props: NodeViewProps) {
           <span
             className="tiptap-drag-grip"
             contentEditable={false}
-            title="Glisser pour déplacer (Alt : habillage texte près des bords)"
+            title="Glisser pour déplacer (ou vers le bord d'un média pour les mettre côte à côte)"
           >
             ⠿
           </span>
@@ -125,7 +119,7 @@ export function FigureImageView(props: NodeViewProps) {
                   className={align === opt.value ? 'is-active' : ''}
                   onMouseDown={(e) => {
                     e.preventDefault()
-                    updateAttributes({ align: opt.value, offsetX: null })
+                    updateAttributes({ align: opt.value })
                   }}
                 >
                   {opt.label}

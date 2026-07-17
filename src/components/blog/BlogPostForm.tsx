@@ -181,7 +181,9 @@ export function BlogPostForm({
 
       <div>
         <p className="mb-2 text-sm font-medium text-slate-500 dark:text-slate-400">Aperçu</p>
-        <div className="card p-5">
+        {/* py-5 sans padding horizontal : le contenu de l'aperçu occupe la même
+            largeur utile que l'article publié pour un rendu identique. */}
+        <div className="card py-5">
           {coverImageUrl && (
             <div className="mb-4 aspect-[5/2] w-full overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
               <img

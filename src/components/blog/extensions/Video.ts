@@ -41,9 +41,11 @@ export const Video = Node.create({
       },
       align: {
         default: 'center' as FigureAlign,
+        // Seuls `float-left`/`float-right` sont conservés ; toute autre valeur
+        // héritée retombe sur `center` (cf. FigureImage).
         parseHTML: (element) => {
           const cls = element.getAttribute('class') ?? ''
-          const match = cls.match(/fig-(float-left|float-right|left|center|right)/)
+          const match = cls.match(/fig-(float-left|float-right)/)
           return match ? match[1] : 'center'
         },
       },
@@ -62,12 +64,11 @@ export const Video = Node.create({
     const className = `fig-${align}${width ? ' fig-sized' : ''}`
     const attrs: Record<string, string> = { class: className }
     if (width) attrs.style = `width: ${width}%`
-    return [
-      'figure',
-      mergeAttributes(attrs),
-      ['video', mergeAttributes({ src, controls: 'true' })],
-      ['figcaption', {}, caption ?? ''],
-    ]
+    const video = ['video', mergeAttributes({ src, controls: 'true' })] as const
+    // Pas de <figcaption> vide : évite une marge fantôme dans l'article publié.
+    return caption
+      ? ['figure', mergeAttributes(attrs), video, ['figcaption', {}, caption]]
+      : ['figure', mergeAttributes(attrs), video]
   },
 
   addNodeView() {

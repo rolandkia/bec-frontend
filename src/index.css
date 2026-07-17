@@ -181,19 +181,21 @@ body {
   color: rgb(100 116 139); /* slate-500 */
 }
 
-/* Alignements en bloc (l'élément se réduit à la largeur du média).
+/* Alignement centré (seul alignement bloc produit par l'éditeur).
    Sélecteurs préfixés par les conteneurs (spécificité 0,2,0) pour l'emporter
    sur `.ProseMirror figure` (0,1,1). */
+.ProseMirror .fig-center,
+.blog-rendered .fig-center {
+  width: fit-content;
+  margin-inline: auto;
+}
+/* Rétrocompat : alignements/position d'articles déjà publiés (l'éditeur ne les
+   produit plus — cf. FigureImage.ts, ramenés à `center` au reparse). */
 .ProseMirror .fig-left,
 .blog-rendered .fig-left {
   width: fit-content;
   margin-right: auto;
   margin-left: 0;
-}
-.ProseMirror .fig-center,
-.blog-rendered .fig-center {
-  width: fit-content;
-  margin-inline: auto;
 }
 .ProseMirror .fig-right,
 .blog-rendered .fig-right {
@@ -201,8 +203,6 @@ body {
   margin-left: auto;
   margin-right: 0;
 }
-/* Position continue : `margin-left` porte le % choisi en glissant l'image
-   (voir dropTarget.ts::computeHorizontalPlacement), posé en style inline. */
 .ProseMirror .fig-custom,
 .blog-rendered .fig-custom {
   width: fit-content;
@@ -299,7 +299,9 @@ body {
 .blog-rendered .media-grid figure {
   float: none;
   margin: 0;
-  min-width: 0;
+  /* Plancher : un item ne peut pas s'effondrer en un filet de quelques pixels
+     (garde une vignette lisible et sa poignée saisissable). */
+  min-width: min(96px, 100%);
   width: auto;
   flex: 1 1 0%; /* parts égales par défaut */
 }
@@ -389,9 +391,12 @@ body {
 }
 
 /* pb-12 : réserve la place de la toolbar flottante du dernier média
-   (position absolue sous la figure, voir .tiptap-node-toolbar). */
+   (position absolue sous la figure, voir .tiptap-node-toolbar).
+   Pas de padding horizontal : la colonne de contenu a ainsi la même largeur
+   utile que l'article publié (<article>, sans inset) → l'habillage et les %
+   des médias se calculent à l'identique dans l'éditeur, l'aperçu et le final. */
 .tiptap-content {
-  @apply px-5 py-4 pb-12;
+  @apply py-4 pb-12;
 }
 .tiptap-content .ProseMirror {
   min-height: 20rem;
@@ -475,8 +480,8 @@ body {
 }
 
 /* Ligne d'insertion (pleine largeur de colonne) : elle montre EXACTEMENT la
-   frontière de blocs où le média atterrira au dépôt. L'habillage/la position
-   horizontale visés sont montrés séparément par .tiptap-placement-hint. */
+   frontière de blocs où le média atterrira au dépôt (l'alignement, lui, est
+   conservé et se règle via la barre d'outils du média). */
 .tiptap-drop-indicator {
   position: fixed;
   z-index: 60;
@@ -506,18 +511,6 @@ body {
   outline: 2px solid var(--color-club-primary);
   outline-offset: 2px;
   background: color-mix(in oklab, var(--color-club-primary) 8%, transparent);
-}
-
-/* Aperçu de l'atterrissage horizontal pendant un drag sur un gap : la bande
-   gauche/droite (habillage) ou la position continue visée par le pointeur. */
-.tiptap-placement-hint {
-  position: fixed;
-  z-index: 59;
-  height: 0.5rem;
-  border-radius: 9999px;
-  pointer-events: none;
-  background: color-mix(in oklab, var(--color-club-primary) 35%, transparent);
-  outline: 1px dashed var(--color-club-primary);
 }
 
 /* Placeholder d'upload (décoration ProseMirror, jamais sérialisé dans le

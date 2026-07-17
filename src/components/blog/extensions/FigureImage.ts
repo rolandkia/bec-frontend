@@ -3,11 +3,12 @@ import { ReactNodeViewRenderer } from '@tiptap/react'
 import { FigureImageView } from './FigureImageView'
 import { parseFigureWidth } from './mediaSizes'
 
-/** `custom` : position continue (voir `offsetX`), posée en glissant l'image
- *  horizontalement — les autres valeurs restent les préréglages de la
- *  toolbar. Le `float` CSS, lui, ne connaît que 2 côtés : `float-left` et
- *  `float-right` ne sont donc jamais continus. */
-export type FigureAlign = 'left' | 'center' | 'right' | 'float-left' | 'float-right' | 'custom'
+/** Trois placements : `center` (bloc centré) et l'habillage `float-left`
+ *  (texte à droite) / `float-right` (texte à gauche) — les deux seuls côtés que
+ *  CSS `float` sait représenter. Les anciennes valeurs `left`/`right`/`custom`
+ *  d'articles déjà publiés sont ramenées à `center` au reparse (leur CSS reste
+ *  pour le rendu du HTML publié). */
+export type FigureAlign = 'center' | 'float-left' | 'float-right'
 
 export interface FigureImageAttrs {
   src: string
@@ -15,8 +16,6 @@ export interface FigureImageAttrs {
   caption: string
   width: number | null
   align: FigureAlign
-  /** % de la colonne, bord gauche de la figure. Uniquement pour `align: 'custom'`. */
-  offsetX: number | null
 }
 
 declare module '@tiptap/core' {
@@ -64,17 +63,12 @@ export const FigureImage = Node.create({
       },
       align: {
         default: 'center',
+        // Seuls `float-left`/`float-right` sont conservés ; toute autre valeur
+        // héritée (`left`/`right`/`custom`) retombe sur `center`.
         parseHTML: (element) => {
           const cls = element.getAttribute('class') ?? ''
-          const match = cls.match(/fig-(float-left|float-right|left|center|right|custom)/)
+          const match = cls.match(/fig-(float-left|float-right)/)
           return match ? match[1] : 'center'
-        },
-      },
-      offsetX: {
-        default: null,
-        parseHTML: (element) => {
-          const match = (element.style?.marginLeft ?? '').match(/([\d.]+)%/)
-          return match ? Math.round(parseFloat(match[1])) : null
         },
       },
     }
@@ -88,19 +82,15 @@ export const FigureImage = Node.create({
   },
 
   renderHTML({ node }) {
-    const { src, alt, caption, width, align, offsetX } = node.attrs
+    const { src, alt, caption, width, align } = node.attrs
     const className = `fig-${align}${width ? ' fig-sized' : ''}`
     const attrs: Record<string, string> = { class: className }
-    const style: string[] = []
-    if (width) style.push(`width: ${width}%`)
-    if (align === 'custom' && offsetX != null) style.push(`margin-left: ${offsetX}%`)
-    if (style.length) attrs.style = style.join('; ')
-    return [
-      'figure',
-      mergeAttributes(attrs),
-      ['img', mergeAttributes({ src, alt })],
-      ['figcaption', {}, caption ?? ''],
-    ]
+    if (width) attrs.style = `width: ${width}%`
+    const img = ['img', mergeAttributes({ src, alt })] as const
+    // Pas de <figcaption> vide : évite une marge fantôme dans l'article publié.
+    return caption
+      ? ['figure', mergeAttributes(attrs), img, ['figcaption', {}, caption]]
+      : ['figure', mergeAttributes(attrs), img]
   },
 
   addNodeView() {

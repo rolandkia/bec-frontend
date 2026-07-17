@@ -31,13 +31,15 @@ export type DropTarget = GapTarget | CombineTarget
 
 /** Marge (px) d'hystérésis : la zone de combinaison active s'agrandit un peu
  *  pour éviter le clignotement quand le pointeur oscille sur sa frontière. */
-const HYSTERESIS = 12
-/** Bande verticale centrale d'un média qui accepte la combinaison ; au-dessus/
- *  en dessous, le drop vise le gap voisin. */
-const COMBINE_V_BAND = 0.5
-/** Largeur relative des zones bord gauche/droit déclenchant la combinaison
- *  (le cœur restant, 20 %, retombe sur le gap le plus proche). */
-const COMBINE_EDGE = 0.4
+const HYSTERESIS = 20
+/** Bande verticale d'un média qui accepte la combinaison ; au-dessus/en dessous,
+ *  le drop vise le gap voisin. Large (0,75) pour capter le geste facilement. */
+const COMBINE_V_BAND = 0.75
+/** Largeur relative des zones bord gauche/droit déclenchant la combinaison. */
+const COMBINE_EDGE = 0.5
+/** Marge (px) de captation autour du média : la combinaison s'amorce même quand
+ *  le pointeur arrive du gap voisin, sans être pile sur le bord. */
+const COMBINE_MARGIN = 24
 
 /** Rect « visuel » d'un bloc. Les NodeViews React enveloppent le média dans un
  *  div (pleine largeur, hauteur nulle si le média flotte, display:contents
@@ -121,13 +123,15 @@ export function findCombineTarget(
     if (!rect || rect.width <= 0) return null
 
     const active = opts.prev && opts.prev.targetPos === pos ? opts.prev : null
-    const margin = active ? HYSTERESIS : 0
+    // Marge de base généreuse (captation depuis le gap voisin), agrandie encore
+    // par l'hystérésis quand ce média était déjà la cible.
+    const margin = COMBINE_MARGIN + (active ? HYSTERESIS : 0)
     const vPad = (rect.height * (1 - COMBINE_V_BAND)) / 2
     if (y < rect.top + vPad - margin || y > rect.bottom - vPad + margin) return null
 
     const edge = rect.width * COMBINE_EDGE
-    const inLeft = x >= rect.left - margin && x <= rect.left + edge + (active?.side === 'left' ? margin : 0)
-    const inRight = x >= rect.right - edge - (active?.side === 'right' ? margin : 0) && x <= rect.right + margin
+    const inLeft = x >= rect.left - margin && x <= rect.left + edge + (active?.side === 'left' ? HYSTERESIS : 0)
+    const inRight = x >= rect.right - edge - (active?.side === 'right' ? HYSTERESIS : 0) && x <= rect.right + margin
     let side: 'left' | 'right' | null
     if (inLeft && inRight) side = active?.side ?? (x < rect.left + rect.width / 2 ? 'left' : 'right')
     else side = inLeft ? 'left' : inRight ? 'right' : null
@@ -158,7 +162,9 @@ export function findCombineTarget(
 }
 
 /** Cible du drag pour la position courante du pointeur : la combinaison
- *  (bord d'un média) a priorité, sinon le gap le plus proche en Y. */
+ *  (bord d'un média) a priorité, sinon le gap le plus proche en Y. Le
+ *  déplacement ne change plus l'alignement horizontal du média (choisi via la
+ *  barre d'outils) : seul l'ordre vertical / la mise côte à côte est géré. */
 export function computeDropTarget(
   view: EditorView,
   x: number,
@@ -168,54 +174,4 @@ export function computeDropTarget(
   const combine = findCombineTarget(view, x, y, opts)
   if (combine) return combine
   return nearestGap(collectGaps(view), y)
-}
-
-/** Largeur (fraction de la colonne) des bandes gauche/droite qui déclenchent
- *  l'habillage (`float-left`/`float-right`) plutôt qu'un placement continu. */
-const EDGE_ZONE_FRACTION = 0.15
-
-export interface HorizontalPlacement {
-  align: 'float-left' | 'float-right' | 'custom'
-  /** % de la colonne, position du bord gauche de la figure (null si float). */
-  offsetX: number | null
-}
-
-/** Traduit la position horizontale du pointeur dans un gap en placement de la
- *  figure. Par défaut : position continue sur toute la plage, coins compris —
- *  l'habillage (`float-left`/`float-right`, le seul état que CSS `float` sait
- *  représenter) n'est déclenché que si `allowFloat` est vrai (touche Alt
- *  maintenue), sinon sa bande de bord empêcherait d'atteindre les coins en
- *  continu pour une image large (le pointeur centre l'image, donc « coin »
- *  et « bord de la bande d'habillage » se chevauchent). */
-export function computeHorizontalPlacement(
-  gap: GapTarget,
-  x: number,
-  width: number,
-  allowFloat: boolean,
-): HorizontalPlacement {
-  if (allowFloat) {
-    const edge = gap.width * EDGE_ZONE_FRACTION
-    if (x <= gap.left + edge) return { align: 'float-left', offsetX: null }
-    if (x >= gap.left + gap.width - edge) return { align: 'float-right', offsetX: null }
-  }
-  const relX = ((x - gap.left) / gap.width) * 100
-  const maxOffset = Math.max(0, 100 - width)
-  const offsetX = Math.round(Math.min(maxOffset, Math.max(0, relX - width / 2)))
-  return { align: 'custom', offsetX }
-}
-
-/** Rect (viewport) prévisionnel de la figure pour un placement donné, utilisé
- *  pour l'aperçu visuel pendant le drag. */
-export function placementRect(
-  gap: GapTarget,
-  placement: HorizontalPlacement,
-  width: number,
-): { left: number; width: number } {
-  if (placement.align === 'float-left') {
-    return { left: gap.left, width: gap.width * EDGE_ZONE_FRACTION }
-  }
-  if (placement.align === 'float-right') {
-    return { left: gap.left + gap.width * (1 - EDGE_ZONE_FRACTION), width: gap.width * EDGE_ZONE_FRACTION }
-  }
-  return { left: gap.left + ((placement.offsetX ?? 0) / 100) * gap.width, width: (width / 100) * gap.width }
 }

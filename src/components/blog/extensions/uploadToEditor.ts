@@ -1,7 +1,7 @@
 import { isAxiosError } from 'axios'
 import type { Node as PMNode } from '@tiptap/pm/model'
 import type { EditorView } from '@tiptap/pm/view'
-import { uploadMedia } from '../../../api/media'
+import { mediaTooLargeMessage, uploadMedia } from '../../../api/media'
 import { isMediaNode, MEDIA_GRID_NAME } from './MediaGrid'
 import { findPlaceholder, uploadPlaceholderKey } from './mediaUploadPlaceholder'
 
@@ -52,8 +52,18 @@ export async function uploadFileAt(
   callbacks?: UploadCallbacks,
 ): Promise<void> {
   if (!isSupportedMediaFile(file)) return
-  const id = `upload-${++uploadSeq}`
   const isImage = file.type.startsWith('image/')
+  // Garde-fou immédiat pour les vidéos (non compressées côté client) : évite un
+  // envoi de 100 Mo voué à l'échec. Les images sont downscalées avant l'envoi,
+  // donc on laisse le serveur trancher après compression.
+  if (!isImage) {
+    const tooLarge = mediaTooLargeMessage(file)
+    if (tooLarge) {
+      callbacks?.onError?.(tooLarge)
+      return
+    }
+  }
+  const id = `upload-${++uploadSeq}`
   const previewUrl = isImage ? URL.createObjectURL(file) : null
 
   {

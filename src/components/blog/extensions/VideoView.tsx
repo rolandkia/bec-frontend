@@ -7,11 +7,9 @@ import { MediaResizeHandles } from './MediaResizeHandles'
 import { useMediaDrag } from './useMediaDrag'
 
 const ALIGN_OPTIONS: { value: FigureAlign; label: string; title: string }[] = [
-  { value: 'left', label: '⬅', title: 'Aligner à gauche' },
+  { value: 'float-left', label: '◧', title: 'À gauche, texte à droite' },
   { value: 'center', label: '⬛', title: 'Centrer' },
-  { value: 'right', label: '➡', title: 'Aligner à droite' },
-  { value: 'float-left', label: '◧', title: 'Texte à droite de la vidéo' },
-  { value: 'float-right', label: '◨', title: 'Texte à gauche de la vidéo' },
+  { value: 'float-right', label: '◨', title: 'À droite, texte à gauche' },
 ]
 
 export function VideoView(props: NodeViewProps) {
