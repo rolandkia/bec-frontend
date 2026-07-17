@@ -1,7 +1,5 @@
-import { useRef, useState } from 'react'
-import { isAxiosError } from 'axios'
+import { useRef } from 'react'
 import type { Editor } from '@tiptap/react'
-import { uploadMedia } from '../../api/media'
 
 function ToolbarButton({
   onClick,
@@ -32,38 +30,29 @@ function ToolbarButton({
   )
 }
 
-export function EditorToolbar({ editor }: { editor: Editor }) {
+export function EditorToolbar({
+  editor,
+  uploading,
+  uploadError,
+  onUploadFiles,
+}: {
+  editor: Editor
+  uploading: boolean
+  uploadError: string | null
+  /** L'upload (placeholder, erreurs, insertion) est orchestré par BlogEditor,
+   *  partagé avec le drop de fichiers OS et le collage. */
+  onUploadFiles: (files: File[]) => void
+}) {
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [isUploading, setIsUploading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   function triggerUpload() {
-    setError(null)
     requestAnimationFrame(() => fileInputRef.current?.click())
   }
 
-  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
+  function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? [])
     e.target.value = ''
-    if (!file) return
-    setIsUploading(true)
-    setError(null)
-    try {
-      const { url, resource_type } = await uploadMedia(file)
-      if (resource_type === 'video') {
-        editor.chain().focus().setVideo({ src: url }).run()
-      } else {
-        editor.chain().focus().setFigureImage({ src: url, alt: file.name }).run()
-      }
-    } catch (err) {
-      setError(
-        isAxiosError(err) && err.response?.data?.detail
-          ? String(err.response.data.detail)
-          : "Échec de l'envoi du fichier.",
-      )
-    } finally {
-      setIsUploading(false)
-    }
+    if (files.length) onUploadFiles(files)
   }
 
   return (
@@ -95,7 +84,7 @@ export function EditorToolbar({ editor }: { editor: Editor }) {
 
       <span className="tb-sep" />
 
-      <ToolbarButton title="Insérer une image ou une vidéo" disabled={isUploading} onClick={() => triggerUpload()}>
+      <ToolbarButton title="Insérer des images ou des vidéos" disabled={uploading} onClick={() => triggerUpload()}>
         🖼
       </ToolbarButton>
 
@@ -108,14 +97,15 @@ export function EditorToolbar({ editor }: { editor: Editor }) {
         ↷
       </ToolbarButton>
 
-      {isUploading && <span className="tb-status">Envoi en cours…</span>}
-      {error && <span className="tb-status tb-error">{error}</span>}
+      {uploading && <span className="tb-status">Envoi en cours…</span>}
+      {uploadError && <span className="tb-status tb-error">{uploadError}</span>}
 
       <input
         ref={fileInputRef}
         type="file"
         className="hidden"
         accept="image/*,video/*"
+        multiple
         onChange={handleFile}
       />
     </div>

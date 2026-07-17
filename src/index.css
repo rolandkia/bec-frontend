@@ -266,6 +266,47 @@ body {
   display: flow-root;
 }
 
+/* ---------------------------------------------------------------------------
+   Grille média : 2 à 4 médias côte à côte (créée en déposant un média sur le
+   bord d'un autre). Les enfants gardent leur balisage <figure> habituel ;
+   leur `width:X%` inline devient la flex-basis (part de la rangée),
+   sans largeur ils se partagent la rangée à parts égales.
+   --------------------------------------------------------------------------- */
+.ProseMirror .media-grid,
+.blog-rendered .media-grid {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start; /* hauteurs naturelles (mix portrait/paysage/vidéo) */
+  margin-block: 2rem;
+}
+/* Dans l'éditeur, chaque enfant est enveloppé par le conteneur du NodeView
+   React : display:contents le rend transparent au layout flex, pour que les
+   <figure> soient les items de la grille comme dans l'article rendu. */
+.ProseMirror .media-grid > div {
+  display: contents;
+}
+/* Neutralise les règles de figure isolée (floats, fit-content, marges).
+   Sélecteurs (0,2,1) : l'emportent sur `.fig-*` (0,2,0) et `.ProseMirror
+   figure` (0,1,1). */
+.ProseMirror .media-grid figure,
+.blog-rendered .media-grid figure {
+  float: none;
+  margin: 0;
+  min-width: 0;
+  width: auto;
+  flex: 1 1 0%; /* parts égales par défaut */
+}
+.ProseMirror .media-grid figure.fig-sized,
+.blog-rendered .media-grid figure.fig-sized {
+  flex: 0 1 auto; /* le style inline `width:X%` devient la flex-basis */
+}
+.ProseMirror .media-grid figure img,
+.blog-rendered .media-grid figure img,
+.ProseMirror .media-grid figure video,
+.blog-rendered .media-grid figure video {
+  width: 100%; /* le média remplit sa colonne */
+}
+
 /* Sur mobile, on désactive l'habillage : le média passe en pleine largeur
    et le texte n'est plus écrasé dans une colonne trop étroite. */
 @media (max-width: 640px) {
@@ -287,15 +328,41 @@ body {
   }
 }
 
-/* ---------------------------------------------------------------------------
-   Habillage de l'éditeur TipTap (barre d'outils, zone d'édition, poignées).
-   --------------------------------------------------------------------------- */
-.tiptap-editor {
-  overflow: hidden;
+/* Grille média sur mobile : les paires restent côte à côte (c'est tout
+   l'intérêt), 3-4 éléments passent en 2×2. IMPORTANT : ce bloc doit rester
+   APRÈS le media query ci-dessus — son `width: 100% !important` s'applique
+   aussi aux enfants de grille (même spécificité (0,2,1) avec !important),
+   seul l'ordre des sources permet de le neutraliser ici. */
+@media (max-width: 640px) {
+  .ProseMirror .media-grid,
+  .blog-rendered .media-grid {
+    gap: 0.5rem;
+  }
+  .ProseMirror .media-grid figure,
+  .blog-rendered .media-grid figure {
+    width: auto !important;
+    flex: 1 1 0%; /* parts égales : les ratios personnalisés seraient illisibles */
+  }
+  /* 3 médias ou plus : 2 par rangée. :has() plutôt que la classe
+     media-grid-N car, dans l'éditeur, ProseMirror ne réécrit pas la classe
+     du conteneur quand le nombre d'enfants change. */
+  .ProseMirror .media-grid:has(> :nth-child(3)),
+  .blog-rendered .media-grid:has(> :nth-child(3)) {
+    flex-wrap: wrap;
+  }
+  .ProseMirror .media-grid:has(> :nth-child(3)) figure,
+  .blog-rendered .media-grid:has(> :nth-child(3)) figure {
+    flex: 1 1 calc(50% - 0.25rem);
+  }
 }
 
+/* ---------------------------------------------------------------------------
+   Habillage de l'éditeur TipTap (barre d'outils, zone d'édition, poignées).
+   Pas d'overflow:hidden sur .tiptap-editor : il clippait la toolbar flottante
+   du dernier média ; les coins arrondis sont portés par la toolbar elle-même.
+   --------------------------------------------------------------------------- */
 .tiptap-toolbar {
-  @apply flex flex-wrap items-center gap-1 border-b border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-800 dark:bg-slate-900/60;
+  @apply flex flex-wrap items-center gap-1 rounded-t-2xl border-b border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-800 dark:bg-slate-900/60;
 }
 
 .tb-btn {
@@ -314,12 +381,28 @@ body {
   @apply text-red-600 dark:text-red-400;
 }
 
+/* pb-12 : réserve la place de la toolbar flottante du dernier média
+   (position absolue sous la figure, voir .tiptap-node-toolbar). */
 .tiptap-content {
-  @apply px-5 py-4;
+  @apply px-5 py-4 pb-12;
 }
 .tiptap-content .ProseMirror {
   min-height: 20rem;
   outline: none;
+}
+
+/* Gapcursor (inclus dans StarterKit) : rend visible le point d'insertion
+   entre deux blocs sans texte (ex. entre deux images) — cliquer puis taper
+   y insère un paragraphe. Sans style, il est invisible (1px noir). */
+.ProseMirror .ProseMirror-gapcursor:after {
+  width: 24px;
+  border-top: 2px solid var(--color-club-primary);
+}
+
+/* Après un dépôt, scrollIntoView ne colle pas le média au bord du viewport. */
+.ProseMirror figure,
+.ProseMirror .media-grid {
+  scroll-margin-block: 5rem;
 }
 .tiptap-content .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
@@ -384,8 +467,9 @@ body {
   height: auto;
 }
 
-/* Ligne d'insertion : sa position horizontale (tiers gauche/centre/droit)
-   annonce l'habillage que prendra le média au dépôt. */
+/* Ligne d'insertion (pleine largeur de colonne) : elle montre EXACTEMENT la
+   frontière de blocs où le média atterrira au dépôt — l'habillage, lui, ne
+   change jamais pendant un déplacement. */
 .tiptap-drop-indicator {
   position: fixed;
   z-index: 60;
@@ -394,6 +478,63 @@ body {
   background: var(--color-club-primary);
   pointer-events: none;
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.6);
+}
+
+/* Combinaison façon Canva : barre verticale sur le bord visé du média
+   survolé + halo sur celui-ci — lâcher fusionne les deux en grille. */
+.tiptap-combine-indicator {
+  position: fixed;
+  z-index: 60;
+  width: 4px;
+  border-radius: 9999px;
+  background: var(--color-club-primary);
+  pointer-events: none;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.6);
+}
+.tiptap-combine-outline {
+  position: fixed;
+  z-index: 59;
+  pointer-events: none;
+  border-radius: 0.75rem;
+  outline: 2px solid var(--color-club-primary);
+  outline-offset: 2px;
+  background: color-mix(in oklab, var(--color-club-primary) 8%, transparent);
+}
+
+/* Placeholder d'upload (décoration ProseMirror, jamais sérialisé dans le
+   HTML) : aperçu estompé du fichier + spinner pendant l'envoi Cloudinary. */
+.tiptap-upload-placeholder {
+  position: relative;
+  display: block;
+  margin-block: 2rem;
+  min-height: 3.5rem;
+  border-radius: 0.75rem;
+  text-align: center;
+  font-size: 2rem;
+  line-height: 3.5rem;
+}
+.tiptap-upload-placeholder img {
+  display: block;
+  max-width: 100%;
+  opacity: 0.4;
+  border-radius: 0.75rem;
+}
+.tiptap-upload-spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0 -14px;
+  border-radius: 9999px;
+  border: 3px solid color-mix(in oklab, var(--color-club-primary) 25%, transparent);
+  border-top-color: var(--color-club-primary);
+  animation: tiptap-spin 0.8s linear infinite;
+}
+@keyframes tiptap-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Poignée de déplacement, visible au survol ou quand le média est sélectionné. */

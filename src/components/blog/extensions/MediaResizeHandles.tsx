@@ -10,13 +10,23 @@ const HANDLES = [
   { key: 'se', dir: 1 },
 ] as const
 
-export function MediaResizeHandles({ onResize }: { onResize: (widthPercent: number) => void }) {
-  function startResize(event: React.PointerEvent, dir: number) {
+export function MediaResizeHandles({
+  onResize,
+  container = 'column',
+}: {
+  /** Nouvelle largeur en % du conteneur ; `dir` indique le côté saisi
+   *  (1 = poignées droites, -1 = gauches) pour choisir le voisin qui
+   *  compense dans une grille. */
+  onResize: (widthPercent: number, dir: 1 | -1) => void
+  /** Référence de mesure : la colonne de contenu, ou la grille média. */
+  container?: 'column' | 'grid'
+}) {
+  function startResize(event: React.PointerEvent, dir: 1 | -1) {
     event.preventDefault()
     event.stopPropagation()
     const handle = event.currentTarget as HTMLElement
     const figure = handle.closest('figure') as HTMLElement | null
-    const column = handle.closest('.ProseMirror') as HTMLElement | null
+    const column = handle.closest(container === 'grid' ? '.media-grid' : '.ProseMirror') as HTMLElement | null
     if (!figure || !column) return
 
     const columnWidth = column.getBoundingClientRect().width
@@ -27,7 +37,7 @@ export function MediaResizeHandles({ onResize }: { onResize: (widthPercent: numb
     function onMove(e: PointerEvent) {
       const delta = (e.clientX - startX) * dir
       const nextPx = startWidth + delta
-      onResize(clampMediaWidth((nextPx / columnWidth) * 100))
+      onResize(clampMediaWidth((nextPx / columnWidth) * 100), dir)
     }
     function onUp() {
       window.removeEventListener('pointermove', onMove)

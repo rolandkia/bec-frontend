@@ -26,7 +26,8 @@ declare module '@tiptap/core' {
 
 export const FigureImage = Node.create({
   name: 'figureImage',
-  group: 'block',
+  // `media` : accepté comme enfant d'une grille média (voir MediaGrid).
+  group: 'block media',
   atom: true,
   // Pas de DnD HTML5 (ghosts dupliqués) : le déplacement est géré par le
   // drag pointeur custom (voir useMediaDrag).

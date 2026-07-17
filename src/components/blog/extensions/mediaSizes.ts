@@ -17,6 +17,16 @@ export function clampMediaWidth(width: number): number {
   return Math.round(Math.min(MEDIA_WIDTH_MAX, Math.max(MEDIA_WIDTH_MIN, width)))
 }
 
+/** Largeur minimale (en % de la rangée) d'un élément de grille média : en
+ *  dessous, la vignette devient illisible et sa poignée insaisissable. */
+export const GRID_ITEM_WIDTH_MIN = 15
+
+/** Borne la largeur d'un élément de grille dans [GRID_ITEM_WIDTH_MIN, max]
+ *  (max = part restante de la paire redimensionnée) et l'arrondit à l'entier. */
+export function clampGridItemWidth(width: number, max: number): number {
+  return Math.round(Math.min(max, Math.max(GRID_ITEM_WIDTH_MIN, width)))
+}
+
 /** Lit la largeur (% de colonne) depuis le style inline `width:X%` puis, en
  *  repli, depuis l'ancienne classe `fig-w-N` (contenu déjà publié). */
 export function parseFigureWidth(element: HTMLElement): number | null {

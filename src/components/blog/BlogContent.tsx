@@ -3,8 +3,10 @@ import DOMPurify from 'dompurify'
 const ALLOWED_TAGS = [
   'p', 'br', 'h1', 'h2', 'h3', 'h4', 'strong', 'em', 'u', 's',
   'ul', 'ol', 'li', 'blockquote', 'a', 'figure', 'figcaption', 'img', 'video',
+  // Grille média : <div class="media-grid" data-type="media-grid">.
+  'div',
 ]
-const ALLOWED_ATTR = ['href', 'title', 'src', 'alt', 'class', 'width', 'controls', 'rel', 'target', 'style']
+const ALLOWED_ATTR = ['href', 'title', 'src', 'alt', 'class', 'width', 'controls', 'rel', 'target', 'style', 'data-type']
 
 export function BlogContent({ html }: { html: string }) {
   const clean = DOMPurify.sanitize(html, {
