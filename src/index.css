@@ -137,21 +137,46 @@ body {
    Ces règles s'appliquent À LA FOIS dans l'éditeur (.ProseMirror) et dans
    l'article rendu (.blog-rendered) pour un rendu identique.
    --------------------------------------------------------------------------- */
+/* Rythme vertical HOMOGÈNE : même écart entre deux blocs de texte quels qu'ils
+   soient (titre ou paragraphe). Une `margin-block` unique sur chaque bloc + le
+   margin-collapsing donnent un espacement constant — l'écart après un titre est
+   identique à celui entre deux paragraphes, et à celui d'un retour clavier
+   (nouveau paragraphe). Les titres restent distincts par la taille/graisse seule.
+   Portée `.ProseMirror` + `.blog-rendered` (0,1,1) : bat les marges du plugin
+   `prose` (0,1,0). Les figures/médias gardent leur marge plus large (voir plus bas). */
+.ProseMirror,
+.blog-rendered {
+  --blog-block-gap: 0.9rem;
+}
+.ProseMirror :is(p, h2, h3, ul, ol, blockquote),
+.blog-rendered :is(p, h2, h3, ul, ol, blockquote) {
+  margin-block: var(--blog-block-gap);
+}
+/* Pas de marge fantôme en haut/bas du contenu (prose le fait déjà, mais nos
+   sélecteurs plus spécifiques la réintroduiraient). */
+.ProseMirror > :first-child,
+.blog-rendered > :first-child {
+  margin-top: 0;
+}
+.ProseMirror > :last-child,
+.blog-rendered > :last-child {
+  margin-bottom: 0;
+}
+
 /* Titres de section du contenu : nettement plus petits que le titre de
-   l'article (h1, text-3xl ≈ 1.875rem) pour une hiérarchie claire. */
+   l'article (h1, text-3xl ≈ 1.875rem) pour une hiérarchie claire. La marge est
+   gérée par la règle de rythme homogène ci-dessus. */
 .ProseMirror h2,
 .blog-rendered h2 {
   font-size: 1.35rem;
   font-weight: 700;
   line-height: 1.3;
-  margin: 1.5rem 0 0.5rem;
 }
 .ProseMirror h3,
 .blog-rendered h3 {
   font-size: 1.15rem;
   font-weight: 700;
   line-height: 1.35;
-  margin: 1.25rem 0 0.4rem;
 }
 
 /* IMPORTANT : uniquement margin-block ici. Un `margin: 2rem 0` imposerait
@@ -216,6 +241,16 @@ body {
   float: left;
   width: fit-content;
   margin: 0.25rem 2rem 1.5rem 0;
+}
+/* En édition, le NodeView React enveloppe la <figure> dans un <div> conteneur.
+   Pour qu'un média flottant autonome s'enroule avec les blocs FRÈRES (et pas
+   seulement dans son wrapper), on rend ce wrapper transparent au layout — même
+   principe que `.media-text > div:not(.media-text-col)`. Sélecteur sûr : sans
+   wrapper (figure enfant direct), il ne matche rien et la figure flotte quand
+   même. Le publié (.blog-rendered) n'a pas de wrapper → rien à faire. */
+.ProseMirror > *:has(> figure.fig-float-left),
+.ProseMirror > *:has(> figure.fig-float-right) {
+  display: contents;
 }
 .ProseMirror .fig-float-right,
 .blog-rendered .fig-float-right {
@@ -316,6 +351,58 @@ body {
   width: 100%; /* le média remplit sa colonne */
 }
 
+/* ---------------------------------------------------------------------------
+   Bloc image + texte : un média avec du texte qui l'HABILLE. Le texte longe
+   l'image puis, une fois la hauteur de l'image dépassée, repart en pleine largeur
+   SOUS l'image. Réalisé par un FLOTTANT CONTENU (pas du flex, qui figerait le
+   texte dans une colonne étroite) : `.media-text` établit un BFC (`flow-root`)
+   qui contient le flottant ET garantit que le contenu APRÈS le bloc reste en
+   dessous. `imageSide` = côté du flottant. L'ordre DOM (média → texte) est
+   inchangé — round-trip HTML trivial.
+   --------------------------------------------------------------------------- */
+.ProseMirror .media-text,
+.blog-rendered .media-text {
+  display: flow-root; /* BFC : contient le flottant + isole du contenu suivant */
+  margin-block: 2rem;
+}
+/* Éditeur : le conteneur du NodeView React (div) qui enveloppe la <figure>
+   devient transparent au layout — mais PAS la colonne de texte (.media-text-col),
+   pour que la <figure> soit l'élément flottant direct. */
+.ProseMirror .media-text > div:not(.media-text-col) {
+  display: contents;
+}
+/* Média flottant : neutralise le centrage de figure isolée. Sa largeur % inline
+   (style) est relative au bloc ; le texte s'enroule dans l'espace restant. */
+.ProseMirror .media-text figure,
+.blog-rendered .media-text figure {
+  float: left;
+  margin: 0 1.5rem 1rem 0;
+  min-width: min(120px, 100%);
+}
+.ProseMirror .media-text-right figure,
+.blog-rendered .media-text-right figure {
+  float: right;
+  margin: 0 0 1rem 1.5rem;
+}
+.ProseMirror .media-text figure img,
+.blog-rendered .media-text figure img,
+.ProseMirror .media-text figure video,
+.blog-rendered .media-text figure video {
+  width: 100%;
+}
+/* Colonne de texte : bloc NORMAL (surtout PAS de flex/overflow/flow-root, sinon
+   elle créerait un BFC et resterait à côté du flottant au lieu de l'habiller).
+   Ses lignes se raccourcissent le long du flottant puis prennent toute la largeur
+   sous l'image. */
+.ProseMirror .media-text-col > :first-child,
+.blog-rendered .media-text-col > :first-child {
+  margin-top: 0;
+}
+.ProseMirror .media-text-col > :last-child,
+.blog-rendered .media-text-col > :last-child {
+  margin-bottom: 0;
+}
+
 /* Sur mobile, on désactive l'habillage : le média passe en pleine largeur
    et le texte n'est plus écrasé dans une colonne trop étroite. */
 @media (max-width: 640px) {
@@ -362,6 +449,21 @@ body {
   .ProseMirror .media-grid:has(> :nth-child(3)) figure,
   .blog-rendered .media-grid:has(> :nth-child(3)) figure {
     flex: 1 1 calc(50% - 0.25rem);
+  }
+}
+
+/* Bloc image + texte sur mobile : plus d'habillage, image pleine largeur PUIS
+   texte dessous (l'ordre DOM média → texte donne image-puis-texte quel que soit
+   `imageSide`). IMPORTANT : après le media query ci-dessus, dont le
+   `width:100% !important` sur `figure.fig-sized`/`[style*='width']` couvre déjà
+   la mise en pleine largeur du média du bloc. */
+@media (max-width: 640px) {
+  .ProseMirror .media-text figure,
+  .blog-rendered .media-text figure,
+  .ProseMirror .media-text-right figure,
+  .blog-rendered .media-text-right figure {
+    float: none;
+    margin: 0 0 1rem 0;
   }
 }
 

@@ -90,6 +90,7 @@ export function useMediaDrag({
       })
       if (!target) overlay?.hideTargets()
       else if (target.kind === 'gap') overlay?.showGap(target)
+      else if (target.kind === 'wrap') overlay?.showWrap(target)
       else overlay?.showCombine(target)
     }
 
@@ -119,6 +120,28 @@ export function useMediaDrag({
       view.dispatch(tr.scrollIntoView())
     }
 
+    /** Fait flotter le média (`fig-float-left/right`) juste AVANT le bloc de
+     *  texte cible : ce bloc et tout ce qui suit s'enroulent autour. Une largeur
+     *  par défaut (50 %) est posée si absente — un flottant pleine largeur
+     *  n'enroulerait rien. Calqué sur `dropAtGap` (préservation attrs/contenu). */
+    function dropFloatBeforeBlock(blockPos: number, from: number, side: 'left' | 'right') {
+      const moved = node.type.create(
+        {
+          ...node.attrs,
+          align: side === 'left' ? 'float-left' : 'float-right',
+          width: node.attrs.width ?? 50,
+        },
+        node.content,
+        node.marks,
+      )
+      const tr = view.state.tr
+      tr.delete(from, from + node.nodeSize)
+      const insertPos = tr.mapping.map(blockPos)
+      tr.insert(insertPos, moved)
+      tr.setSelection(NodeSelection.create(tr.doc, insertPos))
+      view.dispatch(tr.scrollIntoView())
+    }
+
     function drop() {
       const t = target
       if (!t) return
@@ -139,6 +162,10 @@ export function useMediaDrag({
           const topPos = t.gridPos ?? t.targetPos
           const topNode = view.state.doc.nodeAt(topPos)
           dropAtGap(topPos + (topNode?.nodeSize ?? 0), from)
+          return
+        }
+        if (t.kind === 'wrap') {
+          dropFloatBeforeBlock(t.blockPos, from, t.side)
           return
         }
         dropAtGap(t.pos, from)

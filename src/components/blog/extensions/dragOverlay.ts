@@ -1,4 +1,4 @@
-import type { CombineTarget, GapTarget } from './dropTarget'
+import type { CombineTarget, GapTarget, WrapTarget } from './dropTarget'
 
 /** Feedback visuel du drag : fantôme sous le curseur, ligne d'insertion de
  *  gap, barre + halo de combinaison. Simples overlays `position: fixed` en
@@ -52,8 +52,18 @@ export class DragOverlay {
 
   /** Barre verticale sur le bord visé du média cible + halo sur celui-ci. */
   showCombine(target: CombineTarget) {
+    this.showEdge(target.rect, target.side)
+  }
+
+  /** Habillage : même feedback que la combinaison (halo sur le paragraphe +
+   *  barre du côté où l'image ira, le texte s'enroulant de l'autre côté). */
+  showWrap(target: WrapTarget) {
+    this.showEdge(target.rect, target.side)
+  }
+
+  /** Halo sur un rect + barre verticale sur le bord `side`. */
+  private showEdge(rect: DOMRect, side: 'left' | 'right') {
     this.gapLine.style.display = 'none'
-    const { rect, side } = target
     this.combineOutline.style.display = 'block'
     this.combineOutline.style.left = `${rect.left}px`
     this.combineOutline.style.top = `${rect.top}px`

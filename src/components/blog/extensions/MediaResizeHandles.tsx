@@ -18,15 +18,19 @@ export function MediaResizeHandles({
    *  (1 = poignées droites, -1 = gauches) pour choisir le voisin qui
    *  compense dans une grille. */
   onResize: (widthPercent: number, dir: 1 | -1) => void
-  /** Référence de mesure : la colonne de contenu, ou la grille média. */
-  container?: 'column' | 'grid'
+  /** Référence de mesure : la colonne de contenu, la grille média, ou le bloc
+   *  2 colonnes image+texte. */
+  container?: 'column' | 'grid' | 'mediaText'
 }) {
+  const containerSelector =
+    container === 'grid' ? '.media-grid' : container === 'mediaText' ? '.media-text' : '.ProseMirror'
+
   function startResize(event: React.PointerEvent, dir: 1 | -1) {
     event.preventDefault()
     event.stopPropagation()
     const handle = event.currentTarget as HTMLElement
     const figure = handle.closest('figure') as HTMLElement | null
-    const column = handle.closest(container === 'grid' ? '.media-grid' : '.ProseMirror') as HTMLElement | null
+    const column = handle.closest(containerSelector) as HTMLElement | null
     if (!figure || !column) return
 
     const columnWidth = column.getBoundingClientRect().width

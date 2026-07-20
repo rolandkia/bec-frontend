@@ -3,11 +3,12 @@ import { ReactNodeViewRenderer } from '@tiptap/react'
 import { FigureImageView } from './FigureImageView'
 import { parseFigureWidth } from './mediaSizes'
 
-/** Trois placements : `center` (bloc centré) et l'habillage `float-left`
- *  (texte à droite) / `float-right` (texte à gauche) — les deux seuls côtés que
- *  CSS `float` sait représenter. Les anciennes valeurs `left`/`right`/`custom`
- *  d'articles déjà publiés sont ramenées à `center` au reparse (leur CSS reste
- *  pour le rendu du HTML publié). */
+/** Placement d'un média AUTONOME : uniquement `center` désormais. L'ancien
+ *  habillage flottant (`float-left`/`float-right`) est remplacé par le bloc
+ *  2 colonnes image+texte (cf. MediaText) ; ces valeurs héritées — comme
+ *  `left`/`right`/`custom` — sont ramenées à `center` au reparse (le CSS `float`
+ *  reste seulement pour le rendu des articles déjà publiés non ré-enregistrés).
+ *  Le type conserve les variantes flottantes pour typer ce contenu hérité. */
 export type FigureAlign = 'center' | 'float-left' | 'float-right'
 
 export interface FigureImageAttrs {
@@ -63,12 +64,15 @@ export const FigureImage = Node.create({
       },
       align: {
         default: 'center',
-        // Seuls `float-left`/`float-right` sont conservés ; toute autre valeur
-        // héritée (`left`/`right`/`custom`) retombe sur `center`.
+        // L'habillage flottant est de retour : on préserve `fig-float-left/right`
+        // au reparse (édition d'un article existant). Les alignements hérités
+        // non flottants (`fig-left`/`fig-right`/`fig-custom`) retombent sur `center`.
         parseHTML: (element) => {
-          const cls = element.getAttribute('class') ?? ''
-          const match = cls.match(/fig-(float-left|float-right)/)
-          return match ? match[1] : 'center'
+          const fig = element.closest?.('figure') ?? element
+          const cls = fig instanceof HTMLElement ? (fig.getAttribute('class') ?? '') : ''
+          if (cls.includes('fig-float-left')) return 'float-left'
+          if (cls.includes('fig-float-right')) return 'float-right'
+          return 'center'
         },
       },
     }

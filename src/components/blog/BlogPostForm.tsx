@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { isAxiosError } from 'axios'
 import { uploadMedia } from '../../api/media'
 import { coverImageStyle, type CoverPosition } from '../../api/types'
-import { BlogEditor } from './BlogEditor'
+import { BlogEditor, type BlogEditorHandle } from './BlogEditor'
 import { BlogContent } from './BlogContent'
 import { CoverFocalPicker } from './CoverFocalPicker'
 
@@ -42,6 +42,11 @@ export function BlogPostForm({
   const [isUploadingCover, setIsUploadingCover] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Navigation clavier : Entrée valide le champ et passe au suivant
+  // (Titre → Résumé → éditeur de contenu).
+  const summaryRef = useRef<HTMLInputElement>(null)
+  const editorRef = useRef<BlogEditorHandle>(null)
 
   async function handleCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -115,6 +120,12 @@ export function BlogPostForm({
           className={inputClass}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault()
+              summaryRef.current?.focus()
+            }
+          }}
           placeholder="Titre de l'article"
         />
       </div>
@@ -124,9 +135,16 @@ export function BlogPostForm({
           Résumé
         </label>
         <input
+          ref={summaryRef}
           className={inputClass}
           value={summary}
           onChange={(e) => setSummary(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault()
+              editorRef.current?.focus()
+            }
+          }}
           placeholder="Court résumé affiché dans la liste des articles"
         />
       </div>
@@ -157,7 +175,7 @@ export function BlogPostForm({
         <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
           Contenu de l'article
         </label>
-        <BlogEditor initialContent={initial?.content_html ?? ''} onChange={setContent} />
+        <BlogEditor ref={editorRef} initialContent={initial?.content_html ?? ''} onChange={setContent} />
       </div>
 
       <div className="flex flex-wrap items-center gap-3">

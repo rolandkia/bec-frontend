@@ -27,7 +27,19 @@ export interface CombineTarget {
   rect: DOMRect
 }
 
-export type DropTarget = GapTarget | CombineTarget
+/** Dépôt sur le bord d'un bloc de texte : le média y devient flottant
+ *  (`fig-float-left/right`) et le texte s'enroule autour. */
+export interface WrapTarget {
+  kind: 'wrap'
+  /** Position top-level du bloc de texte cible. */
+  blockPos: number
+  /** Côté où le média flottera. */
+  side: 'left' | 'right'
+  /** Rect du bloc cible (pour le feedback visuel). */
+  rect: DOMRect
+}
+
+export type DropTarget = GapTarget | CombineTarget | WrapTarget
 
 /** Marge (px) d'hystérésis : la zone de combinaison active s'agrandit un peu
  *  pour éviter le clignotement quand le pointeur oscille sur sa frontière. */
@@ -161,10 +173,59 @@ export function findCombineTarget(
   return found
 }
 
+/** Largeur (px) max de la bande de bord d'un bloc déclenchant l'habillage.
+ *  Bornée (et non toute la largeur) pour que le MILIEU d'un bloc reste un `gap`
+ *  (insertion centrée entre blocs) : on n'habille que si le pointeur vise
+ *  franchement un bord gauche/droit. */
+const WRAP_EDGE_PX = 120
+/** Repli proportionnel pour les blocs étroits. */
+const WRAP_EDGE_RATIO = 0.33
+
+/** Blocs de texte top-level qui peuvent accueillir un média flottant : le texte
+ *  s'enroulera autour. Listes et titres inclus (pas seulement les paragraphes). */
+const WRAPPABLE_BLOCKS = new Set([
+  'paragraph',
+  'heading',
+  'bulletList',
+  'orderedList',
+  'blockquote',
+])
+
+/** Bloc de texte top-level dont le bord gauche/droit est survolé : le média y
+ *  flottera et le texte s'enroulera autour. Ignore les blocs vides (rien à
+ *  enrouler → on laisse le `gap`). */
+export function findWrapTarget(
+  view: EditorView,
+  x: number,
+  y: number,
+  opts: Pick<CombineOpts, 'excludeFrom' | 'excludeTo'>,
+): WrapTarget | null {
+  let found: WrapTarget | null = null
+  view.state.doc.forEach((child, offset) => {
+    if (found) return
+    if (!WRAPPABLE_BLOCKS.has(child.type.name) || child.content.size === 0) return
+    if (offset >= opts.excludeFrom && offset < opts.excludeTo) return
+    const rect = blockRect(view, offset)
+    if (!rect || rect.width <= 0) return
+    if (y < rect.top || y > rect.bottom) return
+    const edge = Math.min(WRAP_EDGE_PX, rect.width * WRAP_EDGE_RATIO)
+    const side: 'left' | 'right' | null =
+      x >= rect.left && x <= rect.left + edge
+        ? 'left'
+        : x >= rect.right - edge && x <= rect.right
+          ? 'right'
+          : null
+    if (!side) return
+    found = { kind: 'wrap', blockPos: offset, side, rect }
+  })
+  return found
+}
+
 /** Cible du drag pour la position courante du pointeur : la combinaison
- *  (bord d'un média) a priorité, sinon le gap le plus proche en Y. Le
- *  déplacement ne change plus l'alignement horizontal du média (choisi via la
- *  barre d'outils) : seul l'ordre vertical / la mise côte à côte est géré. */
+ *  (bord d'un média) a priorité, puis l'habillage (bord d'un paragraphe),
+ *  sinon le gap le plus proche en Y. Le déplacement ne change plus l'alignement
+ *  horizontal du média (choisi via la barre d'outils) : seul l'ordre vertical /
+ *  la mise côte à côte / l'habillage est géré. */
 export function computeDropTarget(
   view: EditorView,
   x: number,
@@ -173,5 +234,7 @@ export function computeDropTarget(
 ): DropTarget | null {
   const combine = findCombineTarget(view, x, y, opts)
   if (combine) return combine
+  const wrap = findWrapTarget(view, x, y, opts)
+  if (wrap) return wrap
   return nearestGap(collectGaps(view), y)
 }

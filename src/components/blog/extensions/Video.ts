@@ -41,12 +41,14 @@ export const Video = Node.create({
       },
       align: {
         default: 'center' as FigureAlign,
-        // Seuls `float-left`/`float-right` sont conservés ; toute autre valeur
-        // héritée retombe sur `center` (cf. FigureImage).
-        parseHTML: (element) => {
-          const cls = element.getAttribute('class') ?? ''
-          const match = cls.match(/fig-(float-left|float-right)/)
-          return match ? match[1] : 'center'
+        // Habillage flottant préservé au reparse (cf. FigureImage) ; les
+        // alignements hérités non flottants retombent sur `center`.
+        parseHTML: (element): FigureAlign => {
+          const fig = element.closest?.('figure') ?? element
+          const cls = fig instanceof HTMLElement ? (fig.getAttribute('class') ?? '') : ''
+          if (cls.includes('fig-float-left')) return 'float-left'
+          if (cls.includes('fig-float-right')) return 'float-right'
+          return 'center'
         },
       },
     }

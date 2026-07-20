@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { forwardRef, useImperativeHandle, useState } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
@@ -6,17 +6,24 @@ import { EditorToolbar } from './EditorToolbar'
 import { FigureImage } from './extensions/FigureImage'
 import { Video } from './extensions/Video'
 import { MediaGrid } from './extensions/MediaGrid'
+import { MediaText, MediaTextColumn } from './extensions/MediaText'
 import { MediaUploadPlaceholder } from './extensions/mediaUploadPlaceholder'
 import { collectGaps, nearestGap } from './extensions/dropTarget'
 import { isSupportedMediaFile, uploadFileAt, type UploadCallbacks } from './extensions/uploadToEditor'
 
-export function BlogEditor({
-  initialContent,
-  onChange,
-}: {
-  initialContent: string
-  onChange: (html: string) => void
-}) {
+/** Poignée impérative exposée au parent (formulaire) pour donner le focus à
+ *  l'éditeur — utilisée par la navigation clavier (Entrée depuis le Résumé). */
+export interface BlogEditorHandle {
+  focus: () => void
+}
+
+export const BlogEditor = forwardRef<
+  BlogEditorHandle,
+  {
+    initialContent: string
+    onChange: (html: string) => void
+  }
+>(function BlogEditor({ initialContent, onChange }, ref) {
   // État d'upload partagé entre la toolbar, le drop de fichiers et le collage.
   const [pendingUploads, setPendingUploads] = useState(0)
   const [uploadError, setUploadError] = useState<string | null>(null)
@@ -46,6 +53,8 @@ export function BlogEditor({
       FigureImage,
       Video,
       MediaGrid,
+      MediaTextColumn,
+      MediaText,
       MediaUploadPlaceholder,
     ],
     content: initialContent,
@@ -75,6 +84,8 @@ export function BlogEditor({
     },
   })
 
+  useImperativeHandle(ref, () => ({ focus: () => editor?.commands.focus() }), [editor])
+
   if (!editor) return null
 
   return (
@@ -92,4 +103,4 @@ export function BlogEditor({
       <EditorContent editor={editor} className="tiptap-content prose prose-slate max-w-none dark:prose-invert prose-headings:text-club-primary dark:prose-headings:text-club-primary-light prose-a:text-club-primary dark:prose-a:text-club-primary-light" />
     </div>
   )
-}
+})
