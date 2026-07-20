@@ -11,6 +11,11 @@ import { BlogAdminPage } from './pages/BlogAdminPage'
 import { RecordsPage } from './pages/RecordsPage'
 import { AthletesListPage } from './pages/AthletesListPage'
 import { AthleteDetailPage } from './pages/AthleteDetailPage'
+import { GalleryPage } from './pages/GalleryPage'
+import { GalleryAdminPage } from './pages/GalleryAdminPage'
+import { MediaUploadPage } from './pages/MediaUploadPage'
+import { AlbumDetailPage } from './pages/AlbumDetailPage'
+import { MediaEditPage } from './pages/MediaEditPage'
 import { NotFound } from './components/ui/Status'
 
 function App() {
@@ -28,6 +33,11 @@ function App() {
         <Route path="records" element={<RecordsPage />} />
         <Route path="athletes" element={<AthletesListPage />} />
         <Route path="athletes/:id" element={<AthleteDetailPage />} />
+        <Route path="galerie" element={<GalleryPage />} />
+        <Route path="galerie/admin" element={<GalleryAdminPage />} />
+        <Route path="galerie/nouveau" element={<MediaUploadPage />} />
+        <Route path="galerie/albums/:id" element={<AlbumDetailPage />} />
+        <Route path="galerie/media/:id/modifier" element={<MediaEditPage />} />
         <Route path="*" element={<NotFound title="Page introuvable" message="Cette page n'existe pas." />} />
       </Route>
     </Routes>

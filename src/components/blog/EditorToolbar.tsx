@@ -1,5 +1,7 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import type { Editor } from '@tiptap/react'
+import type { MediaOut } from '../../api/types'
+import { GalleryMediaPicker } from './GalleryMediaPicker'
 
 function ToolbarButton({
   onClick,
@@ -35,6 +37,7 @@ export function EditorToolbar({
   uploading,
   uploadError,
   onUploadFiles,
+  onInsertFromGallery,
 }: {
   editor: Editor
   uploading: boolean
@@ -42,8 +45,11 @@ export function EditorToolbar({
   /** L'upload (placeholder, erreurs, insertion) est orchestré par BlogEditor,
    *  partagé avec le drop de fichiers OS et le collage. */
   onUploadFiles: (files: File[]) => void
+  /** Insère dans l'éditeur des médias déjà hébergés (choisis dans la galerie). */
+  onInsertFromGallery: (items: MediaOut[]) => void
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [galleryOpen, setGalleryOpen] = useState(false)
 
   function triggerUpload() {
     requestAnimationFrame(() => fileInputRef.current?.click())
@@ -87,6 +93,9 @@ export function EditorToolbar({
       <ToolbarButton title="Insérer des images ou des vidéos" disabled={uploading} onClick={() => triggerUpload()}>
         🖼
       </ToolbarButton>
+      <ToolbarButton title="Insérer depuis la galerie" onClick={() => setGalleryOpen(true)}>
+        🗂
+      </ToolbarButton>
 
       <span className="tb-sep" />
 
@@ -108,6 +117,16 @@ export function EditorToolbar({
         multiple
         onChange={handleFile}
       />
+
+      {galleryOpen && (
+        <GalleryMediaPicker
+          onClose={() => setGalleryOpen(false)}
+          onInsert={(items) => {
+            onInsertFromGallery(items)
+            setGalleryOpen(false)
+          }}
+        />
+      )}
     </div>
   )
 }

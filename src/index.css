@@ -206,6 +206,105 @@ body {
   color: rgb(100 116 139); /* slate-500 */
 }
 
+/* Lecture seule : cliquer un média l'ouvre en plein écran (voir Lightbox).
+   L'affordance (curseur + léger éclaircissement au survol) n'est active que
+   sur `.blog-rendered-zoomable` (donc pas dans l'éditeur ni si désactivée). */
+.blog-rendered-zoomable figure img,
+.blog-rendered-zoomable video {
+  cursor: zoom-in;
+  transition: opacity 0.15s ease;
+}
+.blog-rendered-zoomable figure img:hover,
+.blog-rendered-zoomable video:hover {
+  opacity: 0.9;
+}
+
+/* ---------------------------------------------------------------------------
+   Mention d'athlète : <a class="mention">@Prénom Nom</a>. Pilule discrète, à la
+   fois dans l'éditeur (.ProseMirror) et l'article rendu (.blog-rendered). La
+   spécificité (0,1,1) l'emporte sur `prose-a:*` (Tailwind Typography). */
+.ProseMirror a.mention,
+.blog-rendered a.mention {
+  display: inline-block;
+  padding: 0 0.3em;
+  border-radius: 0.375rem;
+  background: color-mix(in srgb, var(--color-club-primary) 12%, transparent);
+  color: var(--color-club-primary);
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+@media (prefers-color-scheme: dark) {
+  .ProseMirror a.mention,
+  .blog-rendered a.mention {
+    color: var(--color-club-primary-light);
+  }
+}
+.blog-rendered-zoomable a.mention {
+  cursor: pointer;
+}
+.blog-rendered-zoomable a.mention:hover {
+  background: color-mix(in srgb, var(--color-club-primary) 22%, transparent);
+}
+
+/* Liste déroulante des suggestions d'athlètes (montée dans document.body). */
+.mention-popup {
+  min-width: 15rem;
+  max-height: 16rem;
+  overflow-y: auto;
+  border-radius: 0.75rem;
+  border: 1px solid rgb(226 232 240); /* slate-200 */
+  background: white;
+  padding: 0.25rem;
+  box-shadow: 0 10px 30px -10px rgb(0 0 0 / 0.3);
+}
+@media (prefers-color-scheme: dark) {
+  .mention-popup {
+    border-color: rgb(51 65 85); /* slate-700 */
+    background: rgb(15 23 42); /* slate-900 */
+  }
+}
+.mention-popup-item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.6rem;
+  border-radius: 0.5rem;
+  padding: 0.4rem 0.5rem;
+  text-align: left;
+  cursor: pointer;
+}
+.mention-popup-item.is-selected {
+  background: color-mix(in srgb, var(--color-club-primary) 12%, transparent);
+}
+.mention-popup-avatar {
+  display: flex;
+  height: 2rem;
+  width: 2rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.6rem;
+  background-image: linear-gradient(to bottom right, var(--color-club-primary-light), var(--color-club-primary));
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: white;
+}
+.mention-popup-name {
+  font-size: 0.9rem;
+  color: rgb(30 41 59); /* slate-800 */
+}
+@media (prefers-color-scheme: dark) {
+  .mention-popup-name {
+    color: rgb(226 232 240); /* slate-200 */
+  }
+}
+.mention-popup-empty {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  color: rgb(100 116 139); /* slate-500 */
+}
+
 /* Alignement centré (seul alignement bloc produit par l'éditeur).
    Sélecteurs préfixés par les conteneurs (spécificité 0,2,0) pour l'emporter
    sur `.ProseMirror figure` (0,1,1). */

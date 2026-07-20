@@ -1,5 +1,11 @@
 import { apiClient } from './client'
-import type { BlogPostCreate, BlogPostOut, BlogPostUpdate } from './types'
+import type { BlogMediaOut, BlogPostCreate, BlogPostOut, BlogPostUpdate } from './types'
+
+/** Images/vidéos des articles pas encore présentes dans la galerie. */
+export async function listBlogMedia(): Promise<BlogMediaOut[]> {
+  const { data } = await apiClient.get<BlogMediaOut[]>('/blogs/media')
+  return data
+}
 
 export async function listBlogs(): Promise<BlogPostOut[]> {
   const { data } = await apiClient.get<BlogPostOut[]>('/blogs/')

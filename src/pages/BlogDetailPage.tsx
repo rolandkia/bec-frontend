@@ -1,12 +1,15 @@
+import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { getBlogBySlug } from '../api/blogs'
 import { coverImageStyle } from '../api/types'
 import { BlogContent } from '../components/blog/BlogContent'
+import { Lightbox } from '../components/ui/Lightbox'
 import { Loading, ErrorMessage, NotFound } from '../components/ui/Status'
 
 export function BlogDetailPage() {
   const { slug } = useParams<{ slug: string }>()
+  const [coverOpen, setCoverOpen] = useState(false)
 
   const { data: post, isLoading, isError, error } = useQuery({
     queryKey: ['blog', slug],
@@ -52,12 +55,21 @@ export function BlogDetailPage() {
           <img
             src={post.cover_image_url}
             alt=""
-            className="h-full w-full object-cover"
+            className="h-full w-full cursor-zoom-in object-cover"
             style={coverImageStyle(post.cover_position)}
+            onClick={() => setCoverOpen(true)}
           />
         </div>
       )}
       <BlogContent html={post.content_html} />
+      {coverOpen && post.cover_image_url && (
+        <Lightbox
+          items={[{ url: post.cover_image_url, type: 'image' }]}
+          index={0}
+          onIndexChange={() => {}}
+          onClose={() => setCoverOpen(false)}
+        />
+      )}
     </article>
   )
 }

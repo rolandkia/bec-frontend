@@ -1,5 +1,6 @@
-import { forwardRef, useImperativeHandle, useState } from 'react'
+import { forwardRef, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
+import { useQuery } from '@tanstack/react-query'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import { EditorToolbar } from './EditorToolbar'
@@ -8,8 +9,11 @@ import { Video } from './extensions/Video'
 import { MediaGrid } from './extensions/MediaGrid'
 import { MediaText, MediaTextColumn } from './extensions/MediaText'
 import { MediaUploadPlaceholder } from './extensions/mediaUploadPlaceholder'
+import { createAthleteMention } from './extensions/AthleteMention'
 import { collectGaps, nearestGap } from './extensions/dropTarget'
-import { isSupportedMediaFile, uploadFileAt, type UploadCallbacks } from './extensions/uploadToEditor'
+import { insertMediaNodes, isSupportedMediaFile, uploadFileAt, type UploadCallbacks } from './extensions/uploadToEditor'
+import { listAthletes } from '../../api/athletes'
+import type { MentionItem } from './MentionPopup'
 
 /** Poignée impérative exposée au parent (formulaire) pour donner le focus à
  *  l'éditeur — utilisée par la navigation clavier (Entrée depuis le Résumé). */
@@ -27,6 +31,16 @@ export const BlogEditor = forwardRef<
   // État d'upload partagé entre la toolbar, le drop de fichiers et le collage.
   const [pendingUploads, setPendingUploads] = useState(0)
   const [uploadError, setUploadError] = useState<string | null>(null)
+
+  // Liste des athlètes pour les mentions « @ ». Lue via une ref pour que
+  // l'extension y accède sans recréer l'éditeur quand la requête se résout.
+  const { data: athletes } = useQuery({ queryKey: ['athletes'], queryFn: listAthletes })
+  const athletesRef = useRef<MentionItem[]>([])
+  athletesRef.current = athletes ?? []
+  const athleteMention = useMemo(
+    () => createAthleteMention(() => athletesRef.current),
+    [],
+  )
 
   const uploadCallbacks: UploadCallbacks = {
     onStart: () => {
@@ -56,6 +70,7 @@ export const BlogEditor = forwardRef<
       MediaTextColumn,
       MediaText,
       MediaUploadPlaceholder,
+      athleteMention,
     ],
     content: initialContent,
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
@@ -98,6 +113,16 @@ export const BlogEditor = forwardRef<
           for (const file of files) {
             void uploadFileAt(editor.view, file, editor.state.selection.to, uploadCallbacks)
           }
+        }}
+        onInsertFromGallery={(items) => {
+          insertMediaNodes(
+            editor.view,
+            items.map((m) => ({
+              url: m.url,
+              resource_type: m.resource_type,
+              alt: m.description,
+            })),
+          )
         }}
       />
       <EditorContent editor={editor} className="tiptap-content prose prose-slate max-w-none dark:prose-invert prose-headings:text-club-primary dark:prose-headings:text-club-primary-light prose-a:text-club-primary dark:prose-a:text-club-primary-light" />

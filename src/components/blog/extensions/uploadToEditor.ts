@@ -39,6 +39,30 @@ function skipTrailingGap(doc: PMNode, pos: number): number {
   return pos - trailing.nodeSize
 }
 
+/** Insère un ou plusieurs médias DÉJÀ hébergés (galerie) comme nœuds
+ *  figure/vidéo au point d'insertion courant — sans upload, l'URL Cloudinary
+ *  existant est réutilisé tel quel. Partage la logique de placement (frontière
+ *  de bloc, saut du ¶ final) avec l'upload local. */
+export function insertMediaNodes(
+  view: EditorView,
+  items: { url: string; resource_type: string; alt?: string | null }[],
+): void {
+  if (!items.length) return
+  const schema = view.state.schema
+  const tr = view.state.tr
+  let pos = skipTrailingGap(tr.doc, clampToBlockGap(tr.doc, view.state.selection.to))
+  for (const item of items) {
+    const node =
+      item.resource_type === 'video'
+        ? schema.nodes.video.create({ src: item.url })
+        : schema.nodes.figureImage.create({ src: item.url, alt: item.alt ?? '' })
+    tr.insert(pos, node)
+    pos += node.nodeSize
+  }
+  view.dispatch(tr)
+  view.focus()
+}
+
 let uploadSeq = 0
 
 /** Envoie un fichier média (toolbar, drop OS ou collage) : pose un placeholder

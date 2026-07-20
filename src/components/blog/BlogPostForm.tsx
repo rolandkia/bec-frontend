@@ -218,7 +218,7 @@ export function BlogPostForm({
           {summary && (
             <p className="mb-4 text-lg text-slate-600 dark:text-slate-300">{summary}</p>
           )}
-          <BlogContent html={content || '<p><em>Le contenu apparaîtra ici…</em></p>'} />
+          <BlogContent html={content || '<p><em>Le contenu apparaîtra ici…</em></p>'} enableLightbox={false} />
         </div>
       </div>
     </div>

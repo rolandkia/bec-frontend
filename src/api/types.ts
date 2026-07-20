@@ -186,4 +186,88 @@ export interface BlogPostUpdate {
 export interface MediaUploadOut {
   url: string
   resource_type: string
+  width?: number | null
+  height?: number | null
+}
+
+/** Média référencé par un article, candidat à l'import dans la galerie. */
+export interface BlogMediaOut {
+  url: string
+  resource_type: string
+  blog_title: string
+  blog_slug: string
+}
+
+// --- Galerie ---------------------------------------------------------------
+
+export type MediaResourceType = 'image' | 'video'
+
+export interface AthleteBrief {
+  id: number
+  nom: string
+  prenom: string
+  sexe: string
+}
+
+export interface MediaOut {
+  id: number
+  url: string
+  resource_type: string
+  description: string | null
+  date: string | null
+  lieu: string | null
+  width: number | null
+  height: number | null
+  album_id: number | null
+  created_at: string
+  athletes: AthleteBrief[]
+}
+
+export interface MediaCreate {
+  url: string
+  resource_type: string
+  description?: string | null
+  date?: string | null
+  lieu?: string | null
+  width?: number | null
+  height?: number | null
+  album_id?: number | null
+  athlete_ids?: number[]
+}
+
+export interface MediaUpdate {
+  description?: string | null
+  date?: string | null
+  lieu?: string | null
+  album_id?: number | null
+  athlete_ids?: number[] | null
+}
+
+export interface MediaPage {
+  items: MediaOut[]
+  total: number
+  limit: number | null
+  offset: number
+}
+
+export interface AlbumOut {
+  id: number
+  title: string
+  description: string | null
+  cover_image_url: string | null
+  created_at: string
+  updated_at: string
+  media_count: number
+}
+
+export interface AlbumCreate {
+  title: string
+  description?: string | null
+  cover_image_url?: string | null
+}
+
+export interface AlbumUpdate {
+  title?: string | null
+  description?: string | null
+  cover_image_url?: string | null
 }
