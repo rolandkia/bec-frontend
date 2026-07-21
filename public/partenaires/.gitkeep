@@ -1,0 +1,3 @@
+# Logos des partenaires
+# Déposez ici les fichiers logo (ex. decathlon.png), puis référencez-les
+# dans src/data/partenaires.ts avec le chemin absolu : logo: '/partenaires/decathlon.png'

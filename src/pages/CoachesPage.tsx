@@ -2,12 +2,12 @@ import { useQuery } from '@tanstack/react-query'
 import { listCoaches } from '../api/coaches'
 import { Loading, ErrorMessage } from '../components/ui/Status'
 
-export function CoachesPage() {
+export function CoachesPage({ embedded = false }: { embedded?: boolean }) {
   const coachesQuery = useQuery({ queryKey: ['coaches'], queryFn: listCoaches })
 
   return (
-    <div className="animate-rise">
-      <h1 className="section-title mb-8 text-3xl">Nos coachs</h1>
+    <div className={embedded ? '' : 'animate-rise'}>
+      {!embedded && <h1 className="section-title mb-8 text-3xl">Nos coachs</h1>}
 
       {coachesQuery.isLoading && <Loading />}
       {coachesQuery.isError && (
@@ -18,10 +18,18 @@ export function CoachesPage() {
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           {coachesQuery.data.map((coach) => (
             <div key={coach.id} className="card card-hover flex gap-4 p-5">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-club-primary-light to-club-primary text-lg font-bold text-white shadow-sm">
-                {coach.prenom[0]}
-                {coach.nom[0]}
-              </div>
+              {coach.photo_url ? (
+                <img
+                  src={coach.photo_url}
+                  alt={`${coach.prenom} ${coach.nom}`}
+                  className="h-16 w-16 shrink-0 rounded-2xl object-cover shadow-sm"
+                />
+              ) : (
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-club-primary-light to-club-primary text-lg font-bold text-white shadow-sm">
+                  {coach.prenom[0]}
+                  {coach.nom[0]}
+                </div>
+              )}
               <div>
                 <h2 className="font-semibold text-club-primary dark:text-club-primary-light">
                   {coach.prenom} {coach.nom}

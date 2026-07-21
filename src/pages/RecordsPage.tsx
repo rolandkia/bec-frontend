@@ -8,7 +8,7 @@ import { Loading, ErrorMessage } from '../components/ui/Status'
 
 const SAISON_EN_COURS = currentSaison()
 
-export function RecordsPage() {
+export function RecordsPage({ embedded = false }: { embedded?: boolean }) {
   const [sexe, setSexe] = useState<Sexe>('homme')
   const [periode, setPeriode] = useState<'absolu' | 'saison'>('absolu')
   const [discipline, setDiscipline] = useState('')
@@ -46,8 +46,8 @@ export function RecordsPage() {
   )
 
   return (
-    <div className="animate-rise">
-      <h1 className="section-title mb-6 text-3xl">Records du club</h1>
+    <div className={embedded ? '' : 'animate-rise'}>
+      {!embedded && <h1 className="section-title mb-6 text-3xl">Records du club</h1>}
 
       <div className="mb-8 flex flex-wrap items-center gap-3">
         <div className="flex rounded-full border border-slate-200 p-0.5 dark:border-slate-800">

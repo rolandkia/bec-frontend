@@ -1,6 +1,11 @@
 import { Route, Routes } from 'react-router-dom'
 import { Layout } from './components/layout/Layout'
 import { HomePage } from './pages/HomePage'
+import { ClubPage } from './pages/ClubPage'
+import { InfosPratiquesPage } from './pages/InfosPratiquesPage'
+import { CompetitionsPage } from './pages/CompetitionsPage'
+import { ActualitePage } from './pages/ActualitePage'
+import { ContactPage } from './pages/ContactPage'
 import { CoachesPage } from './pages/CoachesPage'
 import { CalendarPage } from './pages/CalendarPage'
 import { BlogListPage } from './pages/BlogListPage'
@@ -23,6 +28,15 @@ function App() {
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<HomePage />} />
+
+        {/* Sections principales (hubs) */}
+        <Route path="club" element={<ClubPage />} />
+        <Route path="infos-pratiques" element={<InfosPratiquesPage />} />
+        <Route path="competitions" element={<CompetitionsPage />} />
+        <Route path="actualite" element={<ActualitePage />} />
+        <Route path="contact" element={<ContactPage />} />
+
+        {/* Pages internes (accès direct + réutilisées par les hubs) */}
         <Route path="coachs" element={<CoachesPage />} />
         <Route path="calendrier" element={<CalendarPage />} />
         <Route path="blog" element={<BlogListPage />} />

@@ -30,6 +30,7 @@ export interface AthleteOut {
   prenom: string
   ffa_id: string
   sexe: string
+  photo_url: string | null
   resultats: ResultatOut[]
 }
 

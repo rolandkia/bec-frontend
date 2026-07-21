@@ -4,12 +4,12 @@ import { club } from '../../data/club'
 
 const links = [
   { to: '/', label: 'Accueil' },
-  { to: '/coachs', label: 'Coachs' },
-  { to: '/calendrier', label: 'Calendrier' },
-  { to: '/blog', label: 'Blog' },
-  { to: '/galerie', label: 'Galerie' },
-  { to: '/records', label: 'Records' },
+  { to: '/club', label: 'Club' },
+  { to: '/infos-pratiques', label: 'Infos pratiques' },
+  { to: '/competitions', label: 'Compétitions' },
+  { to: '/actualite', label: 'Actualité' },
   { to: '/athletes', label: 'Athlètes' },
+  { to: '/contact', label: 'Contact' },
 ]
 
 export function Navbar() {
@@ -29,7 +29,7 @@ export function Navbar() {
           </span>
         </NavLink>
 
-        <nav className="hidden gap-7 md:flex">
+        <nav className="hidden gap-5 md:flex lg:gap-7">
           {links.map((link) => (
             <NavLink
               key={link.to}

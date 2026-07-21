@@ -75,19 +75,21 @@ function CalendarSection({
   )
 }
 
-export function CalendarPage() {
+export function CalendarPage({ embedded = false }: { embedded?: boolean }) {
   const eventsQuery = useQuery({ queryKey: ['events'], queryFn: listEvents })
 
   const { upcoming, past } = splitEvents(eventsQuery.data ?? [])
 
   return (
-    <div className="animate-rise space-y-12">
-      <header>
-        <h1 className="section-title text-3xl">Calendrier des compétitions</h1>
-        <p className="mt-2 text-slate-500 dark:text-slate-400">
-          Les prochaines échéances du club, mises à jour automatiquement selon la date du jour.
-        </p>
-      </header>
+    <div className={`space-y-12 ${embedded ? '' : 'animate-rise'}`}>
+      {!embedded && (
+        <header>
+          <h1 className="section-title text-3xl">Calendrier des compétitions</h1>
+          <p className="mt-2 text-slate-500 dark:text-slate-400">
+            Les prochaines échéances du club, mises à jour automatiquement selon la date du jour.
+          </p>
+        </header>
+      )}
 
       {eventsQuery.isLoading && <Loading />}
       {eventsQuery.isError && (

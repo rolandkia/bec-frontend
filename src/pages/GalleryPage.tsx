@@ -15,7 +15,7 @@ const TABS: { key: Tab; label: string }[] = [
   { key: 'albums', label: 'Albums' },
 ]
 
-export function GalleryPage() {
+export function GalleryPage({ embedded = false }: { embedded?: boolean }) {
   const [tab, setTab] = useState<Tab>('feed')
 
   // Les albums alimentent la rangée « stories » (toujours visible) et l'onglet Albums.
@@ -25,9 +25,9 @@ export function GalleryPage() {
   })
 
   return (
-    <div className="animate-rise">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="section-title text-3xl">Galerie</h1>
+    <div className={embedded ? '' : 'animate-rise'}>
+      <div className={`mb-6 flex items-center ${embedded ? 'justify-end' : 'justify-between'}`}>
+        {!embedded && <h1 className="section-title text-3xl">Galerie</h1>}
         <Link to="/galerie/admin" className="btn-outline">
           Gérer la galerie
         </Link>

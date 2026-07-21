@@ -66,7 +66,7 @@ export function HomePage() {
               Découvrir les athlètes
             </Link>
             <Link
-              to="/calendrier"
+              to="/competitions"
               className="btn bg-white/10 text-white ring-1 ring-white/40 backdrop-blur transition hover:bg-white/20"
             >
               Voir le calendrier
@@ -94,7 +94,7 @@ export function HomePage() {
           <div className="mb-5 flex items-end justify-between gap-3">
             <h2 className="section-title">Prochaines compétitions</h2>
             <Link
-              to="/calendrier"
+              to="/competitions"
               className="text-sm font-semibold text-club-primary transition hover:underline dark:text-club-primary-light"
             >
               Tout le calendrier →
@@ -151,7 +151,7 @@ export function HomePage() {
                 ))}
               </div>
               <Link
-                to="/records"
+                to="/competitions?tab=records"
                 className="text-sm font-semibold text-club-primary transition hover:underline dark:text-club-primary-light"
               >
                 Records →
@@ -198,10 +198,10 @@ export function HomePage() {
         <div className="mb-5 flex items-center justify-between">
           <h2 className="section-title">Derniers articles</h2>
           <Link
-            to="/blog"
+            to="/actualite"
             className="text-sm font-semibold text-club-primary transition hover:underline dark:text-club-primary-light"
           >
-            Tout le blog →
+            Toute l'actualité →
           </Link>
         </div>
         {isLoading && <Loading />}
