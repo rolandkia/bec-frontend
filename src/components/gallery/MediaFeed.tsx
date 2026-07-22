@@ -58,7 +58,17 @@ export function MediaFeed({
   if (isLoading) return <Loading />
   if (isError) return <ErrorMessage message="Impossible de charger les médias." />
   if (media.length === 0) {
-    return <p className="text-slate-500 dark:text-slate-400">Aucun média pour le moment.</p>
+    return <p className="text-[color:var(--color-muted)]">Aucun média pour le moment.</p>
+  }
+
+  // Span bento calculé depuis l'orientation : portraits en hauteur, paysages
+  // larges sur 2 colonnes, et une grande tuile ponctuelle pour rythmer la grille.
+  function bentoSpan(m: MediaOut, i: number): string {
+    const ar = m.width && m.height ? m.width / m.height : 1
+    if (i % 9 === 0 && ar > 0.85 && ar < 1.5) return 'col-span-2 row-span-2'
+    if (ar <= 0.72) return 'row-span-2'
+    if (ar >= 1.6) return 'col-span-2'
+    return ''
   }
 
   function renderCaption(_item: LightboxItem, index: number) {
@@ -96,9 +106,11 @@ export function MediaFeed({
           ))}
         </div>
       ) : (
-        <div className="columns-2 gap-4 sm:columns-3 lg:columns-4">
+        <div className="grid grid-flow-row-dense auto-rows-[150px] grid-cols-2 gap-3 sm:auto-rows-[180px] sm:grid-cols-3 lg:grid-cols-4">
           {media.map((m, i) => (
-            <MediaTile key={m.id} media={m} onClick={() => setLightboxIndex(i)} />
+            <div key={m.id} className={bentoSpan(m, i)}>
+              <MediaTile media={m} onClick={() => setLightboxIndex(i)} />
+            </div>
           ))}
         </div>
       )}

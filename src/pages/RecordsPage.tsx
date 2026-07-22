@@ -50,7 +50,7 @@ export function RecordsPage({ embedded = false }: { embedded?: boolean }) {
       {!embedded && <h1 className="section-title mb-6 text-3xl">Records du club</h1>}
 
       <div className="mb-8 flex flex-wrap items-center gap-3">
-        <div className="flex rounded-full border border-slate-200 p-0.5 dark:border-slate-800">
+        <div className="flex rounded-full border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-0.5">
           {(['homme', 'femme'] as const).map((s) => (
             <button
               key={s}
@@ -59,7 +59,7 @@ export function RecordsPage({ embedded = false }: { embedded?: boolean }) {
               className={`rounded-full px-4 py-1.5 text-sm font-medium capitalize transition ${
                 sexe === s
                   ? 'bg-club-primary text-white shadow-sm'
-                  : 'text-slate-600 dark:text-slate-300'
+                  : 'text-[color:var(--color-muted)] hover:text-white'
               }`}
             >
               {s === 'homme' ? 'Hommes' : 'Femmes'}
@@ -67,14 +67,14 @@ export function RecordsPage({ embedded = false }: { embedded?: boolean }) {
           ))}
         </div>
 
-        <div className="flex rounded-full border border-slate-200 p-0.5 dark:border-slate-800">
+        <div className="flex rounded-full border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-0.5">
           <button
             type="button"
             onClick={() => setPeriode('absolu')}
             className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
               periode === 'absolu'
                 ? 'bg-club-primary text-white shadow-sm'
-                : 'text-slate-600 dark:text-slate-300'
+                : 'text-[color:var(--color-muted)] hover:text-white'
             }`}
           >
             Records absolus
@@ -85,7 +85,7 @@ export function RecordsPage({ embedded = false }: { embedded?: boolean }) {
             className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
               periode === 'saison'
                 ? 'bg-club-primary text-white shadow-sm'
-                : 'text-slate-600 dark:text-slate-300'
+                : 'text-[color:var(--color-muted)] hover:text-white'
             }`}
           >
             Meilleures perfs {SAISON_EN_COURS}

@@ -110,7 +110,6 @@ export function niveauTier(niveau: string): NiveauTier {
     tier: 0,
     chevrons: 0,
     star: false,
-    className:
-      'bg-slate-100 text-slate-600 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700',
+    className: 'bg-white/5 text-[color:var(--color-muted)] ring-1 ring-white/10',
   }
 }

@@ -1,67 +1,69 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/typography';
 
+/* Site en SOMBRE UNIQUEMENT : on force la variante `dark:` à s'appliquer en
+   permanence. Chaque utilitaire `dark:*` déjà présent dans les composants
+   devient ainsi le style définitif (et l'emporte sur sa version claire). */
+@custom-variant dark (&);
+
 @theme {
-  /* Couleurs du club : rouge & or, vives et joyeuses */
-  --color-club-primary: #d81f2a;
-  --color-club-primary-light: #f2555e;
-  --color-club-accent: #f5a623;
-  --color-club-accent-light: #ffc247;
+  /* ROUGE du club = énergie / performance (CTA, accents). */
+  --color-club-primary: #b5121b; /* rouge profond (brief) */
+  --color-club-primary-light: #f2555e; /* rouge clair lisible (liens/hover sur noir) */
+  --color-club-primary-dark: #7f1015; /* rouge hover (brief) */
+
+  /* OR du club = EXCELLENCE (podiums, records, niveau international, détails premium).
+     À utiliser AVEC PARCIMONIE — cf. « Politique OR » plus bas. L'identité réelle du
+     club (blason + maillots) est rouge ET or, ce qui justifie ce second accent. */
+  --color-club-accent: #d4af37; /* or */
+  --color-club-accent-light: #e6c65c; /* or clair */
+
+  /* Surfaces sombres neutres et cinématiques (brief) */
+  --color-ink: #0a0a0a; /* fond de base (near-black) */
+  --color-surface: #141414; /* cartes / surfaces élevées */
+  --color-surface-2: #1d1d1d; /* surfaces plus élevées (hover, pills) */
+  --color-line: #262626; /* filets / bordures (neutre) */
+  --color-fg: #f8f8f8; /* texte principal */
+  --color-muted: #b8b8b8; /* texte secondaire */
 
   /* Typographie */
   --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-display: 'Oswald', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Space Grotesk', 'Inter', ui-sans-serif, system-ui, sans-serif;
 }
 
 :root {
-  color-scheme: light dark;
+  color-scheme: dark;
 
   /* Infobulle des graphes (Recharts) — hors de portée des variantes Tailwind dark: */
-  --tooltip-bg: #ffffff;
-  --tooltip-text: #1e293b; /* slate-800 */
-  --tooltip-border: rgba(148, 163, 184, 0.35);
+  --tooltip-bg: #141414;
+  --tooltip-text: #f8f8f8;
+  --tooltip-border: rgba(38, 38, 38, 0.9);
 }
 
 body {
-  @apply text-slate-800 dark:text-slate-100;
+  color: var(--color-fg);
   font-family: var(--font-sans);
   min-height: 100vh;
   background:
+    /* halo or discret (excellence) — atmosphère, pas de chrome */
     radial-gradient(
-      1100px 550px at 100% -10%,
-      color-mix(in oklab, var(--color-club-accent) 13%, transparent),
+      1000px 560px at 92% -10%,
+      color-mix(in oklab, var(--color-club-accent) 6%, transparent),
+      transparent 58%
+    ),
+    /* halos rouges cinématiques, adoucis sur le fond neutre */
+    radial-gradient(
+      1100px 620px at 88% -12%,
+      color-mix(in oklab, var(--color-club-primary) 12%, transparent),
       transparent 60%
     ),
     radial-gradient(
-      900px 500px at -10% 0%,
-      color-mix(in oklab, var(--color-club-primary) 10%, transparent),
+      900px 520px at -8% 4%,
+      color-mix(in oklab, var(--color-club-primary) 7%, transparent),
       transparent 55%
     ),
-    #ffffff;
+    var(--color-ink);
   background-attachment: fixed;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --tooltip-bg: #0f172a; /* slate-900 */
-    --tooltip-text: #e2e8f0; /* slate-200 */
-    --tooltip-border: rgba(148, 163, 184, 0.25);
-  }
-
-  body {
-    background:
-      radial-gradient(
-        1100px 550px at 100% -10%,
-        color-mix(in oklab, var(--color-club-accent) 9%, transparent),
-        transparent 60%
-      ),
-      radial-gradient(
-        900px 500px at -10% 0%,
-        color-mix(in oklab, var(--color-club-primary) 15%, transparent),
-        transparent 55%
-      ),
-      #020617;
-  }
 }
 
 @layer base {
@@ -69,48 +71,147 @@ body {
   h2,
   h3 {
     font-family: var(--font-display);
-    letter-spacing: -0.01em;
+    letter-spacing: -0.02em;
+  }
+  /* Chiffres alignés (scoreboard, records, dates) */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
   }
 }
 
 @layer components {
-  /* Carte de base réutilisable, avec support clair/sombre */
+  /* Carte de base réutilisable (surfaces sombres) */
   .card {
-    @apply rounded-2xl border border-slate-200/80 bg-white/85 shadow-sm backdrop-blur-sm transition duration-200 dark:border-slate-800 dark:bg-slate-900/70;
+    @apply rounded-2xl border shadow-sm transition duration-200;
+    border-color: var(--color-line);
+    background: color-mix(in oklab, var(--color-surface) 88%, transparent);
+    backdrop-filter: blur(8px);
   }
 
   /* À combiner avec .card pour un effet de survol dynamique */
   .card-hover {
-    @apply hover:-translate-y-1 hover:border-club-primary/40 hover:shadow-xl hover:shadow-club-primary/5;
+    @apply hover:-translate-y-1;
+    transition:
+      transform 0.2s ease,
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+  .card-hover:hover {
+    border-color: color-mix(in oklab, var(--color-club-primary) 55%, var(--color-line));
+    box-shadow: 0 22px 48px -24px color-mix(in oklab, var(--color-club-primary) 55%, transparent);
   }
 
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition duration-200;
   }
 
+  /* CTA principal : rouge plein */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-full bg-club-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-club-primary/25 hover:brightness-110;
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-club-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-club-primary/30 hover:brightness-110;
   }
 
+  /* CTA secondaire : bouton blanc (fort contraste sur fond sombre / photo) */
   .btn-accent {
-    @apply inline-flex items-center justify-center gap-2 rounded-full bg-club-accent px-5 py-2.5 text-sm font-semibold text-slate-900 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-club-accent/30 hover:brightness-105;
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[color:var(--color-ink)] shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/30 hover:brightness-95;
   }
 
   .btn-outline {
-    @apply inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition duration-200 hover:-translate-y-0.5 hover:border-club-primary hover:text-club-primary dark:border-slate-700 dark:text-slate-200 dark:hover:border-club-primary-light dark:hover:text-club-primary-light;
+    @apply inline-flex items-center justify-center gap-2 rounded-full border px-5 py-2.5 text-sm font-semibold transition duration-200 hover:-translate-y-0.5;
+    border-color: var(--color-line);
+    color: var(--color-fg);
+  }
+  .btn-outline:hover {
+    border-color: var(--color-club-primary-light);
+    color: var(--color-club-primary-light);
   }
 
   .section-title {
-    @apply font-display text-2xl font-bold tracking-tight text-club-primary dark:text-club-primary-light;
+    @apply font-display text-2xl font-bold tracking-tight sm:text-3xl;
+    color: var(--color-fg);
   }
 
   .badge {
     @apply inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold;
   }
 
-  /* Menu déroulant natif réutilisable (clair/sombre) */
+  /* Menu déroulant natif réutilisable (sombre) */
   .select {
-    @apply rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm transition focus:border-club-primary focus:outline-none focus:ring-2 focus:ring-club-primary/30 dark:border-slate-800 dark:bg-slate-900;
+    @apply rounded-lg border px-3 py-2 text-sm shadow-sm transition focus:border-club-primary focus:outline-none focus:ring-2 focus:ring-club-primary/30;
+    border-color: var(--color-line);
+    background: var(--color-surface);
+    color: var(--color-fg);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     POLITIQUE OR (--color-club-accent : #d4af37)
+     L'or ne sert QU'À l'excellence méritée : 1re place d'un podium, records /
+     records personnels, niveau international, liens « Records », et fins filets
+     premium. JAMAIS pour les boutons, la navigation, le corps de texte ou les
+     surfaces génériques (qui restent neutres + rouge). Le rouge = énergie /
+     performance ; l'or = distinction.
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  /* Bloc de chiffre éditorial (scoreboard, stats, records) — se distingue de
+     .card : pas de fond de carte, le CHIFFRE porte la hiérarchie. */
+  .stat {
+    @apply font-display font-bold leading-[0.9] tracking-tight;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+  }
+
+  /* Section pleine largeur (déborde le conteneur max-w-6xl) pour les bandes
+     immersives / splits / fonds photo. Le voile de lisibilité est posé par le
+     composant lui-même. */
+  .band {
+    @apply relative -mx-4 overflow-hidden sm:mx-0 sm:rounded-3xl;
+  }
+
+  /* Filet neutre fin (séparateur discret). */
+  .hairline {
+    height: 1px;
+    background: var(--color-line);
+    border: 0;
+  }
+
+  /* Filet OR premium (excellence) — dégradé qui s'estompe aux extrémités. */
+  .rule-gold {
+    height: 1px;
+    border: 0;
+    background: linear-gradient(
+      to right,
+      transparent,
+      color-mix(in oklab, var(--color-club-accent) 70%, transparent),
+      transparent
+    );
+  }
+
+  /* Bouton « profil FFA » : sobre, avec icône lien externe (pages athlètes). */
+  .btn-ffa {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border px-5 py-2.5 text-sm font-semibold transition duration-200 hover:-translate-y-0.5;
+    border-color: color-mix(in oklab, var(--color-club-accent) 45%, var(--color-line));
+    color: var(--color-fg);
+  }
+  .btn-ffa:hover {
+    border-color: var(--color-club-accent);
+    color: var(--color-club-accent-light);
+    box-shadow: 0 12px 30px -18px color-mix(in oklab, var(--color-club-accent) 60%, transparent);
+  }
+
+  /* Badge OR (record / distinction) — usage parcimonieux. */
+  .badge-gold {
+    @apply inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold;
+    background: color-mix(in oklab, var(--color-club-accent) 16%, transparent);
+    color: var(--color-club-accent-light);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-club-accent) 40%, transparent);
+  }
+
+  /* Badge « à venir / live » — rouge d'énergie. */
+  .badge-live {
+    @apply inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold;
+    background: color-mix(in oklab, var(--color-club-primary) 18%, transparent);
+    color: var(--color-club-primary-light);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-club-primary) 45%, transparent);
   }
 }
 
@@ -129,6 +230,26 @@ body {
 @layer utilities {
   .animate-rise {
     animation: rise 0.5s ease-out both;
+  }
+}
+
+/* Défilement horizontal continu du composant <Marquee>. Boucle sans couture :
+   le contenu est dupliqué, la piste translate de 0 → -50 %. Pause au survol. */
+@keyframes marquee-x {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+@layer utilities {
+  .animate-marquee {
+    animation: marquee-x var(--marquee-duration, 40s) linear infinite;
+    will-change: transform;
+  }
+  .animate-marquee:hover {
+    animation-play-state: paused;
   }
 }
 
@@ -228,17 +349,11 @@ body {
   display: inline-block;
   padding: 0 0.3em;
   border-radius: 0.375rem;
-  background: color-mix(in srgb, var(--color-club-primary) 12%, transparent);
-  color: var(--color-club-primary);
+  background: color-mix(in srgb, var(--color-club-primary) 20%, transparent);
+  color: var(--color-club-primary-light);
   font-weight: 500;
   text-decoration: none;
   white-space: nowrap;
-}
-@media (prefers-color-scheme: dark) {
-  .ProseMirror a.mention,
-  .blog-rendered a.mention {
-    color: var(--color-club-primary-light);
-  }
 }
 .blog-rendered-zoomable a.mention {
   cursor: pointer;
@@ -253,16 +368,10 @@ body {
   max-height: 16rem;
   overflow-y: auto;
   border-radius: 0.75rem;
-  border: 1px solid rgb(226 232 240); /* slate-200 */
-  background: white;
+  border: 1px solid var(--color-line);
+  background: var(--color-surface-2);
   padding: 0.25rem;
-  box-shadow: 0 10px 30px -10px rgb(0 0 0 / 0.3);
-}
-@media (prefers-color-scheme: dark) {
-  .mention-popup {
-    border-color: rgb(51 65 85); /* slate-700 */
-    background: rgb(15 23 42); /* slate-900 */
-  }
+  box-shadow: 0 20px 40px -12px rgb(0 0 0 / 0.6);
 }
 .mention-popup-item {
   display: flex;
@@ -292,12 +401,7 @@ body {
 }
 .mention-popup-name {
   font-size: 0.9rem;
-  color: rgb(30 41 59); /* slate-800 */
-}
-@media (prefers-color-scheme: dark) {
-  .mention-popup-name {
-    color: rgb(226 232 240); /* slate-200 */
-  }
+  color: var(--color-fg);
 }
 .mention-popup-empty {
   padding: 0.5rem 0.75rem;

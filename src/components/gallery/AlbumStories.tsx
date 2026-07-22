@@ -11,11 +11,11 @@ export function AlbumStories({ albums }: { albums: AlbumOut[] }) {
         <Link
           key={album.id}
           to={`/galerie/albums/${album.id}`}
-          className="flex w-20 flex-shrink-0 flex-col items-center gap-1.5"
+          className="group flex w-20 flex-shrink-0 flex-col items-center gap-1.5"
         >
-          <span className="rounded-full bg-gradient-to-br from-club-accent to-club-primary p-[2.5px]">
-            <span className="block rounded-full bg-white p-[2px] dark:bg-slate-900">
-              <span className="block h-16 w-16 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+          <span className="rounded-full bg-gradient-to-br from-club-primary-light to-club-primary p-[2.5px] transition-transform duration-200 group-hover:scale-105">
+            <span className="block rounded-full bg-[color:var(--color-ink)] p-[2px]">
+              <span className="block h-16 w-16 overflow-hidden rounded-full bg-[color:var(--color-surface-2)]">
                 {album.cover_image_url ? (
                   <img src={album.cover_image_url} alt="" loading="lazy" className="h-full w-full object-cover" />
                 ) : (
@@ -26,7 +26,7 @@ export function AlbumStories({ albums }: { albums: AlbumOut[] }) {
               </span>
             </span>
           </span>
-          <span className="w-full truncate text-center text-xs text-slate-600 dark:text-slate-300">
+          <span className="w-full truncate text-center text-xs text-[color:var(--color-muted)]">
             {album.title}
           </span>
         </Link>

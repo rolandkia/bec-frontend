@@ -1,11 +1,30 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
+import { ArrowLeft, Clock } from 'lucide-react'
 import { getBlogBySlug } from '../api/blogs'
 import { coverImageStyle } from '../api/types'
 import { BlogContent } from '../components/blog/BlogContent'
 import { Lightbox } from '../components/ui/Lightbox'
 import { Loading, ErrorMessage, NotFound } from '../components/ui/Status'
+
+/** Temps de lecture estimé (≈200 mots/min) à partir du HTML de l'article. */
+function readingMinutes(html: string): number {
+  const words = html
+    .replace(/<[^>]+>/g, ' ')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length
+  return Math.max(1, Math.round(words / 200))
+}
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+}
 
 export function BlogDetailPage() {
   const { slug } = useParams<{ slug: string }>()
@@ -30,38 +49,69 @@ export function BlogDetailPage() {
 
   if (!post) return null
 
-  return (
-    <article>
-      <Link to="/blog" className="mb-6 inline-block text-sm text-slate-500 underline dark:text-slate-400">
-        ← Retour au blog
-      </Link>
+  const minutes = readingMinutes(post.content_html)
+
+  const meta = (
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[color:var(--color-muted)]">
       {post.published_at && (
-        <p className="mb-2 text-sm font-medium text-club-accent">
-          {new Date(post.published_at).toLocaleDateString('fr-FR', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-          })}
-        </p>
+        <span className="font-semibold uppercase tracking-[0.14em] text-club-primary-light">
+          {formatDate(post.published_at)}
+        </span>
       )}
-      <h1 className="mb-3 text-3xl font-bold text-club-primary dark:text-club-primary-light">
-        {post.title}
-      </h1>
-      {post.summary && (
-        <p className="mb-6 text-lg text-slate-600 dark:text-slate-300">{post.summary}</p>
-      )}
-      {post.cover_image_url && (
-        <div className="mb-6 aspect-[5/2] w-full overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
+      <span className="inline-flex items-center gap-1.5">
+        <Clock className="h-4 w-4" />
+        {minutes} min de lecture
+      </span>
+    </div>
+  )
+
+  return (
+    <article className="animate-rise">
+      <Link
+        to="/blog"
+        className="mb-6 inline-flex items-center gap-1.5 text-sm text-[color:var(--color-muted)] transition hover:text-white"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Retour au blog
+      </Link>
+
+      {post.cover_image_url ? (
+        // Couverture « magazine » : photo plein-cadre + titre en surimpression
+        <div className="band mb-8 border border-[color:var(--color-line)]">
           <img
             src={post.cover_image_url}
             alt=""
-            className="h-full w-full cursor-zoom-in object-cover"
+            className="aspect-[16/10] w-full cursor-zoom-in object-cover sm:aspect-[16/7]"
             style={coverImageStyle(post.cover_position)}
             onClick={() => setCoverOpen(true)}
           />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[color:var(--color-ink)] via-[color:var(--color-ink)]/40 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 p-6 sm:p-10">
+            <div className="mx-auto max-w-3xl">
+              {meta}
+              <h1 className="mt-3 font-display text-3xl font-bold leading-tight text-white sm:text-5xl">
+                {post.title}
+              </h1>
+            </div>
+          </div>
         </div>
+      ) : (
+        <header className="mx-auto mb-8 max-w-3xl">
+          {meta}
+          <h1 className="mt-3 font-display text-3xl font-bold leading-tight text-white sm:text-5xl">
+            {post.title}
+          </h1>
+        </header>
       )}
-      <BlogContent html={post.content_html} />
+
+      <div className="mx-auto max-w-3xl">
+        {post.summary && (
+          <p className="text-lg leading-relaxed text-[color:var(--color-fg)]/90">{post.summary}</p>
+        )}
+        <hr className="rule-gold my-8" />
+        <BlogContent html={post.content_html} />
+      </div>
+
       {coverOpen && post.cover_image_url && (
         <Lightbox
           items={[{ url: post.cover_image_url, type: 'image' }]}

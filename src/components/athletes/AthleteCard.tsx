@@ -6,23 +6,47 @@ import { LevelBadge } from './LevelBadge'
 
 export function AthleteCard({ athlete }: { athlete: AthleteOut }) {
   const niveau = computeNiveauSaison(athlete.resultats, currentSaison())
+  const initials = `${athlete.prenom[0] ?? ''}${athlete.nom[0] ?? ''}`
 
   return (
     <Link
       to={`/athletes/${athlete.id}`}
-      className="card card-hover flex items-center gap-4 p-4"
+      className="group card card-hover block overflow-hidden p-0"
     >
-      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-club-primary-light to-club-primary font-bold text-white shadow-sm">
-        {athlete.prenom[0]}
-        {athlete.nom[0]}
+      <div className="relative aspect-[4/5] overflow-hidden">
+        {athlete.photo_url ? (
+          <img
+            src={athlete.photo_url}
+            alt={`${athlete.prenom} ${athlete.nom}`}
+            loading="lazy"
+            className="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+          />
+        ) : (
+          // Repli sans photo : monogramme sur dégradé rouge + blason club estompé
+          // (jamais de visage d'un tiers associé à un athlète nommé).
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-club-primary-light to-club-primary">
+            <img
+              src="/photos/logo.webp"
+              alt=""
+              aria-hidden
+              className="absolute inset-0 m-auto h-2/3 w-2/3 object-contain opacity-[0.10]"
+            />
+            <span className="font-display text-6xl font-bold uppercase text-white/90">
+              {initials}
+            </span>
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-[color:var(--color-ink)] via-[color:var(--color-ink)]/15 to-transparent" />
+        {niveau && <LevelBadge niveau={niveau} className="absolute right-3 top-3" />}
+        <div className="absolute inset-x-0 bottom-0 p-4">
+          <p className="truncate font-display text-lg font-bold text-white">
+            {athlete.prenom} {athlete.nom}
+          </p>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--color-muted)]">
+            {athlete.sexe}
+          </p>
+        </div>
       </div>
-      <div className="min-w-0">
-        <p className="truncate font-semibold text-club-primary dark:text-club-primary-light">
-          {athlete.prenom} {athlete.nom}
-        </p>
-        <p className="text-sm capitalize text-slate-500 dark:text-slate-400">{athlete.sexe}</p>
-      </div>
-      {niveau && <LevelBadge niveau={niveau} className="ml-auto shrink-0" />}
     </Link>
   )
 }

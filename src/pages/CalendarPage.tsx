@@ -4,6 +4,7 @@ import { listEvents } from '../api/events'
 import { splitEvents } from '../utils/events'
 import { EventRow } from '../components/calendar/EventRow'
 import { Loading, ErrorMessage } from '../components/ui/Status'
+import { motion, Reveal, RevealGroup, staggerItem } from '../components/ui/motion'
 
 function groupByMonth(items: EvenementOut[]) {
   const groups = new Map<string, EvenementOut[]>()
@@ -37,14 +38,15 @@ function CalendarSection({
   return (
     <section>
       <div className="mb-4 flex items-center gap-3">
-        <h2 className="font-display text-xl font-bold tracking-tight text-club-primary dark:text-club-primary-light">
+        <span className="h-5 w-1 rounded-full bg-club-primary" aria-hidden />
+        <h2 className="font-display text-xl font-bold uppercase tracking-[0.12em] text-white">
           {title}
         </h2>
         <span
-          className={`badge ${
+          className={`badge tabular ${
             accent
-              ? 'bg-club-accent/15 text-club-accent'
-              : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+              ? 'border border-club-primary/40 bg-club-primary/15 text-club-primary-light'
+              : 'bg-[color:var(--color-surface-2)] text-[color:var(--color-muted)]'
           }`}
         >
           {count}
@@ -52,21 +54,23 @@ function CalendarSection({
       </div>
 
       {items.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-slate-200 py-8 text-center text-slate-500 dark:border-slate-800 dark:text-slate-400">
+        <p className="rounded-xl border border-dashed border-[color:var(--color-line)] py-8 text-center text-[color:var(--color-muted)]">
           {emptyLabel}
         </p>
       ) : (
         <div className="space-y-6">
           {Array.from(groups.entries()).map(([month, monthEvents]) => (
             <div key={month}>
-              <h3 className="mb-2 text-sm font-semibold capitalize text-slate-400 dark:text-slate-500">
+              <h3 className="mb-2 text-xs font-semibold uppercase capitalize tracking-[0.14em] text-[color:var(--color-muted)]">
                 {month}
               </h3>
-              <div className="space-y-3">
+              <RevealGroup className="space-y-3">
                 {monthEvents.map((event) => (
-                  <EventRow key={event.id} event={event} />
+                  <motion.div key={event.id} variants={staggerItem}>
+                    <EventRow event={event} />
+                  </motion.div>
                 ))}
-              </div>
+              </RevealGroup>
             </div>
           ))}
         </div>
@@ -81,14 +85,14 @@ export function CalendarPage({ embedded = false }: { embedded?: boolean }) {
   const { upcoming, past } = splitEvents(eventsQuery.data ?? [])
 
   return (
-    <div className={`space-y-12 ${embedded ? '' : 'animate-rise'}`}>
+    <div className="space-y-12">
       {!embedded && (
-        <header>
+        <Reveal>
           <h1 className="section-title text-3xl">Calendrier des compétitions</h1>
-          <p className="mt-2 text-slate-500 dark:text-slate-400">
+          <p className="mt-2 text-[color:var(--color-muted)]">
             Les prochaines échéances du club, mises à jour automatiquement selon la date du jour.
           </p>
-        </header>
+        </Reveal>
       )}
 
       {eventsQuery.isLoading && <Loading />}

@@ -1,12 +1,17 @@
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
+import { ArrowLeft, ExternalLink } from 'lucide-react'
 import { getAthlete, getNiveau, getResultats, getRP } from '../api/athletes'
 import type { RPOut } from '../api/types'
 import { PerformanceTable } from '../components/athletes/PerformanceTable'
 import { PerformanceChart } from '../components/athletes/PerformanceChart'
 import { LevelBadge } from '../components/athletes/LevelBadge'
 import { Loading, ErrorMessage, NotFound } from '../components/ui/Status'
+import { computeNiveauSaison } from '../utils/niveau'
+import { currentSaison } from '../utils/saison'
+import { ffaProfileUrl } from '../utils/ffa'
+import { Reveal } from '../components/ui/motion'
 
 interface RPCard {
   discipline: string
@@ -110,36 +115,80 @@ export function AthleteDetailPage() {
   const athlete = athleteQuery.data
   if (!athlete) return null
 
+  const currentNiveau = computeNiveauSaison(athlete.resultats, currentSaison())
+  const initials = `${athlete.prenom[0] ?? ''}${athlete.nom[0] ?? ''}`
+
   return (
     <div className="animate-rise">
       <Link
         to="/athletes"
-        className="mb-6 inline-block text-sm text-slate-500 transition hover:text-club-primary dark:text-slate-400 dark:hover:text-club-primary-light"
+        className="mb-6 inline-flex items-center gap-1.5 text-sm text-[color:var(--color-muted)] transition hover:text-white"
       >
-        ← Retour aux athlètes
+        <ArrowLeft className="h-4 w-4" />
+        Retour aux athlètes
       </Link>
 
-      <div className="mb-10 flex items-center gap-4">
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-club-primary-light to-club-primary text-xl font-bold text-white shadow-md">
-          {athlete.prenom[0]}
-          {athlete.nom[0]}
-        </div>
-        <div>
-          <h1 className="font-display text-3xl font-bold tracking-tight text-club-primary dark:text-club-primary-light">
-            {athlete.prenom} {athlete.nom}
-          </h1>
-          <p className="text-sm capitalize text-slate-500 dark:text-slate-400">{athlete.sexe}</p>
+      {/* Hero athlète — portrait + identité */}
+      <div className="band mb-10 border border-[color:var(--color-line)] bg-[color:var(--color-surface)]">
+        <div className="grid md:grid-cols-[minmax(0,300px)_1fr]">
+          <div className="relative aspect-[4/5] overflow-hidden md:aspect-auto md:min-h-[320px]">
+            {athlete.photo_url ? (
+              <img
+                src={athlete.photo_url}
+                alt={`${athlete.prenom} ${athlete.nom}`}
+                className="h-full w-full object-cover object-top"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-club-primary-light to-club-primary">
+                <img
+                  src="/photos/logo.webp"
+                  alt=""
+                  aria-hidden
+                  className="absolute inset-0 m-auto h-2/3 w-2/3 object-contain opacity-[0.10]"
+                />
+                <span className="font-display text-7xl font-bold uppercase text-white/90">
+                  {initials}
+                </span>
+              </div>
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-[color:var(--color-surface)] via-transparent to-transparent md:bg-gradient-to-r" />
+          </div>
+          <div className="flex flex-col justify-center gap-4 p-6 sm:p-10">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-club-primary-light">
+              Athlète du club
+            </p>
+            <h1 className="font-display text-4xl font-bold leading-tight tracking-tight text-white sm:text-5xl">
+              {athlete.prenom} {athlete.nom}
+            </h1>
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-sm capitalize text-[color:var(--color-muted)]">
+                {athlete.sexe}
+              </span>
+              {currentNiveau && <LevelBadge niveau={currentNiveau} />}
+            </div>
+            <div className="mt-2">
+              <a
+                href={ffaProfileUrl(athlete.ffa_id)}
+                target="_blank"
+                rel="noreferrer"
+                className="btn-ffa"
+              >
+                Profil FFA
+                <ExternalLink className="h-4 w-4" />
+              </a>
+            </div>
+          </div>
         </div>
       </div>
 
-      <section className="mb-10">
+      <Reveal className="mb-10">
         <h2 className="section-title mb-4">Records personnels</h2>
         {(rpOfficielQuery.isLoading || rpToutesQuery.isLoading) && <Loading />}
         {(rpOfficielQuery.isError || rpToutesQuery.isError) && (
           <ErrorMessage message="Impossible de charger les records personnels." />
         )}
         {!rpOfficielQuery.isLoading && !rpToutesQuery.isLoading && rpCards.length === 0 && (
-          <p className="text-slate-500 dark:text-slate-400">Aucun record personnel pour le moment.</p>
+          <p className="text-[color:var(--color-muted)]">Aucun record personnel pour le moment.</p>
         )}
         {rpCards.length > 0 && (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -150,27 +199,31 @@ export function AthleteDetailPage() {
               if (!principale) return null
 
               return (
-                <div key={discipline} className="card card-hover p-4">
-                  <p className="text-sm font-semibold text-club-accent">{discipline}</p>
-                  <p className="mt-0.5 text-2xl font-bold text-club-primary dark:text-club-primary-light">
+                <div key={discipline} className="card card-hover p-5">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--color-muted)]">
+                    {discipline}
+                  </p>
+                  {/* Record officiel = distinction → OR (politique d'usage de l'or) */}
+                  <p className="stat mt-1 text-3xl text-club-accent">
                     {principale.raw_performance ?? principale.performance_valeur}
                   </p>
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  <p className="mt-1 text-xs text-[color:var(--color-muted)]">
                     {principale.date ? new Date(principale.date).toLocaleDateString('fr-FR') : '—'} ·{' '}
                     {principale.lieu ?? '—'}
                   </p>
 
                   {/* Marque non homologuée (vent favorable) : affichée en escalier
-                      sous le record officiel lorsqu'elle est meilleure. */}
+                      sous le record officiel lorsqu'elle est meilleure. Style
+                      neutre — l'or reste réservé au record OFFICIEL. */}
                   {officiel && nonHomologue && (
-                    <div className="mt-3 ml-4 border-l-2 border-amber-300 pl-3 dark:border-amber-700/60">
-                      <span className="badge bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400">
+                    <div className="mt-3 ml-1 border-l-2 border-[color:var(--color-line)] pl-3">
+                      <span className="badge bg-white/5 text-[color:var(--color-muted)] ring-1 ring-white/10">
                         Non homologué
                       </span>
-                      <p className="mt-1 text-lg font-bold text-slate-700 dark:text-slate-200">
+                      <p className="tabular mt-1 font-display text-lg font-bold text-white">
                         {nonHomologue.raw_performance ?? nonHomologue.performance_valeur}
                       </p>
-                      <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                      <p className="mt-0.5 text-xs text-[color:var(--color-muted)]">
                         {nonHomologue.date ? new Date(nonHomologue.date).toLocaleDateString('fr-FR') : '—'} ·{' '}
                         {nonHomologue.lieu ?? '—'}
                         {nonHomologue.vent != null && ` · vent ${nonHomologue.vent}`}
@@ -180,7 +233,7 @@ export function AthleteDetailPage() {
 
                   {!officiel && nonHomologue && (
                     <span
-                      className="badge mt-2 inline-flex bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400"
+                      className="badge mt-2 inline-flex bg-white/5 text-[color:var(--color-muted)] ring-1 ring-white/10"
                       title={`Non homologué (vent ${nonHomologue.vent ?? '?'} m/s)`}
                     >
                       Non homologué
@@ -191,29 +244,31 @@ export function AthleteDetailPage() {
             })}
           </div>
         )}
-      </section>
+      </Reveal>
 
       {niveauQuery.data && niveauQuery.data.length > 0 && (
-        <section className="mb-10">
-          <h2 className="section-title mb-4">Niveau par saison</h2>
-          <div className="flex flex-wrap gap-3">
+        <Reveal className="mb-10">
+          <h2 className="section-title mb-4">Progression par saison</h2>
+          <div className="flex gap-3 overflow-x-auto pb-1">
             {niveauQuery.data.map((n) => (
-              <span
+              <div
                 key={n.saison}
-                className="inline-flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400"
+                className="card flex min-w-[120px] shrink-0 flex-col items-center gap-2 px-4 py-3 text-center"
               >
-                <span className="font-medium">{n.saison}</span>
+                <span className="tabular text-xs font-semibold uppercase tracking-[0.12em] text-[color:var(--color-muted)]">
+                  {n.saison}
+                </span>
                 {n.niveau ? (
                   <LevelBadge niveau={n.niveau} />
                 ) : (
-                  <span className="badge bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                  <span className="badge bg-white/5 text-[color:var(--color-muted)] ring-1 ring-white/10">
                     —
                   </span>
                 )}
-              </span>
+              </div>
             ))}
           </div>
-        </section>
+        </Reveal>
       )}
 
       <section>
