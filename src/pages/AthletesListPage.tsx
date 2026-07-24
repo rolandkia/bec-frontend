@@ -85,13 +85,19 @@ export function AthletesListPage() {
           Aucun athlète ne correspond à ces critères.
         </p>
       )}
-      <RevealGroup className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-        {filtered.map((athlete) => (
-          <motion.div key={athlete.id} variants={staggerItem}>
-            <AthleteCard athlete={athlete} />
-          </motion.div>
-        ))}
-      </RevealGroup>
+      {/* Ne monter le RevealGroup qu'une fois les données présentes : sinon son
+          animation `whileInView` (once: true) se déclenche sur le conteneur vide
+          pendant le chargement, et les cartes ajoutées ensuite restent invisibles
+          (opacité 0) tout en étant cliquables. */}
+      {filtered.length > 0 && (
+        <RevealGroup className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          {filtered.map((athlete) => (
+            <motion.div key={athlete.id} variants={staggerItem}>
+              <AthleteCard athlete={athlete} />
+            </motion.div>
+          ))}
+        </RevealGroup>
+      )}
     </div>
   )
 }

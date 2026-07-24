@@ -1,12 +1,54 @@
 import { Link } from 'react-router-dom'
-import { CoachesPage } from './CoachesPage'
+import { useQuery } from '@tanstack/react-query'
 import { club } from '../data/club'
-import { bureau } from '../data/organigramme'
 import { partenaires, partenairesIntro } from '../data/partenaires'
+import { listCoachs } from '../api/coachs'
+import type { CoachOut } from '../api/types'
 import { Reveal, RevealGroup, motion, staggerItem } from '../components/ui/motion'
 import { Avatar } from '../components/ui/Avatar'
+import { Loading, ErrorMessage } from '../components/ui/Status'
+
+function MembreCard({ m }: { m: CoachOut }) {
+  return (
+    <motion.div
+      variants={staggerItem}
+      className="group card card-hover flex flex-col items-center p-8 text-center"
+    >
+      {/* Photo agrandie : anneau dégradé + zoom doux au survol. */}
+      <div className="mb-5 rounded-full bg-gradient-to-br from-club-primary via-club-primary-light to-club-accent-light p-[3px] shadow-lg shadow-club-primary/20 transition duration-500 group-hover:shadow-club-primary/40">
+        <div className="overflow-hidden rounded-full ring-4 ring-[color:var(--color-surface)]">
+          <div className="transition-transform duration-500 ease-out group-hover:scale-110">
+            <Avatar
+              src={m.photo_url ?? undefined}
+              alt={`${m.prenom} ${m.nom}`}
+              initials={`${m.prenom[0] ?? ''}${m.nom[0] ?? ''}`}
+              size="h-32 w-32 sm:h-36 sm:w-36"
+              rounded="rounded-full"
+              textSize="text-4xl"
+            />
+          </div>
+        </div>
+      </div>
+      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-club-accent-light">
+        {m.role}
+      </p>
+      <p className="mt-1 font-display text-lg font-bold text-white">
+        {m.prenom} {m.nom}
+      </p>
+      {m.bio && <p className="mt-2 text-sm text-[color:var(--color-muted)]">{m.bio}</p>}
+    </motion.div>
+  )
+}
 
 export function ClubPage() {
+  const { data: coachs, isLoading, isError } = useQuery({
+    queryKey: ['coachs'],
+    queryFn: listCoachs,
+  })
+
+  const bureau = (coachs ?? []).filter((c) => c.categorie === 'bureau')
+  const encadrement = (coachs ?? []).filter((c) => c.categorie === 'encadrement')
+
   return (
     <div className="animate-rise space-y-16">
       {/* En-tête éditorial */}
@@ -55,42 +97,38 @@ export function ClubPage() {
         </div>
       </section>
 
-      {/* Bureau */}
-      <section>
-        <h2 className="section-title mb-5">Le bureau</h2>
-        <RevealGroup className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {bureau.map((m) => (
-            <motion.div
-              key={m.role}
-              variants={staggerItem}
-              className="card card-hover flex flex-col items-center p-6 text-center"
-            >
-              <Avatar
-                src={m.photo}
-                alt={`${m.prenom} ${m.nom}`}
-                initials={`${m.prenom[0] ?? ''}${m.nom[0] ?? ''}`}
-                size="h-20 w-20"
-                textSize="text-xl"
-              />
-              <p className="mt-4 text-xs font-semibold uppercase tracking-[0.12em] text-club-accent-light">
-                {m.role}
-              </p>
-              <p className="font-display font-bold text-white">
-                {m.prenom} {m.nom}
-              </p>
-              {m.description && (
-                <p className="mt-1 text-sm text-[color:var(--color-muted)]">{m.description}</p>
-              )}
-            </motion.div>
-          ))}
-        </RevealGroup>
-      </section>
+      {/* Bureau + encadrement (issus de l'API /coachs) */}
+      {isLoading ? (
+        <Loading label="Chargement de l'équipe…" />
+      ) : isError ? (
+        <ErrorMessage message="Impossible de charger l'équipe du club." />
+      ) : (
+        <>
+          {/* Bureau */}
+          {bureau.length > 0 && (
+            <section>
+              <h2 className="section-title mb-5">Le bureau</h2>
+              <RevealGroup className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                {bureau.map((m) => (
+                  <MembreCard key={m.id} m={m} />
+                ))}
+              </RevealGroup>
+            </section>
+          )}
 
-      {/* Encadrement */}
-      <section>
-        <h2 className="section-title mb-5">L'encadrement</h2>
-        <CoachesPage embedded />
-      </section>
+          {/* Encadrement */}
+          {encadrement.length > 0 && (
+            <section>
+              <h2 className="section-title mb-5">L'encadrement</h2>
+              <RevealGroup className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                {encadrement.map((m) => (
+                  <MembreCard key={m.id} m={m} />
+                ))}
+              </RevealGroup>
+            </section>
+          )}
+        </>
+      )}
 
       {/* Partenaires */}
       <section>

@@ -93,8 +93,9 @@ export interface CoachOut {
   nom: string
   prenom: string
   role: string
+  categorie: 'bureau' | 'encadrement'
   disciplines: string[]
-  bio: string
+  bio: string | null
   photo_url: string | null
 }
 

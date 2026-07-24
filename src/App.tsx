@@ -6,7 +6,6 @@ import { InfosPratiquesPage } from './pages/InfosPratiquesPage'
 import { CompetitionsPage } from './pages/CompetitionsPage'
 import { ActualitePage } from './pages/ActualitePage'
 import { ContactPage } from './pages/ContactPage'
-import { CoachesPage } from './pages/CoachesPage'
 import { CalendarPage } from './pages/CalendarPage'
 import { BlogListPage } from './pages/BlogListPage'
 import { BlogDetailPage } from './pages/BlogDetailPage'
@@ -37,7 +36,6 @@ function App() {
         <Route path="contact" element={<ContactPage />} />
 
         {/* Pages internes (accès direct + réutilisées par les hubs) */}
-        <Route path="coachs" element={<CoachesPage />} />
         <Route path="calendrier" element={<CalendarPage />} />
         <Route path="blog" element={<BlogListPage />} />
         <Route path="blog/admin" element={<BlogAdminPage />} />

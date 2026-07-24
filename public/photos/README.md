@@ -22,6 +22,22 @@ Sélection curée depuis `../../../bec-pictures/`, optimisée en `.webp`
 
 Pour régénérer / ajouter : `cwebp -q 74 -resize <largeur> 0 source.png -o sortie.webp`.
 
+## Photos de profil — `profil/`
+
+Membres du club (bureau + encadrement), source unique côté front :
+`src/data/organigramme.ts` (section « Le bureau » et « L'encadrement » de la page
+Club). Converties depuis `bec-pictures/photo_profile/` en `.webp` (affichées en
+avatars ~80px, largeur 600px suffisante).
+
+| Fichier | Source | Rôle |
+|---|---|---|
+| `profil/moussa-moumini.webp` | `photo_profile/moussa_moumini.png` | Président |
+| `profil/stephanie-desqueyroux.webp` | `photo_profile/stephanie_desqueyroux.png` | Secrétaire |
+| `profil/ingrid-benedetti.webp` | `photo_profile/ingrid_benedetti.png` | Trésorière |
+| `profil/camille-bechet.webp` | `photo_profile/camille_bechet.png` | Entraîneur |
+
+Régénérer : `cwebp -q 74 -resize 600 0 <source> -o public/photos/profil/<prenom-nom>.webp`.
+
 ## Collection complète — `gallery/`
 
 Toutes les photos de `bec-pictures/` (33), regroupées par thème et converties
