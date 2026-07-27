@@ -68,7 +68,8 @@ export function PerformanceChart({ resultats }: { resultats: ResultatOut[] }) {
         {hasSameDayResults &&
           ' Plusieurs résultats le même jour (séries, finales…) : la courbe suit la meilleure performance.'}
       </p>
-      <div className="h-72 w-full">
+      {/* h-64 sur mobile : à 390 px, 288 px de haut écrasaient le tracé. */}
+      <div className="h-64 w-full sm:h-72">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={points} margin={{ top: 8, right: 12, bottom: 0, left: -8 }}>
             <defs>
@@ -89,17 +90,21 @@ export function PerformanceChart({ resultats }: { resultats: ResultatOut[] }) {
               tickFormatter={(t) =>
                 new Date(t).toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' })
               }
-              tick={{ fontSize: 12 }}
+              tick={{ fontSize: 10 }}
               tickMargin={8}
+              // « janv. 24 » demande ~50 px : sans minTickGap, l'axe se
+              // chevauchait dans les ~310 px de tracé disponibles à 390 px.
+              minTickGap={28}
+              interval="preserveStartEnd"
               stroke="currentColor"
               className="text-slate-400"
             />
             <YAxis
               domain={['auto', 'auto']}
-              tick={{ fontSize: 12 }}
+              tick={{ fontSize: 10 }}
               stroke="currentColor"
               className="text-slate-400"
-              width={44}
+              width={36}
             />
             <Tooltip
               cursor={{ stroke: 'var(--color-club-accent)', strokeWidth: 1 }}

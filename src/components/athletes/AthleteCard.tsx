@@ -11,7 +11,7 @@ export function AthleteCard({ athlete }: { athlete: AthleteOut }) {
   return (
     <Link
       to={`/athletes/${athlete.id}`}
-      className="group card card-hover block overflow-hidden p-0"
+      className="group card card-hover tap block overflow-hidden p-0"
     >
       <div className="relative aspect-[4/5] overflow-hidden">
         {athlete.photo_url ? (

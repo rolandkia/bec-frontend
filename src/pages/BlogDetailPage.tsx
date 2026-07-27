@@ -7,6 +7,8 @@ import { coverImageStyle } from '../api/types'
 import { BlogContent } from '../components/blog/BlogContent'
 import { Lightbox } from '../components/ui/Lightbox'
 import { Loading, ErrorMessage, NotFound } from '../components/ui/Status'
+import { motion, useReducedMotion } from '../components/ui/motion'
+import { useScroll } from 'framer-motion'
 
 /** Temps de lecture estimé (≈200 mots/min) à partir du HTML de l'article. */
 function readingMinutes(html: string): number {
@@ -29,6 +31,8 @@ function formatDate(iso: string): string {
 export function BlogDetailPage() {
   const { slug } = useParams<{ slug: string }>()
   const [coverOpen, setCoverOpen] = useState(false)
+  const reduce = useReducedMotion()
+  const { scrollYProgress } = useScroll()
 
   const { data: post, isLoading, isError, error } = useQuery({
     queryKey: ['blog', slug],
@@ -67,6 +71,17 @@ export function BlogDetailPage() {
 
   return (
     <article className="animate-rise">
+      {/* Fil de lecture : prolonge le liseré rouge de la navbar (signature du
+          club) et donne, sur un écran étroit, la seule indication d'avancement
+          qui manquait. Transform seul → composé, pas de reflow. */}
+      {!reduce && (
+        <motion.div
+          aria-hidden
+          style={{ scaleX: scrollYProgress }}
+          className="fixed inset-x-0 top-0 z-[60] h-0.5 origin-left bg-club-primary"
+        />
+      )}
+
       <Link
         to="/blog"
         className="mb-6 inline-flex items-center gap-1.5 text-sm text-[color:var(--color-muted)] transition hover:text-white"
@@ -76,29 +91,42 @@ export function BlogDetailPage() {
       </Link>
 
       {post.cover_image_url ? (
-        // Couverture « magazine » : photo plein-cadre + titre en surimpression
-        <div className="band mb-8 border border-[color:var(--color-line)]">
-          <img
-            src={post.cover_image_url}
-            alt=""
-            className="aspect-[16/10] w-full cursor-zoom-in object-cover sm:aspect-[16/7]"
-            style={coverImageStyle(post.cover_position)}
-            onClick={() => setCoverOpen(true)}
-          />
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[color:var(--color-ink)] via-[color:var(--color-ink)]/40 to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 p-6 sm:p-10">
+        // Couverture « magazine ». Sur 390 px, un titre en surimpression occupe
+        // 3 à 5 lignes et étouffe la photo : sous sm il passe DESSOUS, dans le
+        // flux. Surimpression à partir de sm. Un seul <h1> dans le DOM — seule
+        // sa position change (`relative` → `sm:absolute`).
+        <div className="band mb-6 border border-[color:var(--color-line)] sm:mb-8">
+          <div className="relative">
+            <img
+              src={post.cover_image_url}
+              alt=""
+              className="block aspect-[16/10] w-full cursor-zoom-in object-cover sm:aspect-[16/7]"
+              style={coverImageStyle(post.cover_position)}
+              onClick={() => setCoverOpen(true)}
+            />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[color:var(--color-ink)] via-[color:var(--color-ink)]/40 to-transparent" />
+          </div>
+          {/* px-4 sous sm : `.band` déborde la gouttière (-mx-4), il faut la
+              rendre au bloc de titre pour le réaligner sur la colonne de lecture. */}
+          <div className="relative px-4 pt-4 sm:absolute sm:inset-x-0 sm:bottom-0 sm:px-10 sm:pb-10 sm:pt-0">
             <div className="mx-auto max-w-3xl">
               {meta}
-              <h1 className="mt-3 font-display text-3xl font-bold leading-tight text-white sm:text-5xl">
+              <h1
+                className="mt-2 font-display font-bold leading-[1.1] text-white sm:mt-3"
+                style={{ fontSize: 'clamp(1.6rem, 7vw, 3rem)' }}
+              >
                 {post.title}
               </h1>
             </div>
           </div>
         </div>
       ) : (
-        <header className="mx-auto mb-8 max-w-3xl">
+        <header className="mx-auto mb-6 max-w-3xl sm:mb-8">
           {meta}
-          <h1 className="mt-3 font-display text-3xl font-bold leading-tight text-white sm:text-5xl">
+          <h1
+            className="mt-2 font-display font-bold leading-[1.1] text-white sm:mt-3"
+            style={{ fontSize: 'clamp(1.6rem, 7vw, 3rem)' }}
+          >
             {post.title}
           </h1>
         </header>
@@ -106,9 +134,11 @@ export function BlogDetailPage() {
 
       <div className="mx-auto max-w-3xl">
         {post.summary && (
-          <p className="text-lg leading-relaxed text-[color:var(--color-fg)]/90">{post.summary}</p>
+          <p className="text-base leading-relaxed text-[color:var(--color-fg)]/90 sm:text-lg">
+            {post.summary}
+          </p>
         )}
-        <hr className="rule-gold my-8" />
+        <hr className="rule-gold my-6 sm:my-8" />
         <BlogContent html={post.content_html} />
       </div>
 

@@ -5,7 +5,7 @@ export function AlbumCard({ album }: { album: AlbumOut }) {
   return (
     <Link
       to={`/galerie/albums/${album.id}`}
-      className="group card card-hover block overflow-hidden p-0"
+      className="group card card-hover tap block overflow-hidden p-0"
     >
       <div className="aspect-[4/3] w-full overflow-hidden bg-[color:var(--color-surface-2)]">
         {album.cover_image_url ? (

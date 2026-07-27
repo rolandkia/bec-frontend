@@ -15,7 +15,7 @@ export function MediaUploadPage() {
 
   return (
     <div className="animate-rise">
-      <h1 className="section-title mb-8 text-3xl">Ajouter des médias</h1>
+      <h1 className="section-title mb-8">Ajouter des médias</h1>
       <MediaForm onDone={handleDone} />
     </div>
   )

@@ -63,11 +63,14 @@ export function MediaFeed({
 
   // Span bento calculé depuis l'orientation : portraits en hauteur, paysages
   // larges sur 2 colonnes, et une grande tuile ponctuelle pour rythmer la grille.
+  // Les spans de COLONNE ne s'appliquent qu'à partir de sm : la grille mobile
+  // n'a que 2 colonnes, un `col-span-2` y consommait la ligne entière (chaque
+  // photo paysage en pleine largeur) et `grid-flow-row-dense` laissait des trous.
   function bentoSpan(m: MediaOut, i: number): string {
     const ar = m.width && m.height ? m.width / m.height : 1
-    if (i % 9 === 0 && ar > 0.85 && ar < 1.5) return 'col-span-2 row-span-2'
-    if (ar <= 0.72) return 'row-span-2'
-    if (ar >= 1.6) return 'col-span-2'
+    if (i % 9 === 0 && ar > 0.85 && ar < 1.5) return 'sm:col-span-2 sm:row-span-2'
+    if (ar <= 0.72) return 'row-span-2' // portrait : pertinent aussi sur mobile
+    if (ar >= 1.6) return 'sm:col-span-2'
     return ''
   }
 

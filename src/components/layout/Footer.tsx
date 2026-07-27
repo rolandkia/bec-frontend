@@ -12,10 +12,10 @@ const footerLinks = [
 
 export function Footer() {
   return (
-    <footer className="mt-20 border-t border-[color:var(--color-line)] bg-[color:var(--color-ink)]">
+    <footer className="mt-14 border-t border-[color:var(--color-line)] bg-[color:var(--color-ink)] sm:mt-20">
       <div className="h-px w-full bg-gradient-to-r from-transparent via-club-primary to-transparent opacity-70" />
-      <div className="mx-auto max-w-6xl px-4 py-12">
-        <div className="grid gap-10 md:grid-cols-3">
+      <div className="mx-auto max-w-6xl px-safe py-10 pb-safe sm:py-12">
+        <div className="grid gap-8 md:grid-cols-3 sm:gap-10">
           {/* Marque */}
           <div>
             <div className="flex items-center gap-2.5">
@@ -34,12 +34,13 @@ export function Footer() {
             <p className="mb-4 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--color-muted)]">
               Navigation
             </p>
-            <ul className="grid grid-cols-2 gap-x-6 gap-y-2.5">
+            {/* py-1.5 : la cible tactile de chaque lien passe de ~17 à ~38 px. */}
+            <ul className="grid grid-cols-2 gap-x-6">
               {footerLinks.map((link) => (
                 <li key={link.to}>
                   <Link
                     to={link.to}
-                    className="text-sm text-slate-300 transition-colors hover:text-club-primary-light"
+                    className="inline-block py-1.5 text-sm text-slate-300 transition-colors hover:text-club-primary-light"
                   >
                     {link.label}
                   </Link>

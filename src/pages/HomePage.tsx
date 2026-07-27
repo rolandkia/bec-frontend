@@ -47,7 +47,7 @@ function SectionHead({
   more?: string
 }) {
   return (
-    <div className="mb-6 flex items-end justify-between gap-4">
+    <div className="mb-5 flex flex-wrap items-end justify-between gap-x-4 gap-y-2 sm:mb-6">
       <div>
         {eyebrow && (
           <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-club-primary-light">
@@ -125,7 +125,8 @@ export function HomePage() {
   const featuredPhoto = featuredAthleteQuery.data?.photo_url
 
   return (
-    <div className="space-y-24">
+    // 96 px entre chaque section coûtaient ~250 px de vide sur un téléphone.
+    <div className="space-y-14 sm:space-y-24">
       {/* ═══ 1 · HERO ═══ */}
       <section className="band">
         <ParallaxImage
@@ -142,7 +143,7 @@ export function HomePage() {
           variants={staggerContainer(0.1, 0.1)}
           initial={reduce ? false : 'hidden'}
           animate="show"
-          className="relative max-w-2xl px-6 py-28 sm:px-12 sm:py-36 lg:py-44"
+          className="relative max-w-2xl px-6 py-20 sm:px-12 sm:py-36 lg:py-44"
         >
           <motion.span
             variants={fadeUp(20, 0.5)}
@@ -203,11 +204,14 @@ export function HomePage() {
             className="absolute inset-0 h-full w-full object-cover opacity-[0.12]"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-[color:var(--color-ink)] via-[color:var(--color-ink)]/90 to-[color:var(--color-ink)]/75" />
-          <div className="relative grid grid-cols-1 divide-y divide-[color:var(--color-line)] sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+          {/* Tableau de scores : 3 colonnes DÈS le mobile. Empilés, ces trois
+              chiffres occupaient ~300 px. `.stat-hero` (taille fluide) garantit
+              qu'aucune valeur ne se tronque dans une colonne de 120 px. */}
+          <div className="relative grid grid-cols-3 divide-x divide-[color:var(--color-line)]">
             {club.chiffresCles.map((c) => (
-              <div key={c.label} className="px-6 py-10 text-center">
-                <CountUp value={c.valeur} className="stat block text-5xl text-white sm:text-6xl" />
-                <p className="mt-3 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--color-muted)]">
+              <div key={c.label} className="px-2 py-8 text-center sm:px-6 sm:py-10">
+                <CountUp value={c.valeur} className="stat stat-hero block text-white" />
+                <p className="mt-2 text-[10px] font-semibold uppercase leading-tight tracking-[0.12em] text-[color:var(--color-muted)] sm:mt-3 sm:text-xs sm:tracking-[0.16em]">
                   {c.label}
                 </p>
               </div>
@@ -234,15 +238,17 @@ export function HomePage() {
                 className="absolute inset-0 h-full w-full object-cover object-center opacity-25"
               />
               <div className="absolute inset-0 bg-gradient-to-r from-[color:var(--color-ink)] via-[color:var(--color-ink)]/85 to-[color:var(--color-ink)]/55" />
-              <div className="relative grid items-center gap-6 p-6 sm:p-10 md:grid-cols-[auto_1fr]">
+              {/* Tuile date et libellé côte à côte dès le mobile : empilés, ils
+                  faisaient de cette bande le bloc le plus haut de la page. */}
+              <div className="relative grid grid-cols-[auto_1fr] items-center gap-4 p-5 sm:gap-6 sm:p-10">
                 {(() => {
                   const d = new Date(featuredEvent.date)
                   return (
-                    <div className="flex h-28 w-28 shrink-0 flex-col items-center justify-center rounded-2xl bg-club-primary text-white shadow-xl shadow-club-primary/30">
-                      <span className="tabular font-display text-5xl font-bold leading-none">
+                    <div className="flex h-20 w-20 shrink-0 flex-col items-center justify-center rounded-2xl bg-club-primary text-white shadow-xl shadow-club-primary/30 sm:h-28 sm:w-28">
+                      <span className="tabular font-display text-3xl font-bold leading-none sm:text-5xl">
                         {d.toLocaleDateString('fr-FR', { day: '2-digit' })}
                       </span>
-                      <span className="mt-1 text-xs font-semibold uppercase tracking-[0.15em]">
+                      <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.15em] sm:text-xs">
                         {d.toLocaleDateString('fr-FR', { month: 'short' })}
                       </span>
                     </div>
@@ -250,7 +256,7 @@ export function HomePage() {
                 })()}
                 <div className="min-w-0">
                   <span className="badge-live uppercase tracking-wide">À venir</span>
-                  <h3 className="mt-3 font-display text-3xl font-bold text-white sm:text-4xl">
+                  <h3 className="mt-2 font-display text-xl font-bold leading-tight text-white sm:mt-3 sm:text-4xl">
                     {featuredEvent.nom}
                   </h3>
                   <p className="mt-2 flex flex-wrap items-center gap-2 text-[color:var(--color-muted)]">
@@ -286,7 +292,7 @@ export function HomePage() {
             className="absolute inset-0 h-full w-full object-cover object-[center_20%]"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-[color:var(--color-ink)] via-[color:var(--color-ink)]/75 to-[color:var(--color-ink)]/20" />
-          <div className="relative max-w-xl px-6 py-16 sm:px-10 sm:py-24">
+          <div className="relative max-w-xl px-6 py-12 sm:px-10 sm:py-24">
             <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-club-accent-light">
               L'excellence récompensée
             </p>
@@ -309,34 +315,22 @@ export function HomePage() {
             </p>
             <h2 className="section-title">Classement du club</h2>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex rounded-full border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-0.5">
+          {/* Filtres empilés pleine largeur sur mobile (cf. `.segmented`). */}
+          <div className="flex w-full flex-col items-stretch gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
+            <div className="segmented">
               {(['homme', 'femme'] as const).map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => setSexe(s)}
-                  className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
-                    sexe === s
-                      ? 'bg-club-primary text-white shadow-sm'
-                      : 'text-[color:var(--color-muted)] hover:text-white'
-                  }`}
-                >
+                <button key={s} type="button" aria-pressed={sexe === s} onClick={() => setSexe(s)}>
                   {s === 'homme' ? 'Hommes' : 'Femmes'}
                 </button>
               ))}
             </div>
-            <div className="flex rounded-full border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-0.5">
+            <div className="segmented">
               {(['absolu', 'saison'] as const).map((p) => (
                 <button
                   key={p}
                   type="button"
+                  aria-pressed={periode === p}
                   onClick={() => setPeriode(p)}
-                  className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
-                    periode === p
-                      ? 'bg-club-primary text-white shadow-sm'
-                      : 'text-[color:var(--color-muted)] hover:text-white'
-                  }`}
                 >
                   {p === 'absolu' ? 'All-time' : 'Saison'}
                 </button>
@@ -344,7 +338,7 @@ export function HomePage() {
             </div>
             <Link
               to="/competitions?tab=records"
-              className="group inline-flex items-center gap-1 text-sm font-semibold text-club-accent-light transition hover:text-white"
+              className="group inline-flex items-center gap-1 self-start text-sm font-semibold text-club-accent-light transition hover:text-white sm:self-auto"
             >
               Records
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -362,9 +356,16 @@ export function HomePage() {
           </p>
         )}
         {podiums.length > 0 && (
-          <RevealGroup className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          // Rail glissable sur mobile : 4 podiums empilés faisaient ~700 px, et
+          // la carte suivante qui dépasse est l'affordance la plus lisible qui
+          // existe au doigt. Grille classique dès sm.
+          <RevealGroup className="rail -mx-4 flex gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0">
             {podiums.map((group) => (
-              <motion.div key={group.discipline} variants={staggerItem}>
+              <motion.div
+                key={group.discipline}
+                variants={staggerItem}
+                className="rail-item w-[78%] shrink-0 sm:w-auto"
+              >
                 <DisciplinePodium group={group} />
               </motion.div>
             ))}
@@ -375,65 +376,89 @@ export function HomePage() {
       {/* ═══ 5 · ATHLÈTE À LA UNE ═══ */}
       {featuredEntry && (
         <section>
-          <SectionHead
-            eyebrow="Athlète à la une"
-            title="Le visage de la performance"
-            to={`/athletes/${featuredEntry.athlete_id}`}
-            more="Voir le profil"
-          />
+          {/* Pas de lien « Voir le profil » ici : la carte porte déjà le CTA. */}
+          <SectionHead eyebrow="Athlète à la une" title="Le visage de la performance" />
           <Reveal>
             <div className="band border border-[color:var(--color-line)] bg-[color:var(--color-surface)]">
-              <div className="grid md:grid-cols-[minmax(0,340px)_1fr]">
-                {/* Portrait */}
-                <div className="relative aspect-[4/5] overflow-hidden md:aspect-auto md:min-h-[380px]">
+              {/* Sous md, le panneau d'identité est en SURIMPRESSION dans le bas
+                  du portrait : il sort du flux, donc la hauteur de la bande est
+                  celle de la photo (~490 px au lieu de ~830 px empilés) et la
+                  fiche tient sur un écran. À partir de md, `md:static` rend le
+                  panneau au flux et le split 2 colonnes reprend à l'identique
+                  (les `inset-*` sont ignorés en position statique). */}
+              <div className="relative grid md:grid-cols-[minmax(0,340px)_1fr]">
+                {/* Portrait. Le cadrage 4/5 (format affiche) ne se justifie que
+                    s'il y a une vraie photo ; sans elle, le monogramme n'a pas
+                    besoin de 490 px de haut sur mobile. */}
+                <div
+                  className={`relative overflow-hidden md:aspect-auto md:min-h-[380px] ${
+                    featuredPhoto ? 'aspect-[4/5]' : 'aspect-[16/10]'
+                  }`}
+                >
                   {featuredPhoto ? (
                     <img
                       src={featuredPhoto}
                       alt={`${featuredEntry.prenom} ${featuredEntry.nom}`}
+                      loading="lazy"
+                      decoding="async"
                       className="h-full w-full object-cover object-top"
                     />
                   ) : (
                     <Monogram
                       initials={`${featuredEntry.prenom[0]}${featuredEntry.nom[0]}`}
-                      className="h-full w-full text-7xl"
+                      className="h-full w-full items-start pt-6 text-5xl sm:text-7xl md:items-center md:pt-0"
                     />
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[color:var(--color-surface)] via-transparent to-transparent md:bg-gradient-to-r" />
+                  {/* Voile : sur mobile il porte la lisibilité du bloc en
+                      surimpression (opaque en bas) ; dès md il redevient un
+                      simple raccord horizontal vers le panneau. */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[color:var(--color-surface)] via-[color:var(--color-surface)]/70 to-transparent md:bg-gradient-to-r md:via-transparent" />
                 </div>
-                {/* Infos */}
-                <div className="flex flex-col justify-center gap-4 p-6 sm:p-10">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-club-primary-light">
+                {/* Identité */}
+                <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2 p-5 md:static md:justify-center md:gap-4 md:p-10">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-club-primary-light sm:text-xs">
                     {featuredDiscipline} · Meilleure performance
                   </p>
-                  <h3 className="font-display text-4xl font-bold leading-tight text-white sm:text-5xl">
-                    {featuredEntry.prenom} {featuredEntry.nom}
+                  {/* Écriture magazine sportif : prénom en appui, NOM en
+                      capitales — raccord avec le H1 du hero. */}
+                  <h3
+                    className="font-display font-bold leading-[1.02] text-white"
+                    style={{ fontSize: 'clamp(1.75rem, 7.5vw, 3rem)' }}
+                  >
+                    <span className="block text-[0.58em] font-semibold text-white/70">
+                      {featuredEntry.prenom}
+                    </span>
+                    <span className="block uppercase">{featuredEntry.nom}</span>
                   </h3>
-                  <div className="flex flex-wrap items-baseline gap-3">
-                    <span className="stat text-5xl text-club-accent sm:text-6xl">
+                  <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1.5">
+                    {/* OR = excellence méritée (politique d'usage de l'or) */}
+                    <span className="stat stat-hero text-club-accent">
                       {featuredEntry.raw_performance ?? featuredEntry.performance_valeur}
                     </span>
-                    <span className="text-sm uppercase tracking-wide text-[color:var(--color-muted)]">
+                    <span className="text-xs uppercase tracking-wide text-[color:var(--color-muted)] sm:text-sm">
                       {featuredEntry.epreuve}
                     </span>
+                    {featuredEntry.niveau && <LevelBadge niveau={featuredEntry.niveau} />}
                   </div>
-                  {featuredEntry.niveau && (
-                    <div>
-                      <LevelBadge niveau={featuredEntry.niveau} />
-                    </div>
-                  )}
-                  <div className="mt-2 flex flex-wrap gap-3">
-                    <Link to={`/athletes/${featuredEntry.athlete_id}`} className="btn-primary">
+                  <div className="mt-1 flex items-center gap-2 md:mt-2 md:gap-3">
+                    <Link
+                      to={`/athletes/${featuredEntry.athlete_id}`}
+                      className="btn-primary tap min-w-0 flex-1 sm:flex-none"
+                    >
                       Voir le profil
-                      <ArrowRight className="h-4 w-4" />
+                      <ArrowRight className="h-4 w-4 shrink-0" />
                     </Link>
                     {featuredAthleteQuery.data?.ffa_id && (
                       <a
                         href={ffaProfileUrl(featuredAthleteQuery.data.ffa_id)}
                         target="_blank"
                         rel="noreferrer"
-                        className="btn-ffa"
+                        className="btn-ffa tap shrink-0"
+                        aria-label="Profil FFA"
                       >
-                        Profil FFA
+                        {/* Libellé masqué sur mobile : deux CTA en toutes lettres
+                            ne tiennent pas sur une ligne dans 350 px. */}
+                        <span className="hidden sm:inline">Profil FFA</span>
                         <ExternalLink className="h-4 w-4" />
                       </a>
                     )}
@@ -456,7 +481,7 @@ export function HomePage() {
         {isLoading && <Loading />}
         {isError && <ErrorMessage message="Impossible de charger les articles." />}
         {posts && (
-          <RevealGroup className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <RevealGroup className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-4 md:grid-cols-3">
             {posts.slice(0, 3).map((post) => (
               <motion.div key={post.id} variants={staggerItem}>
                 <BlogCard post={post} />
@@ -487,7 +512,7 @@ export function HomePage() {
                 type="button"
                 onClick={() => setGalleryIndex(i)}
                 aria-label={`Agrandir : ${p.legende}`}
-                className="group relative block h-56 w-72 shrink-0 cursor-pointer overflow-hidden rounded-2xl sm:h-64 sm:w-96"
+                className="group tap rail-item relative block h-44 w-64 shrink-0 cursor-pointer overflow-hidden rounded-2xl sm:h-64 sm:w-96"
               >
                 <img
                   src={p.src}
@@ -495,8 +520,9 @@ export function HomePage() {
                   loading="lazy"
                   className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                <span className="absolute bottom-3 left-4 text-sm font-semibold text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                {/* Légende visible d'emblée au doigt (cf. MediaTile). */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent transition-opacity duration-300 hover-hover:opacity-0 group-hover:opacity-100" />
+                <span className="absolute bottom-3 left-4 right-3 truncate text-left text-sm font-semibold text-white transition-opacity duration-300 hover-hover:opacity-0 group-hover:opacity-100">
                   {p.legende}
                 </span>
               </button>
@@ -521,7 +547,7 @@ export function HomePage() {
         <SectionHead eyebrow="Ce qui nous anime" title="Nos valeurs" />
         <div className="grid gap-4 lg:grid-cols-[0.85fr_1.15fr]">
           {/* Panneau photo */}
-          <Reveal className="band relative min-h-[320px] border border-[color:var(--color-line)] lg:min-h-full">
+          <Reveal className="band relative min-h-[220px] border border-[color:var(--color-line)] sm:min-h-[320px] lg:min-h-full">
             <img
               src="/photos/concentration-02.webp"
               alt="Athlète concentré avant l'effort"
@@ -567,11 +593,11 @@ export function HomePage() {
             className="absolute inset-0 h-full w-full object-cover object-center opacity-30"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[color:var(--color-ink)] via-[color:var(--color-ink)]/80 to-[color:var(--color-ink)]/60" />
-          <div className="relative mx-auto max-w-2xl px-6 py-16 text-center sm:py-20">
+          <div className="relative mx-auto max-w-2xl px-6 py-12 text-center sm:py-20">
             <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-club-primary-light">
               Rejoignez le collectif
             </p>
-            <h2 className="font-display text-3xl font-bold text-white sm:text-4xl">
+            <h2 className="font-display text-2xl font-bold leading-tight text-white sm:text-4xl">
               De l'initiation à la haute performance
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-[color:var(--color-muted)]">
@@ -602,7 +628,7 @@ export function HomePage() {
                 href={p.url ?? '#'}
                 target={p.url ? '_blank' : undefined}
                 rel={p.url ? 'noreferrer' : undefined}
-                className="group card card-hover flex items-center justify-center p-6"
+                className="group card card-hover tap flex items-center justify-center p-6"
                 title={p.nom}
               >
                 <img src={p.logo} alt={p.nom} className="max-h-12 w-auto opacity-80 transition group-hover:opacity-100" />

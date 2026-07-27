@@ -88,7 +88,7 @@ export function CalendarPage({ embedded = false }: { embedded?: boolean }) {
     <div className="space-y-12">
       {!embedded && (
         <Reveal>
-          <h1 className="section-title text-3xl">Calendrier des compétitions</h1>
+          <h1 className="section-title">Calendrier des compétitions</h1>
           <p className="mt-2 text-[color:var(--color-muted)]">
             Les prochaines échéances du club, mises à jour automatiquement selon la date du jour.
           </p>

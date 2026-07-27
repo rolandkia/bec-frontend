@@ -179,10 +179,10 @@ export function BlogPostForm({
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <button type="button" className="btn-outline" disabled={isSaving} onClick={() => handleSubmit(false)}>
+        <button type="button" className="btn-outline tap" disabled={isSaving} onClick={() => handleSubmit(false)}>
           {submitLabelDraft}
         </button>
-        <button type="button" className="btn-primary" disabled={isSaving} onClick={() => handleSubmit(true)}>
+        <button type="button" className="btn-primary tap" disabled={isSaving} onClick={() => handleSubmit(true)}>
           {submitLabelPublish}
         </button>
         {onDelete && (

@@ -13,7 +13,7 @@ export function DisciplinePodium({ group }: { group: ClassementParDiscipline }) 
   if (top.length === 0) return null
 
   return (
-    <div className="card card-hover overflow-hidden">
+    <div className="card card-hover tap overflow-hidden">
       <div className="flex items-center gap-2.5 border-b border-[color:var(--color-line)] px-4 py-3">
         <span className="h-4 w-1 rounded-full bg-club-primary" aria-hidden />
         <span className="font-display text-sm font-bold uppercase tracking-[0.14em] text-white">
@@ -24,7 +24,7 @@ export function DisciplinePodium({ group }: { group: ClassementParDiscipline }) 
         {top.map((entry, i) => (
           <li
             key={`${entry.athlete_id}-${entry.rang}`}
-            className={`flex items-center gap-3 px-4 py-3 ${
+            className={`flex items-center gap-3 px-4 ${
               i === 0 ? 'bg-club-primary/[0.06]' : 'border-t border-[color:var(--color-line)]/60'
             }`}
           >
@@ -34,9 +34,12 @@ export function DisciplinePodium({ group }: { group: ClassementParDiscipline }) 
             >
               {entry.rang}
             </span>
+            {/* Le lien porte le padding vertical de la ligne : la cible tactile
+                fait toute la hauteur de la rangée (~46 px) au lieu des 20 px du
+                texte seul. */}
             <Link
               to={`/athletes/${entry.athlete_id}`}
-              className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-100 transition hover:text-club-primary-light"
+              className="min-w-0 flex-1 truncate py-3 text-sm font-semibold text-slate-100 transition hover:text-club-primary-light"
             >
               {entry.prenom} {entry.nom}
             </Link>

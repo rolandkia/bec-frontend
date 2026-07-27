@@ -40,8 +40,8 @@ export function BlogAdminPage() {
 
   return (
     <div className="animate-rise">
-      <div className="mb-8 flex items-center justify-between">
-        <h1 className="section-title text-3xl">Gestion des articles</h1>
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="section-title">Gestion des articles</h1>
         <Link to="/blog/nouveau" className="btn-primary">
           Nouvel article
         </Link>
@@ -81,7 +81,9 @@ export function BlogAdminPage() {
                       : `Créé le ${formatDate(post.created_at)}`}
                   </p>
                 </div>
-                <div className="flex items-center gap-3">
+                {/* flex-wrap : les 4 actions réclamaient ~400 px sur une seule
+                    ligne et débordaient l'écran d'un téléphone. */}
+                <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-2 sm:w-auto">
                   {isPublished && (
                     <Link
                       to={`/blog/${post.slug}`}
@@ -99,7 +101,14 @@ export function BlogAdminPage() {
                     disabled={exportingSlug === post.slug}
                     onClick={() => handleExportPdf(post)}
                   >
-                    {exportingSlug === post.slug ? 'Export…' : 'Exporter en PDF'}
+                    {exportingSlug === post.slug ? (
+                      'Export…'
+                    ) : (
+                      <>
+                        <span className="sm:hidden">PDF</span>
+                        <span className="hidden sm:inline">Exporter en PDF</span>
+                      </>
+                    )}
                   </button>
                   <button
                     type="button"

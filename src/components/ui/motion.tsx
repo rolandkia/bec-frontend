@@ -87,7 +87,13 @@ export function Reveal({
     <motion.div
       initial="hidden"
       whileInView="show"
-      viewport={{ once, amount: 0.2 }}
+      // `amount` est une FRACTION de l'élément : un bloc plus haut que quelques
+      // fois le viewport (une `band` mobile, une longue liste) ne peut jamais
+      // atteindre un seuil de 0.2 et resterait à opacité 0 tout en étant
+      // cliquable. `'some'` + marge basse négative déclenche quand le haut du
+      // bloc franchit 85 % du viewport : même ressenti, sans dépendre de la
+      // hauteur.
+      viewport={{ once, amount: 'some', margin: '0px 0px -15% 0px' }}
       variants={variants}
       transition={{ delay }}
       {...rest}
@@ -121,7 +127,9 @@ export function RevealGroup({
     <motion.div
       initial="hidden"
       whileInView="show"
-      viewport={{ once, amount: 0.15 }}
+      // Cf. Reveal : seuil indépendant de la hauteur du groupe (une grille de
+      // 12 cartes ne peut pas franchir 15 % d'elle-même).
+      viewport={{ once, amount: 'some', margin: '0px 0px -15% 0px' }}
       variants={staggerContainer(stagger)}
       {...rest}
     >
@@ -239,8 +247,13 @@ export function ParallaxImage({
 /* ───────────────────────────────────────────────────────────────────────────
    Marquee — défilement horizontal continu (transform seul, GPU) via une
    keyframe CSS (`.animate-marquee`, cf. index.css) : la pause au survol se fait
-   en pur CSS. Le contenu est dupliqué pour une boucle sans couture. Sous
-   reduced-motion → simple rangée scrollable (pas d'animation).
+   en pur CSS. Le contenu est dupliqué pour une boucle sans couture.
+
+   SOUS 640 px : pas d'animation, mais un rail glissable. Sans survol, la piste
+   ne peut pas être mise en pause — on demanderait à l'utilisateur de taper une
+   cible mouvante. Le clone, qui ne sert qu'à la boucle sans couture, n'est donc
+   pas monté (ni téléchargé) sur mobile.
+   Sous reduced-motion → simple rangée scrollable (pas d'animation).
    ─────────────────────────────────────────────────────────────────────────── */
 export function Marquee({
   children,
@@ -255,17 +268,17 @@ export function Marquee({
   const reduce = useReducedMotion()
 
   if (reduce) {
-    return <div className={`flex gap-4 overflow-x-auto ${className}`}>{children}</div>
+    return <div className={`rail flex gap-4 overflow-x-auto ${className}`}>{children}</div>
   }
 
   return (
-    <div className={`overflow-hidden ${className}`}>
+    <div className={`rail overflow-x-auto sm:overflow-hidden ${className}`}>
       <div
-        className="animate-marquee flex w-max gap-4"
+        className="flex w-max gap-4 sm:animate-marquee"
         style={{ '--marquee-duration': `${duration}s` } as CSSProperties}
       >
         <div className="flex shrink-0 gap-4">{children}</div>
-        <div className="flex shrink-0 gap-4" aria-hidden>
+        <div className="hidden shrink-0 gap-4 sm:flex" aria-hidden>
           {children}
         </div>
       </div>

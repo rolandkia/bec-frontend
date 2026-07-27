@@ -1,5 +1,5 @@
-import { useCallback, useEffect } from 'react'
-import type { ReactNode } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
+import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 
 export interface LightboxItem {
@@ -51,6 +51,22 @@ export function Lightbox({
     }
   }, [onClose, goPrev, goNext])
 
+  // Balayage horizontal — geste attendu sur une visionneuse mobile. Pointer
+  // events, aucune dépendance ; seuil de 50 px pour ne pas confondre avec un
+  // tap, et on ignore la souris pour ne pas gêner un cliquer-glisser.
+  const swipeStartX = useRef<number | null>(null)
+
+  function onPointerDown(e: ReactPointerEvent) {
+    swipeStartX.current = e.pointerType === 'mouse' ? null : e.clientX
+  }
+
+  function onPointerUp(e: ReactPointerEvent) {
+    if (swipeStartX.current === null) return
+    const dx = e.clientX - swipeStartX.current
+    swipeStartX.current = null
+    if (Math.abs(dx) > 50) (dx < 0 ? goNext : goPrev)()
+  }
+
   if (!current) return null
 
   return createPortal(
@@ -64,7 +80,7 @@ export function Lightbox({
       <button
         type="button"
         aria-label="Fermer"
-        className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-2xl text-white transition hover:bg-white/20"
+        className="tap absolute right-3 top-[max(0.75rem,env(safe-area-inset-top))] z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-2xl text-white transition hover:bg-white/20"
         onClick={onClose}
       >
         ×
@@ -73,10 +89,12 @@ export function Lightbox({
       {/* Zone média (le clic sur le média ne ferme pas) */}
       <div className="flex flex-1 items-center justify-center overflow-hidden p-4 sm:p-10">
         {count > 1 && (
+          // Flèches latérales réservées à sm : à 390 px, `left-2`/`right-2` les
+          // posait SUR la photo et masquait le sujet (cf. barre basse).
           <button
             type="button"
             aria-label="Précédent"
-            className="absolute left-2 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-3xl text-white transition hover:bg-white/20 sm:left-4"
+            className="absolute left-4 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-3xl text-white transition hover:bg-white/20 sm:flex"
             onClick={(e) => {
               e.stopPropagation()
               goPrev()
@@ -86,21 +104,27 @@ export function Lightbox({
           </button>
         )}
 
-        <div className="flex max-h-full max-w-full flex-col items-center" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="flex max-h-full max-w-full flex-col items-center"
+          style={{ touchAction: 'pan-y' }}
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={onPointerDown}
+          onPointerUp={onPointerUp}
+        >
           {current.type === 'video' ? (
             <video
               key={current.url}
               src={current.url}
               controls
               autoPlay
-              className="max-h-[80vh] max-w-full rounded-lg"
+              className="max-h-[72dvh] max-w-full rounded-lg"
             />
           ) : (
             <img
               key={current.url}
               src={current.url}
               alt=""
-              className="max-h-[80vh] max-w-full rounded-lg object-contain"
+              className="max-h-[72dvh] max-w-full rounded-lg object-contain"
             />
           )}
           {renderCaption && (
@@ -114,7 +138,7 @@ export function Lightbox({
           <button
             type="button"
             aria-label="Suivant"
-            className="absolute right-2 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-3xl text-white transition hover:bg-white/20 sm:right-4"
+            className="absolute right-4 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-3xl text-white transition hover:bg-white/20 sm:flex"
             onClick={(e) => {
               e.stopPropagation()
               goNext()
@@ -126,9 +150,32 @@ export function Lightbox({
       </div>
 
       {count > 1 && (
-        <p className="pb-4 text-center text-sm text-slate-400">
-          {index + 1} / {count}
-        </p>
+        // Barre basse : sur mobile elle porte les flèches (hors de la photo) de
+        // part et d'autre du compteur. Dès sm, seul le compteur reste.
+        <div
+          className="flex items-center justify-center gap-6 pb-safe pt-2 sm:pb-4"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            type="button"
+            aria-label="Précédent"
+            className="tap flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-3xl text-white transition hover:bg-white/20 sm:hidden"
+            onClick={goPrev}
+          >
+            ‹
+          </button>
+          <p className="tabular text-sm text-slate-400">
+            {index + 1} / {count}
+          </p>
+          <button
+            type="button"
+            aria-label="Suivant"
+            className="tap flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-3xl text-white transition hover:bg-white/20 sm:hidden"
+            onClick={goNext}
+          >
+            ›
+          </button>
+        </div>
       )}
     </div>,
     document.body,

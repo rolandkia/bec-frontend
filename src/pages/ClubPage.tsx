@@ -12,19 +12,19 @@ function MembreCard({ m }: { m: CoachOut }) {
   return (
     <motion.div
       variants={staggerItem}
-      className="group card card-hover flex flex-col items-center p-8 text-center"
+      className="group card card-hover tap flex flex-col items-center p-5 text-center sm:p-8"
     >
       {/* Photo agrandie : anneau dégradé + zoom doux au survol. */}
-      <div className="mb-5 rounded-full bg-gradient-to-br from-club-primary via-club-primary-light to-club-accent-light p-[3px] shadow-lg shadow-club-primary/20 transition duration-500 group-hover:shadow-club-primary/40">
+      <div className="mb-4 rounded-full bg-gradient-to-br from-club-primary via-club-primary-light to-club-accent-light p-[3px] shadow-lg shadow-club-primary/20 transition duration-500 group-hover:shadow-club-primary/40 sm:mb-5">
         <div className="overflow-hidden rounded-full ring-4 ring-[color:var(--color-surface)]">
           <div className="transition-transform duration-500 ease-out group-hover:scale-110">
             <Avatar
               src={m.photo_url ?? undefined}
               alt={`${m.prenom} ${m.nom}`}
               initials={`${m.prenom[0] ?? ''}${m.nom[0] ?? ''}`}
-              size="h-32 w-32 sm:h-36 sm:w-36"
+              size="h-24 w-24 sm:h-36 sm:w-36"
               rounded="rounded-full"
-              textSize="text-4xl"
+              textSize="text-3xl sm:text-4xl"
             />
           </div>
         </div>
@@ -60,11 +60,11 @@ export function ClubPage() {
           className="absolute inset-0 h-full w-full object-cover object-[center_25%] opacity-40"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-[color:var(--color-ink)] via-[color:var(--color-ink)]/85 to-[color:var(--color-ink)]/40" />
-        <div className="relative px-6 py-12 sm:px-10 sm:py-16">
+        <div className="relative px-6 py-9 sm:px-10 sm:py-16">
           <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-club-primary-light">
             Le club
           </p>
-          <h1 className="font-display text-4xl font-bold tracking-tight text-white sm:text-5xl">
+          <h1 className="font-display text-3xl font-bold leading-tight tracking-tight text-white sm:text-5xl">
             {club.sigle} Athlétisme
           </h1>
           <p className="mt-3 max-w-xl text-[color:var(--color-muted)]">
@@ -108,7 +108,9 @@ export function ClubPage() {
           {bureau.length > 0 && (
             <section>
               <h2 className="section-title mb-5">Le bureau</h2>
-              <RevealGroup className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {/* 2 par ligne dès le mobile : la fiche est courte (photo, rôle,
+                  nom), une colonne unique donnait une liste interminable. */}
+              <RevealGroup className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
                 {bureau.map((m) => (
                   <MembreCard key={m.id} m={m} />
                 ))}
@@ -120,7 +122,9 @@ export function ClubPage() {
           {encadrement.length > 0 && (
             <section>
               <h2 className="section-title mb-5">L'encadrement</h2>
-              <RevealGroup className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {/* 2 par ligne dès le mobile : la fiche est courte (photo, rôle,
+                  nom), une colonne unique donnait une liste interminable. */}
+              <RevealGroup className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
                 {encadrement.map((m) => (
                   <MembreCard key={m.id} m={m} />
                 ))}

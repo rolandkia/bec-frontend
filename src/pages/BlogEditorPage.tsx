@@ -12,7 +12,7 @@ export function BlogEditorPage() {
 
   return (
     <div className="animate-rise">
-      <h1 className="section-title mb-8 text-3xl">Nouvel article</h1>
+      <h1 className="section-title mb-8">Nouvel article</h1>
       <BlogPostForm onSubmit={handleSubmit} />
     </div>
   )

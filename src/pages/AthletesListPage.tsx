@@ -36,11 +36,11 @@ export function AthletesListPage() {
           className="absolute inset-0 h-full w-full object-cover object-[center_25%] opacity-40"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-[color:var(--color-ink)] via-[color:var(--color-ink)]/85 to-[color:var(--color-ink)]/40" />
-        <div className="relative px-6 py-12 sm:px-10 sm:py-16">
+        <div className="relative px-6 py-9 sm:px-10 sm:py-16">
           <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-club-primary-light">
             L'effectif
           </p>
-          <h1 className="font-display text-4xl font-bold tracking-tight text-white sm:text-5xl">
+          <h1 className="font-display text-3xl font-bold leading-tight tracking-tight text-white sm:text-5xl">
             Athlètes
           </h1>
           {athletes && (
@@ -60,18 +60,9 @@ export function AthletesListPage() {
           placeholder="Rechercher un athlète…"
           className="w-full min-w-0 rounded-full border border-[color:var(--color-line)] bg-[color:var(--color-surface)] px-4 py-2 text-sm text-[color:var(--color-fg)] shadow-sm transition placeholder:text-[color:var(--color-muted)] focus:border-club-primary focus:outline-none focus:ring-2 focus:ring-club-primary/30 sm:w-72"
         />
-        <div className="flex rounded-full border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-0.5">
+        <div className="segmented">
           {(['tous', 'homme', 'femme'] as const).map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => setSexe(s)}
-              className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
-                sexe === s
-                  ? 'bg-club-primary text-white shadow-sm'
-                  : 'text-[color:var(--color-muted)] hover:text-white'
-              }`}
-            >
+            <button key={s} type="button" aria-pressed={sexe === s} onClick={() => setSexe(s)}>
               {s === 'tous' ? 'Tous' : s === 'homme' ? 'Hommes' : 'Femmes'}
             </button>
           ))}

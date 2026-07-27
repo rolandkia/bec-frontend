@@ -150,7 +150,10 @@ export function MediaForm({
                         type="button"
                         aria-label={`Retirer ${file.name}`}
                         onClick={() => removeFile(i)}
-                        className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-sm text-white opacity-0 transition group-hover:opacity-100"
+                        // Toujours visible : en `opacity-0 group-hover:*`, ce
+                        // bouton était purement inatteignable au doigt (Tailwind
+                        // v4 gate `group-hover:` derrière @media (hover: hover)).
+                        className="tap absolute right-1 top-1 flex h-8 w-8 items-center justify-center rounded-full bg-black/70 text-base text-white shadow-sm backdrop-blur transition hover:bg-black/90"
                       >
                         ×
                       </button>
@@ -217,7 +220,7 @@ export function MediaForm({
         <AthletePicker value={athleteIds} onChange={setAthleteIds} />
       </div>
 
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-3">
         <button
           type="button"
           className="btn-primary"

@@ -47,55 +47,45 @@ export function RecordsPage({ embedded = false }: { embedded?: boolean }) {
 
   return (
     <div className={embedded ? '' : 'animate-rise'}>
-      {!embedded && <h1 className="section-title mb-6 text-3xl">Records du club</h1>}
+      {!embedded && <h1 className="section-title mb-6">Records du club</h1>}
 
-      <div className="mb-8 flex flex-wrap items-center gap-3">
-        <div className="flex rounded-full border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-0.5">
+      {/* Filtres : empilés pleine largeur sur mobile. Les deux groupes de
+          pilules côte à côte réclamaient ~365 px dans une colonne de 343 px —
+          c'était le débordement horizontal de /competitions?tab=records. */}
+      <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+        <div className="segmented">
           {(['homme', 'femme'] as const).map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => setSexe(s)}
-              className={`rounded-full px-4 py-1.5 text-sm font-medium capitalize transition ${
-                sexe === s
-                  ? 'bg-club-primary text-white shadow-sm'
-                  : 'text-[color:var(--color-muted)] hover:text-white'
-              }`}
-            >
+            <button key={s} type="button" aria-pressed={sexe === s} onClick={() => setSexe(s)}>
               {s === 'homme' ? 'Hommes' : 'Femmes'}
             </button>
           ))}
         </div>
 
-        <div className="flex rounded-full border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-0.5">
+        <div className="segmented">
           <button
             type="button"
+            aria-pressed={periode === 'absolu'}
             onClick={() => setPeriode('absolu')}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
-              periode === 'absolu'
-                ? 'bg-club-primary text-white shadow-sm'
-                : 'text-[color:var(--color-muted)] hover:text-white'
-            }`}
           >
-            Records absolus
+            {/* Libellés courts sous sm : « Records absolus » + « Meilleures
+                perfs 2025-2026 » ne tiennent pas côte à côte sur un téléphone. */}
+            <span className="sm:hidden">Absolus</span>
+            <span className="hidden sm:inline">Records absolus</span>
           </button>
           <button
             type="button"
+            aria-pressed={periode === 'saison'}
             onClick={() => setPeriode('saison')}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
-              periode === 'saison'
-                ? 'bg-club-primary text-white shadow-sm'
-                : 'text-[color:var(--color-muted)] hover:text-white'
-            }`}
           >
-            Meilleures perfs {SAISON_EN_COURS}
+            <span className="sm:hidden">{SAISON_EN_COURS}</span>
+            <span className="hidden sm:inline">Meilleures perfs {SAISON_EN_COURS}</span>
           </button>
         </div>
 
         <select
           value={effectiveDiscipline}
           onChange={(e) => setDiscipline(e.target.value)}
-          className="select"
+          className="select w-full sm:w-auto"
           aria-label="Filtrer par discipline"
         >
           <option value="">Toutes les disciplines</option>

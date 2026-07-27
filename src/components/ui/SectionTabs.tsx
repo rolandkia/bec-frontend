@@ -37,17 +37,16 @@ export function SectionTabs({
   onChange: (key: string) => void
 }) {
   return (
-    <div className="mb-8 flex rounded-full border border-slate-200 p-0.5 dark:border-slate-800">
+    // `.segmented` : cibles de 44 px au doigt, pleine largeur sur mobile, état
+    // actif annoncé par aria-selected, et bordure alignée sur --color-line.
+    <div className="segmented mb-8" role="tablist">
       {tabs.map((t) => (
         <button
           key={t.key}
           type="button"
+          role="tab"
+          aria-selected={active === t.key}
           onClick={() => onChange(t.key)}
-          className={`flex-1 rounded-full px-4 py-1.5 text-sm font-medium transition sm:flex-none ${
-            active === t.key
-              ? 'bg-club-primary text-white shadow-sm'
-              : 'text-slate-600 dark:text-slate-300'
-          }`}
         >
           {t.label}
         </button>

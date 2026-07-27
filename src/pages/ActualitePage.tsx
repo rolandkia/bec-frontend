@@ -12,7 +12,7 @@ export function ActualitePage() {
 
   return (
     <div className="animate-rise">
-      <h1 className="section-title mb-6 text-3xl">Actualité</h1>
+      <h1 className="section-title mb-6">Actualité</h1>
       <SectionTabs tabs={TABS} active={tab} onChange={setTab} />
       {tab === 'galerie' ? <GalleryPage embedded /> : <BlogListPage embedded />}
     </div>

@@ -12,7 +12,7 @@ export function CompetitionsPage() {
 
   return (
     <div className="animate-rise">
-      <h1 className="section-title mb-6 text-3xl">Compétitions</h1>
+      <h1 className="section-title mb-6">Compétitions</h1>
       <SectionTabs tabs={TABS} active={tab} onChange={setTab} />
       {tab === 'records' ? <RecordsPage embedded /> : <CalendarPage embedded />}
     </div>

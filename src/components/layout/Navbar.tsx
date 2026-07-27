@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { club } from '../../data/club'
@@ -17,11 +17,27 @@ export function Navbar() {
   const [open, setOpen] = useState(false)
   const reduce = useReducedMotion()
 
+  // Menu mobile ouvert : on verrouille le défilement de la page derrière et on
+  // referme à Échap (même contrat que <Lightbox>).
+  useEffect(() => {
+    if (!open) return
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+      document.body.style.overflow = previousOverflow
+    }
+  }, [open])
+
   return (
     <header className="sticky top-0 z-50 border-b border-[color:var(--color-line)] bg-[color:var(--color-ink)]/80 backdrop-blur-xl">
       {/* Fin liseré rouge : signature du club */}
       <div className="h-px w-full bg-gradient-to-r from-transparent via-club-primary to-transparent opacity-70" />
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-safe py-2.5 sm:py-3">
         <NavLink to="/" className="group flex items-center gap-2.5">
           <img
             src="/photos/logo.webp"
@@ -33,7 +49,9 @@ export function Navbar() {
           </span>
         </NavLink>
 
-        <nav className="hidden gap-6 md:flex lg:gap-8">
+        {/* Bascule à lg et non md : les 7 liens en `tracking-[0.14em]` plus le
+            bloc logo réclament ~820 px. À 768 px, la nav desktop débordait. */}
+        <nav className="hidden gap-6 lg:flex lg:gap-8">
           {links.map((link) => (
             <NavLink
               key={link.to}
@@ -65,10 +83,11 @@ export function Navbar() {
 
         <button
           type="button"
-          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[color:var(--color-line)] text-[color:var(--color-muted)] transition hover:border-club-primary hover:text-white md:hidden"
+          className="tap inline-flex h-11 w-11 items-center justify-center rounded-lg border border-[color:var(--color-line)] text-[color:var(--color-muted)] transition hover:border-club-primary hover:text-white lg:hidden"
           onClick={() => setOpen((o) => !o)}
-          aria-label="Ouvrir le menu"
+          aria-label={open ? 'Fermer le menu' : 'Ouvrir le menu'}
           aria-expanded={open}
+          aria-controls="nav-mobile"
         >
           <span className="relative block h-3.5 w-4">
             <span
@@ -87,13 +106,14 @@ export function Navbar() {
       <AnimatePresence>
         {open && (
           <motion.nav
+            id="nav-mobile"
             initial={reduce ? { opacity: 0 } : { opacity: 0, height: 0 }}
             animate={reduce ? { opacity: 1 } : { opacity: 1, height: 'auto' }}
             exit={reduce ? { opacity: 0 } : { opacity: 0, height: 0 }}
             transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-            className="overflow-hidden border-t border-[color:var(--color-line)] md:hidden"
+            className="overflow-hidden border-t border-[color:var(--color-line)] lg:hidden"
           >
-            <div className="flex flex-col gap-1 px-4 py-3">
+            <div className="flex flex-col gap-1 px-safe py-3 pb-safe">
               {links.map((link, i) => (
                 <motion.div
                   key={link.to}
@@ -106,7 +126,8 @@ export function Navbar() {
                     end={link.to === '/'}
                     onClick={() => setOpen(false)}
                     className={({ isActive }) =>
-                      `block rounded-lg px-3 py-2.5 text-sm font-semibold uppercase tracking-wide transition ${
+                      // py-3 → 44 px de cible tactile.
+                      `tap block rounded-lg px-3 py-3 text-sm font-semibold uppercase tracking-wide transition ${
                         isActive
                           ? 'bg-club-primary/15 text-white'
                           : 'text-[color:var(--color-muted)] hover:bg-[color:var(--color-surface-2)] hover:text-white'

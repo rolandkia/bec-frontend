@@ -129,13 +129,22 @@ export function AthleteDetailPage() {
       </Link>
 
       {/* Hero athlète — portrait + identité */}
-      <div className="band mb-10 border border-[color:var(--color-line)] bg-[color:var(--color-surface)]">
-        <div className="grid md:grid-cols-[minmax(0,300px)_1fr]">
-          <div className="relative aspect-[4/5] overflow-hidden md:aspect-auto md:min-h-[320px]">
+      <div className="band mb-8 border border-[color:var(--color-line)] bg-[color:var(--color-surface)] sm:mb-10">
+        {/* Même composition que « Athlète à la une » sur l'accueil : sous md,
+            l'identité passe en surimpression au bas du portrait (donc hors flux)
+            et la fiche tient sur un écran au lieu de ~800 px empilés. */}
+        <div className="relative grid md:grid-cols-[minmax(0,300px)_1fr]">
+          {/* Cadrage affiche 4/5 seulement s'il y a une photo (cf. accueil). */}
+          <div
+            className={`relative overflow-hidden md:aspect-auto md:min-h-[320px] ${
+              athlete.photo_url ? 'aspect-[4/5]' : 'aspect-[16/10]'
+            }`}
+          >
             {athlete.photo_url ? (
               <img
                 src={athlete.photo_url}
                 alt={`${athlete.prenom} ${athlete.nom}`}
+                decoding="async"
                 className="h-full w-full object-cover object-top"
               />
             ) : (
@@ -146,19 +155,25 @@ export function AthleteDetailPage() {
                   aria-hidden
                   className="absolute inset-0 m-auto h-2/3 w-2/3 object-contain opacity-[0.10]"
                 />
-                <span className="font-display text-7xl font-bold uppercase text-white/90">
+                <span className="mt-[-8%] font-display text-5xl font-bold uppercase text-white/90 sm:text-7xl md:mt-0">
                   {initials}
                 </span>
               </div>
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-[color:var(--color-surface)] via-transparent to-transparent md:bg-gradient-to-r" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[color:var(--color-surface)] via-[color:var(--color-surface)]/70 to-transparent md:bg-gradient-to-r md:via-transparent" />
           </div>
-          <div className="flex flex-col justify-center gap-4 p-6 sm:p-10">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-club-primary-light">
+          <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2 p-5 md:static md:justify-center md:gap-4 md:p-10">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-club-primary-light sm:text-xs">
               Athlète du club
             </p>
-            <h1 className="font-display text-4xl font-bold leading-tight tracking-tight text-white sm:text-5xl">
-              {athlete.prenom} {athlete.nom}
+            <h1
+              className="font-display font-bold leading-[1.02] tracking-tight text-white"
+              style={{ fontSize: 'clamp(1.75rem, 7.5vw, 3rem)' }}
+            >
+              <span className="block text-[0.58em] font-semibold text-white/70">
+                {athlete.prenom}
+              </span>
+              <span className="block uppercase">{athlete.nom}</span>
             </h1>
             <div className="flex flex-wrap items-center gap-3">
               <span className="text-sm capitalize text-[color:var(--color-muted)]">
@@ -166,12 +181,12 @@ export function AthleteDetailPage() {
               </span>
               {currentNiveau && <LevelBadge niveau={currentNiveau} />}
             </div>
-            <div className="mt-2">
+            <div className="mt-1 md:mt-2">
               <a
                 href={ffaProfileUrl(athlete.ffa_id)}
                 target="_blank"
                 rel="noreferrer"
-                className="btn-ffa"
+                className="btn-ffa tap"
               >
                 Profil FFA
                 <ExternalLink className="h-4 w-4" />
@@ -249,11 +264,11 @@ export function AthleteDetailPage() {
       {niveauQuery.data && niveauQuery.data.length > 0 && (
         <Reveal className="mb-10">
           <h2 className="section-title mb-4">Progression par saison</h2>
-          <div className="flex gap-3 overflow-x-auto pb-1">
+          <div className="rail -mx-4 flex gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
             {niveauQuery.data.map((n) => (
               <div
                 key={n.saison}
-                className="card flex min-w-[120px] shrink-0 flex-col items-center gap-2 px-4 py-3 text-center"
+                className="card rail-item flex min-w-[120px] shrink-0 flex-col items-center gap-2 px-4 py-3 text-center"
               >
                 <span className="tabular text-xs font-semibold uppercase tracking-[0.12em] text-[color:var(--color-muted)]">
                   {n.saison}

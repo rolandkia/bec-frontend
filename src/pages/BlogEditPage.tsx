@@ -41,7 +41,7 @@ export function BlogEditPage() {
 
   return (
     <div className="animate-rise">
-      <h1 className="section-title mb-8 text-3xl">Modifier l'article</h1>
+      <h1 className="section-title mb-8">Modifier l'article</h1>
       <BlogPostForm
         initial={post}
         onSubmit={handleSubmit}

@@ -9,7 +9,7 @@ export function MediaTile({ media, onClick }: { media: MediaOut; onClick: () => 
     <button
       type="button"
       onClick={onClick}
-      className="group relative block h-full w-full overflow-hidden rounded-xl bg-[color:var(--color-surface-2)]"
+      className="group tap relative block h-full w-full overflow-hidden rounded-xl bg-[color:var(--color-surface-2)]"
     >
       {isVideo ? (
         <>
@@ -38,7 +38,11 @@ export function MediaTile({ media, onClick }: { media: MediaOut; onClick: () => 
       )}
 
       {(media.description || media.lieu) && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 translate-y-2 bg-gradient-to-t from-black/85 via-black/35 to-transparent p-3 text-left opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+        // Base VISIBLE : Tailwind v4 place `group-hover:*` derrière
+        // @media (hover: hover), donc sur tactile la légende n'était jamais
+        // révélée — c'est tout le contenu textuel de l'onglet « Grille ». Le
+        // masquage-puis-révélation reste un bonus des pointeurs fins.
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent p-3 text-left transition-all duration-300 hover-hover:translate-y-2 hover-hover:opacity-0 group-hover:translate-y-0 group-hover:opacity-100">
           {media.description && (
             <p className="truncate text-sm font-semibold text-white">{media.description}</p>
           )}

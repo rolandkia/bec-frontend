@@ -39,7 +39,7 @@ export function GalleryPage({ embedded = false }: { embedded?: boolean }) {
   return (
     <div>
       <Reveal className={`mb-6 flex items-center ${embedded ? 'justify-end' : 'justify-between'}`}>
-        {!embedded && <h1 className="section-title text-3xl">Galerie</h1>}
+        {!embedded && <h1 className="section-title">Galerie</h1>}
         <Link to="/galerie/admin" className="btn-outline">
           Gérer la galerie
         </Link>
@@ -55,7 +55,7 @@ export function GalleryPage({ embedded = false }: { embedded?: boolean }) {
               type="button"
               onClick={() => setLightbox(i)}
               aria-label={`Agrandir : ${p.legende}`}
-              className={`group relative cursor-pointer overflow-hidden rounded-2xl ${tileSpan(i)}`}
+              className={`group tap relative cursor-pointer overflow-hidden rounded-2xl ${tileSpan(i)}`}
             >
               <img
                 src={p.src}
@@ -63,8 +63,10 @@ export function GalleryPage({ embedded = false }: { embedded?: boolean }) {
                 loading="lazy"
                 className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-              <span className="absolute bottom-3 left-4 text-sm font-semibold text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+              {/* Légende visible d'emblée au doigt : `group-hover:*` n'est jamais
+                  évalué sans pointeur fin (cf. MediaTile). */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent transition-opacity duration-300 hover-hover:opacity-0 group-hover:opacity-100" />
+              <span className="absolute bottom-3 left-4 right-3 truncate text-left text-sm font-semibold text-white transition-opacity duration-300 hover-hover:opacity-0 group-hover:opacity-100">
                 {p.legende}
               </span>
             </button>
@@ -77,17 +79,14 @@ export function GalleryPage({ embedded = false }: { embedded?: boolean }) {
 
       {albums && <AlbumStories albums={albums} />}
 
-      <div className="mb-8 flex rounded-full border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-0.5">
+      <div className="segmented mb-8" role="tablist">
         {TABS.map((t) => (
           <button
             key={t.key}
             type="button"
+            role="tab"
+            aria-selected={tab === t.key}
             onClick={() => setTab(t.key)}
-            className={`flex-1 rounded-full px-4 py-1.5 text-sm font-medium transition sm:flex-none ${
-              tab === t.key
-                ? 'bg-club-primary text-white shadow-sm'
-                : 'text-[color:var(--color-muted)] hover:text-white'
-            }`}
           >
             {t.label}
           </button>

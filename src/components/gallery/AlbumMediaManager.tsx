@@ -119,13 +119,14 @@ export function AlbumMediaManager({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4"
+      className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 p-0 sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
       onClick={onClose}
     >
+      {/* Feuille montante sur mobile, dialogue centré dès sm (cf. GalleryMediaPicker). */}
       <div
-        className="flex max-h-[85vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-slate-900"
+        className="flex max-h-[88dvh] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl sm:max-h-[85dvh] sm:rounded-2xl dark:bg-slate-900"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-slate-200 p-4 dark:border-slate-800">
@@ -142,21 +143,19 @@ export function AlbumMediaManager({
           </button>
         </div>
 
-        <div className="flex gap-2 border-b border-slate-200 px-4 py-3 dark:border-slate-800">
-          {(['gallery', 'blogs'] as const).map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => setSource(s)}
-              className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
-                source === s
-                  ? 'bg-club-primary text-white shadow-sm'
-                  : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
-              }`}
-            >
-              {s === 'gallery' ? 'Galerie' : 'Images des blogs'}
-            </button>
-          ))}
+        <div className="border-b border-slate-200 px-4 py-3 dark:border-slate-800">
+          <div className="segmented">
+            {(['gallery', 'blogs'] as const).map((s) => (
+              <button
+                key={s}
+                type="button"
+                aria-pressed={source === s}
+                onClick={() => setSource(s)}
+              >
+                {s === 'gallery' ? 'Galerie' : 'Images des blogs'}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4">
@@ -173,7 +172,8 @@ export function AlbumMediaManager({
               {!galleryQuery.isLoading && !galleryQuery.isError && media.length === 0 && (
                 <p className="text-slate-500 dark:text-slate-400">La galerie est vide.</p>
               )}
-              <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+              {/* 2 colonnes sur mobile : à 3, ~95 px par vignette. */}
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {media.map((m) => (
                   <SelectableTile
                     key={m.id}
@@ -196,7 +196,8 @@ export function AlbumMediaManager({
                   Aucune image d'article à importer (elles sont déjà dans la galerie).
                 </p>
               )}
-              <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+              {/* 2 colonnes sur mobile : à 3, ~95 px par vignette. */}
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {blogQuery.data?.map((bm) => (
                   <SelectableTile
                     key={bm.url}

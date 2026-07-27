@@ -6,6 +6,12 @@
    devient ainsi le style définitif (et l'emporte sur sa version claire). */
 @custom-variant dark (&);
 
+/* Sur téléphone, `:hover` reste « collé » après un tap (iOS) et tout contenu
+   révélé au survol est purement inatteignable au doigt. Les effets et contenus
+   de survol passent donc par `hover-hover:` ; le tactile reçoit à la place un
+   retour `active:`. */
+@custom-variant hover-hover (@media (hover: hover) and (pointer: fine));
+
 @theme {
   /* ROUGE du club = énergie / performance (CTA, accents). */
   --color-club-primary: #b5121b; /* rouge profond (brief) */
@@ -40,10 +46,29 @@
   --tooltip-border: rgba(38, 38, 38, 0.9);
 }
 
+html {
+  /* La navbar est `sticky` : sans cela, une ancre atterrit sous l'en-tête. */
+  scroll-padding-top: 4.5rem;
+}
+
 body {
   color: var(--color-fg);
   font-family: var(--font-sans);
-  min-height: 100vh;
+  /* dvh : la barre d'outils dynamique d'iOS Safari fait mentir 100vh. */
+  min-height: 100dvh;
+  background: var(--color-ink);
+}
+
+/* Atmosphère (halos rouges + or) posée sur une COUCHE FIXE composée plutôt que
+   via `background-attachment: fixed` sur le body : quatre dégradés radiaux
+   attachés forçaient un repaint plein écran à chaque frame de scroll sur
+   mobile (et se comportaient de façon erratique sur iOS Safari). */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
   background:
     /* halo or discret (excellence) — atmosphère, pas de chrome */
     radial-gradient(
@@ -61,9 +86,7 @@ body {
       900px 520px at -8% 4%,
       color-mix(in oklab, var(--color-club-primary) 7%, transparent),
       transparent 55%
-    ),
-    var(--color-ink);
-  background-attachment: fixed;
+    );
 }
 
 @layer base {
@@ -89,17 +112,87 @@ body {
     backdrop-filter: blur(8px);
   }
 
-  /* À combiner avec .card pour un effet de survol dynamique */
+  /* À combiner avec .card pour un effet de survol dynamique. Le soulèvement est
+     réservé aux vrais pointeurs : sur iOS, `:hover` reste collé après un tap et
+     la carte restait figée en position soulevée. Au doigt, retour = enfoncement. */
   .card-hover {
-    @apply hover:-translate-y-1;
     transition:
       transform 0.2s ease,
       border-color 0.2s ease,
       box-shadow 0.2s ease;
   }
-  .card-hover:hover {
-    border-color: color-mix(in oklab, var(--color-club-primary) 55%, var(--color-line));
-    box-shadow: 0 22px 48px -24px color-mix(in oklab, var(--color-club-primary) 55%, transparent);
+  .card-hover:active {
+    transform: scale(0.985);
+  }
+  /* Tailwind v4 place déjà `hover:*` derrière @media (hover: hover) ; les règles
+     écrites à la main comme celle-ci, non. Sans ce garde-fou, la carte restait
+     bordée de rouge après un tap sur iOS. */
+  @media (hover: hover) and (pointer: fine) {
+    .card-hover:hover {
+      transform: translateY(-0.25rem);
+      border-color: color-mix(in oklab, var(--color-club-primary) 55%, var(--color-line));
+      box-shadow: 0 22px 48px -24px color-mix(in oklab, var(--color-club-primary) 55%, transparent);
+    }
+  }
+
+  /* Retour TACTILE : sans survol, rien ne confirme l'appui. Légère compression.
+     `transform` est libre — les utilitaires Tailwind v4 passent par les
+     propriétés `translate`/`scale` —, donc `.tap` se compose avec `.card-hover`
+     et `group-hover:scale-*` sans conflit. */
+  .tap {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    transition: transform 0.12s ease;
+  }
+  .tap:active {
+    transform: scale(0.97);
+  }
+
+  /* Groupe de boutons « segmenté » (pilule) : contrôle le plus répété du site
+     (Hommes/Femmes, all-time/saison, onglets galerie…). Pleine largeur sur
+     mobile — il ne peut donc plus déborder —, largeur naturelle dès sm. L'état
+     actif est porté par `aria-pressed`/`aria-selected` : annoncé aux lecteurs
+     d'écran, et plus de ternaire de classes recopié à chaque appel. */
+  .segmented {
+    @apply flex w-full rounded-full border p-0.5 sm:w-auto;
+    border-color: var(--color-line);
+    background: var(--color-surface);
+  }
+  .segmented > button {
+    @apply min-w-0 flex-1 truncate rounded-full px-3 py-2.5 text-sm font-medium transition sm:flex-none sm:px-4 sm:py-1.5;
+    color: var(--color-muted);
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  .segmented > button[aria-pressed='true'],
+  .segmented > button[aria-selected='true'] {
+    @apply bg-club-primary text-white shadow-sm;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .segmented > button:hover {
+      color: var(--color-fg);
+    }
+    .segmented > button[aria-pressed='true']:hover,
+    .segmented > button[aria-selected='true']:hover {
+      color: #fff;
+    }
+  }
+
+  /* Rangée « rail » : sur mobile on FAIT GLISSER au doigt plutôt que d'empiler
+     verticalement (podiums, photos, saisons). La carte suivante qui dépasse est
+     l'affordance. À combiner avec `-mx-4 px-4 … sm:grid` côté composant. */
+  .rail {
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    scroll-padding-inline-start: 1rem;
+    scrollbar-width: none;
+  }
+  .rail::-webkit-scrollbar {
+    display: none;
+  }
+  .rail-item {
+    scroll-snap-align: start;
   }
 
   .btn {
@@ -121,13 +214,21 @@ body {
     border-color: var(--color-line);
     color: var(--color-fg);
   }
-  .btn-outline:hover {
-    border-color: var(--color-club-primary-light);
-    color: var(--color-club-primary-light);
+  @media (hover: hover) and (pointer: fine) {
+    .btn-outline:hover {
+      border-color: var(--color-club-primary-light);
+      color: var(--color-club-primary-light);
+    }
   }
 
+  /* Titre de section FLUIDE : les 12 `section-title text-3xl` du site
+     court-circuitaient le `text-2xl sm:text-3xl` de la classe (30 px sur un
+     écran de 390 px). Une seule source de vérité, en clamp. */
   .section-title {
-    @apply font-display text-2xl font-bold tracking-tight sm:text-3xl;
+    @apply font-display font-bold tracking-tight;
+    font-size: clamp(1.45rem, 4.4vw, 1.875rem);
+    line-height: 1.15;
+    text-wrap: balance;
     color: var(--color-fg);
   }
 
@@ -141,6 +242,26 @@ body {
     border-color: var(--color-line);
     background: var(--color-surface);
     color: var(--color-fg);
+  }
+
+  /* Au doigt, tous les boutons atteignent 44 px de haut (cible tactile) et
+     reçoivent un retour d'appui ; à la souris ils gardent leur gabarit compact
+     d'origine et leur soulèvement au survol. */
+  @media (hover: none) {
+    .btn,
+    .btn-primary,
+    .btn-accent,
+    .btn-outline,
+    .btn-ffa {
+      min-height: 2.75rem;
+    }
+    .btn:active,
+    .btn-primary:active,
+    .btn-accent:active,
+    .btn-outline:active,
+    .btn-ffa:active {
+      transform: scale(0.97);
+    }
   }
 
   /* ═══════════════════════════════════════════════════════════════════════
@@ -158,6 +279,14 @@ body {
     @apply font-display font-bold leading-[0.9] tracking-tight;
     font-variant-numeric: tabular-nums;
     font-feature-settings: 'tnum' 1;
+  }
+
+  /* Chiffre HÉROS (scoreboard de l'accueil, meilleure perf de l'athlète à la
+     une) : taille fluide, donc jamais tronqué dans une colonne de 130 px sur
+     mobile. Classe séparée de `.stat`, qui est toujours appelée avec un
+     `text-*` explicite (un font-size dans `.stat` créerait un conflit). */
+  .stat-hero {
+    font-size: clamp(2.25rem, 11vw, 4rem);
   }
 
   /* Section pleine largeur (déborde le conteneur max-w-6xl) pour les bandes
@@ -192,10 +321,12 @@ body {
     border-color: color-mix(in oklab, var(--color-club-accent) 45%, var(--color-line));
     color: var(--color-fg);
   }
-  .btn-ffa:hover {
-    border-color: var(--color-club-accent);
-    color: var(--color-club-accent-light);
-    box-shadow: 0 12px 30px -18px color-mix(in oklab, var(--color-club-accent) 60%, transparent);
+  @media (hover: hover) and (pointer: fine) {
+    .btn-ffa:hover {
+      border-color: var(--color-club-accent);
+      color: var(--color-club-accent-light);
+      box-shadow: 0 12px 30px -18px color-mix(in oklab, var(--color-club-accent) 60%, transparent);
+    }
   }
 
   /* Badge OR (record / distinction) — usage parcimonieux. */
@@ -227,14 +358,25 @@ body {
   }
 }
 
-@layer utilities {
-  .animate-rise {
-    animation: rise 0.5s ease-out both;
-  }
+/* `@utility` (et non `@layer utilities`) : c'est ce qui rend la classe
+   VARIANTABLE en Tailwind v4 — indispensable pour `sm:animate-marquee`. */
+@utility animate-rise {
+  animation: rise 0.5s ease-out both;
+}
+
+/* Gouttières respectant les encoches / coins arrondis (viewport-fit=cover). */
+@utility px-safe {
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
+@utility pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
 }
 
 /* Défilement horizontal continu du composant <Marquee>. Boucle sans couture :
-   le contenu est dupliqué, la piste translate de 0 → -50 %. Pause au survol. */
+   le contenu est dupliqué, la piste translate de 0 → -50 %. Pause au survol.
+   N'est appliqué qu'à partir de sm (`sm:animate-marquee`) : sans survol, on ne
+   peut pas mettre la piste en pause, et taper une cible mouvante est hostile. */
 @keyframes marquee-x {
   from {
     transform: translateX(0);
@@ -243,11 +385,11 @@ body {
     transform: translateX(-50%);
   }
 }
-@layer utilities {
-  .animate-marquee {
-    animation: marquee-x var(--marquee-duration, 40s) linear infinite;
-    will-change: transform;
-  }
+@utility animate-marquee {
+  animation: marquee-x var(--marquee-duration, 40s) linear infinite;
+  will-change: transform;
+}
+@media (hover: hover) and (pointer: fine) {
   .animate-marquee:hover {
     animation-play-state: paused;
   }
@@ -335,9 +477,11 @@ body {
   cursor: zoom-in;
   transition: opacity 0.15s ease;
 }
-.blog-rendered-zoomable figure img:hover,
-.blog-rendered-zoomable video:hover {
-  opacity: 0.9;
+@media (hover: hover) and (pointer: fine) {
+  .blog-rendered-zoomable figure img:hover,
+  .blog-rendered-zoomable video:hover {
+    opacity: 0.9;
+  }
 }
 
 /* ---------------------------------------------------------------------------
@@ -346,20 +490,27 @@ body {
    spécificité (0,1,1) l'emporte sur `prose-a:*` (Tailwind Typography). */
 .ProseMirror a.mention,
 .blog-rendered a.mention {
-  display: inline-block;
+  /* `inline` + `box-decoration-break: clone` : la pilule suit le flux et peut se
+     couper en fin de ligne SANS perdre son fond arrondi. En `inline-block` +
+     `nowrap`, un « @Prénom Nom » long poussait l'article hors de l'écran. Le
+     padding est purement horizontal : aucun effet sur la hauteur de ligne. */
+  display: inline;
   padding: 0 0.3em;
   border-radius: 0.375rem;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
   background: color-mix(in srgb, var(--color-club-primary) 20%, transparent);
   color: var(--color-club-primary-light);
   font-weight: 500;
   text-decoration: none;
-  white-space: nowrap;
 }
 .blog-rendered-zoomable a.mention {
   cursor: pointer;
 }
-.blog-rendered-zoomable a.mention:hover {
-  background: color-mix(in srgb, var(--color-club-primary) 22%, transparent);
+@media (hover: hover) and (pointer: fine) {
+  .blog-rendered-zoomable a.mention:hover {
+    background: color-mix(in srgb, var(--color-club-primary) 22%, transparent);
+  }
 }
 
 /* Liste déroulante des suggestions d'athlètes (montée dans document.body). */
@@ -670,6 +821,17 @@ body {
   }
 }
 
+/* Rythme de lecture resserré sur mobile : moins d'air entre les blocs, légendes
+   plus discrètes — l'article reste dense sans être serré. */
+@media (max-width: 640px) {
+  .blog-rendered {
+    --blog-block-gap: 0.7rem;
+  }
+  .blog-rendered figcaption {
+    font-size: 0.75rem;
+  }
+}
+
 /* ---------------------------------------------------------------------------
    Habillage de l'éditeur TipTap (barre d'outils, zone d'édition, poignées).
    Pas d'overflow:hidden sur .tiptap-editor : il clippait la toolbar flottante
@@ -874,9 +1036,13 @@ body {
 .tiptap-drag-grip:active {
   cursor: grabbing;
 }
-.tiptap-figure.is-editable:hover .tiptap-drag-grip,
 .tiptap-figure.is-editable.is-selected .tiptap-drag-grip {
   display: block;
+}
+@media (hover: hover) and (pointer: fine) {
+  .tiptap-figure.is-editable:hover .tiptap-drag-grip {
+    display: block;
+  }
 }
 
 /* Poignées de redimensionnement à la souris (aux 4 coins du média). */
@@ -910,6 +1076,62 @@ body {
   bottom: -7px;
   right: -7px;
   cursor: nwse-resize;
+}
+
+/* ─── Éditeur au DOIGT ───────────────────────────────────────────────────────
+   Le glisser-déposer et le redimensionnement sont déjà 100 % pointer-events
+   (avec `touch-action: none`) : ils FONCTIONNENT au doigt. Ils sont simplement
+   invisibles (poignée de glissement révélée au survol) et trop petits (14 px).
+   ─────────────────────────────────────────────────────────────────────────── */
+@media (hover: none) {
+  /* Aucun survol possible : la poignée s'affiche dès que le média est éditable. */
+  .tiptap-figure.is-editable .tiptap-drag-grip {
+    display: block;
+    padding: 0.3rem 0.85rem;
+    font-size: 1rem;
+  }
+  .tiptap-resize-handle {
+    width: 24px;
+    height: 24px;
+  }
+  .tiptap-resize-handle.nw {
+    top: -12px;
+    left: -12px;
+  }
+  .tiptap-resize-handle.ne {
+    top: -12px;
+    right: -12px;
+  }
+  .tiptap-resize-handle.sw {
+    bottom: -12px;
+    left: -12px;
+  }
+  .tiptap-resize-handle.se {
+    bottom: -12px;
+    right: -12px;
+  }
+  .tiptap-node-toolbar button {
+    height: 2.25rem;
+    width: 2.25rem;
+  }
+}
+
+/* Barre d'outils sur mobile : `flex-wrap` produisait 3 rangées sur 390 px, ce
+   qui repoussait la zone d'édition hors de l'écran. Rangée unique défilante. */
+@media (max-width: 639px) {
+  .tiptap-toolbar {
+    @apply flex-nowrap overflow-x-auto;
+    scrollbar-width: none;
+  }
+  .tiptap-toolbar::-webkit-scrollbar {
+    display: none;
+  }
+  .tb-btn {
+    @apply h-10 min-w-10 shrink-0;
+  }
+  .tb-sep {
+    @apply shrink-0;
+  }
 }
 
 .tiptap-caption-input {

@@ -46,13 +46,15 @@ export function GalleryMediaPicker({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4"
+      className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 p-0 sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
       onClick={onClose}
     >
+      {/* Sur mobile : feuille montante collée en bas (geste naturel, et on gagne
+          les 32 px de marge du dialogue centré). Dialogue centré dès sm. */}
       <div
-        className="flex max-h-[85vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-slate-900"
+        className="flex max-h-[88dvh] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl sm:max-h-[85dvh] sm:rounded-2xl dark:bg-slate-900"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-slate-200 p-4 dark:border-slate-800">
@@ -75,7 +77,9 @@ export function GalleryMediaPicker({
           {!isLoading && !isError && media.length === 0 && (
             <p className="text-slate-500 dark:text-slate-400">La galerie est vide.</p>
           )}
-          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+          {/* 2 colonnes sur mobile : à 3, les vignettes tombaient à ~95 px,
+              trop petit pour reconnaître une photo. */}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {media.map((m) => {
               const isSelected = selected.has(m.id)
               return (

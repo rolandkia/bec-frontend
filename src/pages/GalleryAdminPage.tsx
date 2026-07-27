@@ -42,8 +42,8 @@ export function GalleryAdminPage() {
 
   return (
     <div className="animate-rise space-y-10">
-      <div className="flex items-center justify-between">
-        <h1 className="section-title text-3xl">Gestion de la galerie</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="section-title">Gestion de la galerie</h1>
         <Link to="/galerie/nouveau" className="btn-primary">
           Ajouter des médias
         </Link>
@@ -51,7 +51,7 @@ export function GalleryAdminPage() {
 
       {/* Albums */}
       <section className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl font-semibold text-club-primary dark:text-club-primary-light">Albums</h2>
           {!creatingAlbum && !editingAlbum && (
             <button type="button" className="btn-outline" onClick={() => setCreatingAlbum(true)}>
@@ -97,7 +97,9 @@ export function GalleryAdminPage() {
                     {album.media_count} média{album.media_count > 1 ? 's' : ''}
                   </p>
                 </div>
-                <div className="flex items-center gap-3">
+                {/* flex-wrap : 4 actions (dont deux pilules) réclamaient plus
+                    de 400 px et débordaient l'écran d'un téléphone. */}
+                <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-2 sm:w-auto">
                   <Link
                     to={`/galerie/albums/${album.id}`}
                     className="text-sm text-slate-500 hover:underline dark:text-slate-400"

@@ -107,8 +107,8 @@ export function AlbumForm({
           </div>
         )}
       </div>
-      <div className="flex gap-3">
-        <button type="button" className="btn-primary" disabled={isSaving} onClick={handleSubmit}>
+      <div className="flex flex-wrap gap-3">
+        <button type="button" className="btn-primary tap" disabled={isSaving} onClick={handleSubmit}>
           {isSaving ? 'Enregistrement…' : existing ? 'Enregistrer' : "Créer l'album"}
         </button>
         {onCancel && (
