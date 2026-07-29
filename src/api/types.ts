@@ -273,3 +273,19 @@ export interface AlbumUpdate {
   description?: string | null
   cover_image_url?: string | null
 }
+
+/** Motif d'une demande envoyée depuis le formulaire de contact. */
+export type MotifDemande = 'inscription' | 'question' | 'autre'
+
+export interface DemandeInput {
+  motif: MotifDemande
+  prenom: string
+  nom: string
+  /** Facultatif comme `telephone`, mais le backend en exige au moins un des deux. */
+  email?: string | null
+  telephone?: string | null
+  message: string
+  consentement: boolean
+  /** Champ leurre anti-robot : toujours vide côté humain. */
+  piege?: string
+}

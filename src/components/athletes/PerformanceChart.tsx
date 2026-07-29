@@ -63,8 +63,8 @@ export function PerformanceChart({ resultats }: { resultats: ResultatOut[] }) {
     <div className="card p-4">
       <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">
         {isTemps
-          ? 'Temps (en secondes) — la courbe descend quand l’athlète progresse (temps plus court).'
-          : 'Distance / points — la courbe monte quand l’athlète progresse (valeur plus élevée).'}
+          ? 'Temps (en secondes) : la courbe descend quand l’athlète progresse (temps plus court).'
+          : 'Distance / points : la courbe monte quand l’athlète progresse (valeur plus élevée).'}
         {hasSameDayResults &&
           ' Plusieurs résultats le même jour (séries, finales…) : la courbe suit la meilleure performance.'}
       </p>
@@ -130,7 +130,7 @@ export function PerformanceChart({ resultats }: { resultats: ResultatOut[] }) {
                     {group.map((row, i) => (
                       <p key={i} style={{ fontWeight: row.best != null && group.length > 1 ? 600 : 400 }}>
                         {row.raw ?? row.valeur}
-                        {row.tour ? ` — ${row.tour}` : ''}
+                        {row.tour ? `, ${row.tour}` : ''}
                         {row.best != null && group.length > 1 ? ' (meilleure)' : ''}
                       </p>
                     ))}

@@ -67,13 +67,15 @@ src/
 | --- | --- |
 | `/` | Accueil |
 | `/club`, `/infos-pratiques`, `/competitions`, `/actualite`, `/contact` | Sections principales (hubs) |
-| `/calendrier` | Calendrier des compétitions |
+| `/palmares` | Histoire & palmarès du club (contenu statique, `data/palmares.ts`) |
 | `/blog`, `/blog/:slug` | Liste et détail des articles |
 | `/blog/admin`, `/blog/nouveau`, `/blog/:slug/modifier` | Administration éditoriale |
 | `/athletes`, `/athletes/:id` | Liste des athlètes et fiche détaillée (RP, résultats, niveau) |
-| `/records` | Records du club |
 | `/galerie`, `/galerie/albums/:id` | Galerie et albums |
 | `/galerie/admin`, `/galerie/nouveau`, `/galerie/media/:id/modifier` | Administration des médias |
+
+Anciennes URL conservées en redirection : `/calendrier` → `/competitions`, `/records` →
+`/athletes?tab=records` (les records sont un onglet du hub Athlètes).
 
 Les pages d'administration ne sont pas protégées par authentification : elles ne sont
 volontairement pas liées depuis la navigation.

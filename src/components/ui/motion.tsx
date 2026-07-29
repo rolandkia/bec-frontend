@@ -146,6 +146,11 @@ export const staggerItem = fadeUp()
    Accepte une chaîne (« 120+ », « 20+ », « 6 ») : le préfixe/suffixe non
    numérique est conservé, seule la partie chiffrée est animée. `prefers-
    reduced-motion` → affiche directement la valeur finale.
+
+   NB : sans consommateur depuis le retrait des « chiffres clés » de l'accueil.
+   Conservé comme primitive du module (à réutiliser pour un compteur issu de
+   l'API, pas pour un chiffre éditorial inventé). Surtout PAS pour une année :
+   animer 0 → 1968 n'a aucun sens.
    ─────────────────────────────────────────────────────────────────────────── */
 export function CountUp({
   value,

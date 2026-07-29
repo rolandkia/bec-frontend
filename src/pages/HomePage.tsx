@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowRight, ArrowUpRight, ChevronDown, ExternalLink, MapPin } from 'lucide-react'
 import { club } from '../data/club'
+import { jalonsAccueil } from '../data/palmares'
 import { partenaires, partenairesIntro } from '../data/partenaires'
 import { clubPhotos } from '../data/clubPhotos'
 import { ffaProfileUrl } from '../utils/ffa'
@@ -26,7 +27,6 @@ import {
   staggerContainer,
   fadeUp,
   staggerItem,
-  CountUp,
   ParallaxImage,
   Marquee,
 } from '../components/ui/motion'
@@ -194,28 +194,51 @@ export function HomePage() {
         )}
       </section>
 
-      {/* ═══ 2 · CHIFFRES CLÉS ═══ */}
+      {/* ═══ 2 · HISTOIRE & PALMARÈS (teaser — accent OR) ═══ */}
+      {/* Cette bande occupait auparavant la place n°4 (simple citation sur photo
+          de podium) et l'accueil ouvrait sur trois « chiffres clés » inventés.
+          Elle remonte ici avec des faits datés : l'ancienneté du club est
+          l'argument le plus fort de la page, autant l'annoncer sous le hero. */}
       <Reveal>
         <div className="band border border-[color:var(--color-line)]">
           <img
-            src="/photos/start-wide.webp"
-            alt=""
-            aria-hidden
-            className="absolute inset-0 h-full w-full object-cover opacity-[0.12]"
+            src="/photos/podium-01.webp"
+            alt="Athlètes du club sur le podium"
+            className="absolute inset-0 h-full w-full object-cover object-[center_20%]"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[color:var(--color-ink)] via-[color:var(--color-ink)]/90 to-[color:var(--color-ink)]/75" />
-          {/* Tableau de scores : 3 colonnes DÈS le mobile. Empilés, ces trois
-              chiffres occupaient ~300 px. `.stat-hero` (taille fluide) garantit
-              qu'aucune valeur ne se tronque dans une colonne de 120 px. */}
-          <div className="relative grid grid-cols-3 divide-x divide-[color:var(--color-line)]">
-            {club.chiffresCles.map((c) => (
-              <div key={c.label} className="px-2 py-8 text-center sm:px-6 sm:py-10">
-                <CountUp value={c.valeur} className="stat stat-hero block text-white" />
-                <p className="mt-2 text-[10px] font-semibold uppercase leading-tight tracking-[0.12em] text-[color:var(--color-muted)] sm:mt-3 sm:text-xs sm:tracking-[0.16em]">
-                  {c.label}
-                </p>
-              </div>
-            ))}
+          <div className="absolute inset-0 bg-gradient-to-r from-[color:var(--color-ink)] via-[color:var(--color-ink)]/80 to-[color:var(--color-ink)]/35" />
+          <div className="relative px-6 py-10 sm:px-10 sm:py-16">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-club-accent-light">
+              Depuis 1903
+            </p>
+            <p className="stat max-w-xl text-3xl text-white sm:text-4xl">
+              Un club, une histoire
+              <br />
+              de champions.
+            </p>
+            <hr className="rule-gold mt-6 max-w-[180px]" />
+            {/* 3 colonnes DÈS le mobile (même gabarit que l'ancien tableau de
+                scores) : empilés, ces jalons ajoutaient ~200 px de hauteur.
+                Panneau sombre propre plutôt que le seul voile dégradé : la
+                colonne de droite tombe sur la partie la plus claire de la photo
+                (banderole du podium), où « Finaliste olympique » devenait
+                illisible — surtout sur mobile, où la bande est plus étroite. */}
+            <div className="mt-8 grid grid-cols-3 divide-x divide-white/10 rounded-2xl border border-white/10 bg-[color:var(--color-ink)]/70 backdrop-blur-[3px]">
+              {jalonsAccueil.map((j) => (
+                <div key={j.annee} className="px-2 py-5 text-center sm:px-6 sm:py-6">
+                  <span className="stat block text-2xl text-club-accent-light sm:text-3xl">
+                    {j.annee}
+                  </span>
+                  <p className="mt-1.5 text-[10px] font-semibold uppercase leading-tight tracking-[0.12em] text-[color:var(--color-muted)] sm:mt-2 sm:text-xs sm:tracking-[0.14em]">
+                    {j.label}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <Link to="/palmares" className="btn-accent group mt-8">
+              Notre histoire &amp; palmarès
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </Link>
           </div>
         </div>
       </Reveal>
@@ -282,29 +305,6 @@ export function HomePage() {
           </p>
         )}
       </section>
-
-      {/* ═══ Bande immersive — PODIUM (rythme éditorial + accent OR) ═══ */}
-      <Reveal>
-        <div className="band border border-[color:var(--color-line)]">
-          <img
-            src="/photos/podium-01.webp"
-            alt="Athlètes du club sur le podium"
-            className="absolute inset-0 h-full w-full object-cover object-[center_20%]"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-[color:var(--color-ink)] via-[color:var(--color-ink)]/75 to-[color:var(--color-ink)]/20" />
-          <div className="relative max-w-xl px-6 py-12 sm:px-10 sm:py-24">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-club-accent-light">
-              L'excellence récompensée
-            </p>
-            <p className="stat text-3xl text-white sm:text-4xl">
-              Le podium n'est pas une fin,
-              <br />
-              c'est une habitude.
-            </p>
-            <hr className="rule-gold mt-6 max-w-[180px]" />
-          </div>
-        </div>
-      </Reveal>
 
       {/* ═══ 4 · DERNIERS RÉSULTATS / CLASSEMENT ═══ */}
       <section>

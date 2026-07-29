@@ -1,6 +1,7 @@
-import { Mail, MapPin, UserPlus, Info, ArrowRight } from 'lucide-react'
+import { Mail, MapPin, UserPlus } from 'lucide-react'
 import { club } from '../data/club'
 import { Reveal } from '../components/ui/motion'
+import { DemandeForm } from '../components/contact/DemandeForm'
 
 export function ContactPage() {
   return (
@@ -22,14 +23,17 @@ export function ContactPage() {
             Contact &amp; inscription
           </h1>
           <p className="mt-3 max-w-xl text-[color:var(--color-muted)]">
-            Une question ou l'envie de courir avec nous ? Voici comment nous joindre.
+            Une question ou l'envie de courir avec nous ? Écris-nous ici, on te répond.
           </p>
         </div>
       </div>
 
-      <Reveal className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {/* Coordonnées */}
-        <div className="card p-6 sm:p-8">
+      {/* Le formulaire porte la page (il remplace l'ancien lien mailto) ; les
+          coordonnées restent à côté comme voie de secours. */}
+      <Reveal className="grid grid-cols-1 gap-4 lg:grid-cols-[0.8fr_1.2fr]">
+        {/* Coordonnées — `lg:self-start` : la carte est bien plus courte que le
+            formulaire, étirée elle laissait un grand vide bordé. */}
+        <div className="card p-6 sm:p-8 lg:self-start">
           <h2 className="mb-4 font-display text-lg font-bold text-white">Nous contacter</h2>
           <ul className="space-y-4 text-sm">
             <li className="flex items-start gap-3">
@@ -46,32 +50,32 @@ export function ContactPage() {
               </a>
             </li>
           </ul>
+          {/* Voie directe : ouvre le client mail du visiteur avec l'objet
+              prérempli. Le formulaire reste la voie principale, mais certains
+              préfèrent écrire depuis leur propre boîte. */}
+          <a
+            href={`mailto:${club.contact.email}?subject=${encodeURIComponent('Contact depuis le site du BEC')}`}
+            className="btn-outline tap mt-6 w-full"
+          >
+            <Mail aria-hidden className="h-4 w-4" strokeWidth={2} />
+            Écrire un e-mail
+          </a>
+          <hr className="hairline my-6" />
+          <p className="text-sm leading-relaxed text-[color:var(--color-muted)]">
+            Pour une inscription, précise ton âge et la discipline qui t'intéresse : on te répond
+            avec les modalités d'adhésion, les tarifs et les documents à fournir.
+          </p>
         </div>
 
-        {/* Inscription */}
-        <div className="card flex flex-col p-6 sm:p-8">
-          <div className="mb-3 flex items-center gap-2">
+        {/* Formulaire de demande */}
+        <div className="card p-6 sm:p-8">
+          <div className="mb-5 flex items-center gap-2">
             <UserPlus className="h-5 w-5 text-club-accent-light" />
-            <h2 className="font-display text-lg font-bold text-white">Inscription</h2>
+            <h2 className="font-display text-lg font-bold text-white">Nous écrire</h2>
           </div>
-          <p className="text-sm leading-relaxed text-[color:var(--color-muted)]">
-            Les inscriptions en ligne seront bientôt disponibles. En attendant, écrivez-nous par
-            e-mail pour connaître les modalités d'adhésion, les tarifs et les documents nécessaires.
-          </p>
-          <a
-            href={`mailto:${club.contact.email}?subject=Demande d'inscription`}
-            className="btn-primary mt-6 self-start"
-          >
-            Demander à s'inscrire
-            <ArrowRight className="h-4 w-4" />
-          </a>
+          <DemandeForm />
         </div>
       </Reveal>
-
-      <p className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-[color:var(--color-line)] py-6 text-center text-sm text-[color:var(--color-muted)]">
-        <Info className="h-4 w-4 shrink-0" />
-        Un formulaire d'inscription en ligne sera ajouté ici prochainement.
-      </p>
     </div>
   )
 }

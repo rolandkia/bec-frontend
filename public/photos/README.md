@@ -10,7 +10,7 @@ Sélection curée depuis `../../../bec-pictures/`, optimisée en `.webp`
 | `start-wide.webp` | `photo_starting_block/Capture…11.25.27` | Fond de section large |
 | `race-wide.webp` | `photo_inside_race/Capture…11.22.50` | Fond de section large |
 | `concentration-01/02.webp` | `photo_concentration/` | Tuiles bento (portrait) |
-| `race-portrait.webp` | `photo_inside_race/Capture…11.24.05` | Tuile bento (portrait) |
+| `race-portrait.webp` | `photo_inside_race/Capture…11.24.05` | Tuile bento (portrait) + encart Clément Ducos de `/palmares` — **c'est lui** (dossard « CLEMENT DUCOS », maillot Tennessee, NCAA), donc traité comme photo de contenu avec un vrai `alt` |
 | `race-01.webp` | `photo_inside_race/Capture…11.23.10` | Tuile bento (paysage) |
 | `podium-01/02.webp` | `photo_podium/` | Tuiles bento / résultats |
 | `start-01.webp` | `photo_starting_block/Capture…11.23.20` | Tuile bento |

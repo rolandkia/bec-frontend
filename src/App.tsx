@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { Layout } from './components/layout/Layout'
 import { HomePage } from './pages/HomePage'
 import { ClubPage } from './pages/ClubPage'
+import { PalmaresPage } from './pages/PalmaresPage'
 import { InfosPratiquesPage } from './pages/InfosPratiquesPage'
 import { ActualitePage } from './pages/ActualitePage'
 import { ContactPage } from './pages/ContactPage'
@@ -28,6 +29,7 @@ function App() {
 
         {/* Sections principales */}
         <Route path="club" element={<ClubPage />} />
+        <Route path="palmares" element={<PalmaresPage />} />
         <Route path="infos-pratiques" element={<InfosPratiquesPage />} />
         {/* Compétitions = le calendrier (les records sont passés sous Athlètes). */}
         <Route path="competitions" element={<CalendarPage />} />

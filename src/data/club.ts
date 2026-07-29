@@ -18,11 +18,10 @@ export const club = {
       description: "Des coachs investis dans la formation des jeunes athlètes.",
     },
   ],
-  chiffresCles: [
-    { label: 'Athlètes licenciés', valeur: '120+' },
-    { label: 'Disciplines couvertes', valeur: '20+' },
-    { label: "Coachs diplômés", valeur: '6' },
-  ],
+  // Pas de « chiffres clés » ici : les valeurs affichées sur l'accueil
+  // (athlètes / disciplines / coachs) étaient inventées et contredisaient le
+  // compteur réel de /athletes, qui vient de l'API. L'accueil met désormais en
+  // avant le palmarès du club (`data/palmares.ts`), fait de dates vérifiables.
   contact: {
     adresse: 'Stade municipal, Bordeaux',
     email: 'contact@bec-athle.fr',

@@ -6,10 +6,13 @@ import { club } from '../../data/club'
 const links = [
   { to: '/', label: 'Accueil' },
   { to: '/club', label: 'Club' },
-  { to: '/infos-pratiques', label: 'Infos pratiques' },
+  { to: '/palmares', label: 'Palmarès' },
+  { to: '/infos-pratiques', label: 'Infos' },
   { to: '/competitions', label: 'Compétitions' },
   { to: '/actualite', label: 'Actualité' },
-  { to: '/athletes', label: 'Athlètes' },
+  // Les records vivent dans un onglet de /athletes : sans le dire ici, personne
+  // ne les trouve depuis la navigation.
+  { to: '/athletes', label: 'Athlètes & Records' },
   { to: '/contact', label: 'Contact' },
 ]
 
@@ -49,16 +52,22 @@ export function Navbar() {
           </span>
         </NavLink>
 
-        {/* Bascule à lg et non md : les 7 liens en `tracking-[0.14em]` plus le
-            bloc logo réclament ~820 px. À 768 px, la nav desktop débordait. */}
-        <nav className="hidden gap-6 lg:flex lg:gap-8">
+        {/* Bascule à lg et non md : les liens plus le bloc logo réclament ~800 px,
+            à 768 px la nav desktop débordait.
+            8 liens désormais (ajout de « Palmarès », et « Athlètes » devenu
+            « Athlètes & Records ») : pour rester sur une ligne à 1024 px, on a
+            resserré l'interlettrage (0.14em → 0.1em), réduit l'écart
+            (gap-8 → gap-5, gap-7 seulement à partir de xl) et raccourci
+            « Infos pratiques » en « Infos ». C'est la limite : un 9e lien
+            imposera de basculer la nav desktop à xl. */}
+        <nav className="hidden gap-6 lg:flex lg:gap-5 xl:gap-7">
           {links.map((link) => (
             <NavLink
               key={link.to}
               to={link.to}
               end={link.to === '/'}
               className={({ isActive }) =>
-                `group relative py-1 text-xs font-semibold uppercase tracking-[0.14em] transition-colors hover:text-white ${
+                `group relative whitespace-nowrap py-1 text-xs font-semibold uppercase tracking-[0.1em] transition-colors hover:text-white ${
                   isActive ? 'text-white' : 'text-[color:var(--color-muted)]'
                 }`
               }
