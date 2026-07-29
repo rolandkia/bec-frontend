@@ -52,7 +52,8 @@ jobs:
           username: ${{ secrets.VM_SSH_USER }}
           key: ${{ secrets.VM_SSH_KEY }}
           script: |
-            cd ~/bec-deploy
+            set -e
+            cd /home/kia_pro_roland/bec-deploy
             docker compose pull frontend
             docker compose up -d frontend
             docker image prune -f
