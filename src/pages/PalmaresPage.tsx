@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
-import { ArrowRight, ExternalLink, Trophy } from 'lucide-react'
-import { faitsPalmares, figureActuelle, histoireIntro } from '../data/palmares'
-import { ffaProfileUrl } from '../utils/ffa'
+import { ArrowRight } from 'lucide-react'
+import { faitsPalmares, figureActuelle, figureHistorique, histoireIntro } from '../data/palmares'
+import { FigureCard } from '../components/club/FigureCard'
 import { PalmaresTimeline } from '../components/club/PalmaresTimeline'
 import { Reveal } from '../components/ui/motion'
 
@@ -40,68 +40,24 @@ export function PalmaresPage() {
           </p>
           <h2 className="section-title">Le palmarès s'écrit encore</h2>
         </div>
-        <Reveal className="card overflow-hidden p-0">
-          <div className="grid gap-0 sm:grid-cols-[0.8fr_1.2fr]">
-            <div className="relative min-h-[240px] sm:min-h-full">
-              {/* Photo de contenu (et non décorative) : c'est bien Clément Ducos
-                  sur le cliché — dossard « CLEMENT DUCOS », maillot Tennessee,
-                  championnats NCAA. D'où un vrai `alt`. */}
-              <img
-                src={figureActuelle.photo}
-                alt={figureActuelle.photoAlt}
-                loading="lazy"
-                decoding="async"
-                className="absolute inset-0 h-full w-full object-cover object-[center_20%]"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[color:var(--color-ink)]/80 via-transparent to-transparent sm:bg-gradient-to-r sm:from-transparent sm:to-[color:var(--color-surface)]" />
-            </div>
-            <div className="p-6 sm:p-8">
-              <span className="badge-gold">
-                <Trophy aria-hidden className="h-3.5 w-3.5" strokeWidth={2} />
-                {figureActuelle.badge}
-              </span>
-              <h3 className="mt-3 font-display text-2xl font-bold text-white sm:text-3xl">
-                {figureActuelle.nom}
-              </h3>
-              <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--color-muted)]">
-                {figureActuelle.discipline}
-              </p>
-              <p className="mt-4 leading-relaxed text-[color:var(--color-muted)]">
-                {figureActuelle.texte}
-              </p>
-              <ul className="mt-5 space-y-2">
-                {figureActuelle.faits.map((f) => (
-                  <li key={f} className="flex items-start gap-2.5 text-sm text-[color:var(--color-fg)]">
-                    <span
-                      aria-hidden
-                      className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-club-accent"
-                    />
-                    <span>{f}</span>
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-6 flex flex-wrap gap-3">
-                <a
-                  href={ffaProfileUrl(figureActuelle.ffaId)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="btn-ffa"
-                >
-                  Profil FFA
-                  <ExternalLink aria-hidden className="h-4 w-4" strokeWidth={2} />
-                </a>
-                <a
-                  href={figureActuelle.wikipedia}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="btn-outline"
-                >
-                  Sa fiche Wikipédia
-                  <ExternalLink aria-hidden className="h-4 w-4" strokeWidth={2} />
-                </a>
-              </div>
-            </div>
-          </div>
+        <Reveal>
+          <FigureCard figure={figureActuelle} />
+        </Reveal>
+      </section>
+
+      {/* La championne olympique du club, en miroir de l'encart « Aujourd'hui » :
+          photo à droite, pour donner un rythme entre les deux portraits. Elle
+          n'existait jusqu'ici que sous forme de texte (une ligne de frise, une
+          phrase d'intro) alors que c'est le plus grand titre du palmarès. */}
+      <section>
+        <div className="mb-5 sm:mb-6">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-club-accent-light">
+            1968
+          </p>
+          <h2 className="section-title">La championne olympique du club</h2>
+        </div>
+        <Reveal direction="left">
+          <FigureCard figure={figureHistorique} imageSide="right" />
         </Reveal>
       </section>
 

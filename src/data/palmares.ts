@@ -16,8 +16,8 @@
  *  - le quatrième relayeur de 1969 est Alain Sarteur (et non « Sauteur »).
  *
  * TODO : compléter avec les archives du club (années 1950-1960, section
- * féminine) et brancher un champ `photo?` quand le club fournit ses visuels
- * d'époque (les photos trouvées sur le web sont sous droits).
+ * féminine). Le volet photo est amorcé : un cliché d'archive de 1968 alimente
+ * désormais l'encart Colette Besson (cf. `figureHistorique`).
  */
 
 export type FaitPalmares = {
@@ -30,6 +30,27 @@ export type FaitPalmares = {
   detail?: string
   /** Niveau international (JO, championnats d'Europe) → nœud et titre en OR. */
   majeur?: boolean
+}
+
+/**
+ * Portrait éditorial d'une figure du club — les encarts qui ouvrent /palmares
+ * (`components/club/FigureCard`). Deux aujourd'hui : la championne olympique de
+ * 1968 et le finaliste olympique de 2024.
+ */
+export type FigurePortrait = {
+  nom: string
+  discipline: string
+  badge: string
+  /** `ffa_id` athle.fr (cf. `utils/ffa.ts`). Absent pour les figures dont la
+   *  carrière est antérieure aux fiches en ligne → pas de bouton « Profil FFA ». */
+  ffaId?: string
+  wikipedia: string
+  photo: string
+  photoAlt: string
+  /** `object-position` du cliché : le sujet n'est pas toujours centré. */
+  photoPosition?: string
+  texte: string
+  faits: string[]
 }
 
 /** Paragraphe d'introduction de la page /palmares. */
@@ -172,7 +193,7 @@ export const jalonsAccueil = [
 
 /** L'athlète qui prolonge ce palmarès aujourd'hui (encart « Aujourd'hui », en
  *  ouverture de /palmares, avant la partie historique). */
-export const figureActuelle = {
+export const figureActuelle: FigurePortrait = {
   nom: 'Clément Ducos',
   discipline: '400 m haies',
   badge: 'Finaliste olympique 2024',
@@ -183,6 +204,7 @@ export const figureActuelle = {
   // « CLEMENT DUCOS », maillot Tennessee, championnats NCAA) → vrai `alt`.
   photo: '/photos/race-portrait.webp',
   photoAlt: 'Clément Ducos franchit une haie aux championnats NCAA',
+  photoPosition: 'center 20%',
   texte:
     "Né à Pessac en 2001, licencié au BEC, Clément Ducos a couru la finale du 400 m haies des " +
     "Jeux olympiques de Paris 2024, qualifié avec le deuxième temps des séries, derrière " +
@@ -192,5 +214,37 @@ export const figureActuelle = {
     'Record personnel : 47 s 42 (Chorzów, 2024)',
     'Champion de France du 400 m en salle (Miramas 2022)',
     '5ᵉ performeur français de tous les temps sur 400 m haies',
+  ],
+}
+
+/**
+ * La plus grande championne de l'histoire du club (encart « 1968 », juste sous
+ * l'encart « Aujourd'hui » : la page raconte ainsi les deux bouts du palmarès).
+ * Pas de `ffaId` — sa carrière est antérieure aux fiches athle.fr.
+ */
+export const figureHistorique: FigurePortrait = {
+  nom: 'Colette Besson',
+  discipline: '400 m',
+  badge: 'Championne olympique 1968',
+  wikipedia: 'https://fr.wikipedia.org/wiki/Colette_Besson',
+  // Cliché d'archive : elle porte le maillot du club (« BORDEAUX ÉTUDIANTS
+  // CLUB », dossard 37), d'où le choix de celui-là plutôt que d'un portrait
+  // sous maillot France — c'est une photo de contenu, donc vrai `alt`. Source
+  // 320×480 : douce sur écran 2×, mais le grain passe pour de l'archive.
+  photo: '/photos/besson-maillot-bec.webp',
+  photoAlt: 'Colette Besson en maillot du Bordeaux Étudiants Club, dossard 37',
+  photoPosition: 'center 20%',
+  texte:
+    "Le 16 octobre 1968, à Mexico, Colette Besson gagne le 400 m olympique en 52 s 03 : " +
+    "record d'Europe, et la seule médaille d'or française de l'athlétisme de ces Jeux. Née en " +
+    "1946 à Saint-Georges-de-Didonne, licenciée au BEC et entraînée par Yves Durand " +
+    "Saint-Omer, elle revient d'Athènes l'année suivante avec deux médailles d'argent et deux " +
+    "records du monde. Elle reste la plus grande championne de l'histoire du club.",
+  faits: [
+    "Championne olympique du 400 m (Mexico 1968), en 52 s 03 — record d'Europe",
+    "Seule médaille d'or française de l'athlétisme des Jeux de 1968",
+    "Double médaillée d'argent aux championnats d'Europe 1969 (Athènes) : 400 m en 51 s 7 et " +
+      '4 × 400 m en 3 min 30 s 8, deux records du monde',
+    'Championne de France du 400 m (1968, 1971, 1972) et du 800 m (1970, 1971)',
   ],
 }

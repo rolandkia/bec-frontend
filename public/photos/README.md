@@ -18,9 +18,17 @@ Sélection curée depuis `../../../bec-pictures/`, optimisée en `.webp`
 | `portrait-camille.webp` | `photo_profile/camille_bechet.png` | Portrait athlète |
 | `portrait-01.webp` | `photo_starting_block/IMG_6901.JPG` | Portrait athlète |
 | `portrait-02.webp` | `photo_inside_race/IMG_6907.JPG` | Portrait athlète |
+| `besson-maillot-bec.webp` | `photo_historique/collete-besson-portant-maillot-bec.webp` | Encart Colette Besson de `/palmares` — photo d'archive, donc de contenu avec un vrai `alt`. Retenue parce qu'elle y porte le maillot du club ; source 320×480 seulement, donc douce en 2× (pas de `-resize`, ça n'inventerait rien) |
 | `logo.webp` | `logo_bec.png` | Logo navbar/footer (alpha préservé) |
 
 Pour régénérer / ajouter : `cwebp -q 74 -resize <largeur> 0 source.png -o sortie.webp`.
+
+Trois autres archives de Colette Besson dorment dans
+`bec-pictures/photo_historique/` sans être converties : le portrait N&B de 1968
+(667×1000, le plus net, mais maillot France), le podium de Mexico (1024×580) et
+la réception triomphale à Bordeaux (`.bmp` — `cwebp` ne le lit pas, passer par
+`sips -s format png`). La dernière est en paysage et ferait une bien meilleure
+bande pleine largeur qu'une colonne de carte.
 
 ## Photos de profil — `profil/`
 

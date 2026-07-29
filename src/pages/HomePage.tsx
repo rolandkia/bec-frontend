@@ -1,21 +1,19 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowRight, ArrowUpRight, ChevronDown, ExternalLink, MapPin } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, ChevronDown, MapPin } from 'lucide-react'
 import { club } from '../data/club'
 import { jalonsAccueil } from '../data/palmares'
 import { partenaires, partenairesIntro } from '../data/partenaires'
 import { clubPhotos } from '../data/clubPhotos'
-import { ffaProfileUrl } from '../utils/ffa'
 import { parseLocalDate, splitEvents } from '../utils/events'
 import { Lightbox } from '../components/ui/Lightbox'
 import { EventRow } from '../components/calendar/EventRow'
-import { getClassements, getAthlete } from '../api/athletes'
+import { getClassements } from '../api/athletes'
 import { listEvents } from '../api/events'
 import type { ClassementParDiscipline, Sexe } from '../api/types'
 import { currentSaison } from '../utils/saison'
 import { DisciplinePodium } from '../components/athletes/DisciplinePodium'
-import { LevelBadge } from '../components/athletes/LevelBadge'
 import { listBlogs } from '../api/blogs'
 import { BlogCard } from '../components/blog/BlogCard'
 import { Loading, ErrorMessage } from '../components/ui/Status'
@@ -69,18 +67,6 @@ function SectionHead({
   )
 }
 
-/** Pastille monogramme (repli quand aucune photo n'est disponible). */
-function Monogram({ initials, className = '' }: { initials: string; className?: string }) {
-  return (
-    <div
-      className={`flex items-center justify-center bg-gradient-to-br from-club-primary-light to-club-primary font-display font-bold uppercase text-white ${className}`}
-      aria-hidden
-    >
-      {initials}
-    </div>
-  )
-}
-
 export function HomePage() {
   const [sexe, setSexe] = useState<Sexe>('homme')
   const [periode, setPeriode] = useState<'absolu' | 'saison'>('absolu')
@@ -113,16 +99,6 @@ export function HomePage() {
   const podiums = DISCIPLINES_ACCUEIL.map((disc) => byDiscipline.get(disc)).filter(
     (d): d is ClassementParDiscipline => d !== undefined && d.classement.length > 0,
   )
-
-  // Athlète à la une : n°1 de la discipline phare affichée (dépend du toggle H/F).
-  const featuredEntry = podiums[0]?.classement[0]
-  const featuredDiscipline = podiums[0]?.discipline
-  const featuredAthleteQuery = useQuery({
-    queryKey: ['athlete', featuredEntry?.athlete_id],
-    queryFn: () => getAthlete(featuredEntry!.athlete_id),
-    enabled: featuredEntry != null,
-  })
-  const featuredPhoto = featuredAthleteQuery.data?.photo_url
 
   return (
     // 96 px entre chaque section coûtaient ~250 px de vide sur un téléphone.
@@ -373,104 +349,7 @@ export function HomePage() {
         )}
       </section>
 
-      {/* ═══ 5 · ATHLÈTE À LA UNE ═══ */}
-      {featuredEntry && (
-        <section>
-          {/* Pas de lien « Voir le profil » ici : la carte porte déjà le CTA. */}
-          <SectionHead eyebrow="Athlète à la une" title="Le visage de la performance" />
-          <Reveal>
-            <div className="band border border-[color:var(--color-line)] bg-[color:var(--color-surface)]">
-              {/* Sous md, le panneau d'identité est en SURIMPRESSION dans le bas
-                  du portrait : il sort du flux, donc la hauteur de la bande est
-                  celle de la photo (~490 px au lieu de ~830 px empilés) et la
-                  fiche tient sur un écran. À partir de md, `md:static` rend le
-                  panneau au flux et le split 2 colonnes reprend à l'identique
-                  (les `inset-*` sont ignorés en position statique). */}
-              <div className="relative grid md:grid-cols-[minmax(0,340px)_1fr]">
-                {/* Portrait. Le cadrage 4/5 (format affiche) ne se justifie que
-                    s'il y a une vraie photo ; sans elle, le monogramme n'a pas
-                    besoin de 490 px de haut sur mobile. */}
-                <div
-                  className={`relative overflow-hidden md:aspect-auto md:min-h-[380px] ${
-                    featuredPhoto ? 'aspect-[4/5]' : 'aspect-[16/10]'
-                  }`}
-                >
-                  {featuredPhoto ? (
-                    <img
-                      src={featuredPhoto}
-                      alt={`${featuredEntry.prenom} ${featuredEntry.nom}`}
-                      loading="lazy"
-                      decoding="async"
-                      className="h-full w-full object-cover object-top"
-                    />
-                  ) : (
-                    <Monogram
-                      initials={`${featuredEntry.prenom[0]}${featuredEntry.nom[0]}`}
-                      className="h-full w-full items-start pt-6 text-5xl sm:text-7xl md:items-center md:pt-0"
-                    />
-                  )}
-                  {/* Voile : sur mobile il porte la lisibilité du bloc en
-                      surimpression (opaque en bas) ; dès md il redevient un
-                      simple raccord horizontal vers le panneau. */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[color:var(--color-surface)] via-[color:var(--color-surface)]/70 to-transparent md:bg-gradient-to-r md:via-transparent" />
-                </div>
-                {/* Identité */}
-                <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2 p-5 md:static md:justify-center md:gap-4 md:p-10">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-club-primary-light sm:text-xs">
-                    {featuredDiscipline} · Meilleure performance
-                  </p>
-                  {/* Écriture magazine sportif : prénom en appui, NOM en
-                      capitales — raccord avec le H1 du hero. */}
-                  <h3
-                    className="font-display font-bold leading-[1.02] text-white"
-                    style={{ fontSize: 'clamp(1.75rem, 7.5vw, 3rem)' }}
-                  >
-                    <span className="block text-[0.58em] font-semibold text-white/70">
-                      {featuredEntry.prenom}
-                    </span>
-                    <span className="block uppercase">{featuredEntry.nom}</span>
-                  </h3>
-                  <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1.5">
-                    {/* OR = excellence méritée (politique d'usage de l'or) */}
-                    <span className="stat stat-hero text-club-accent">
-                      {featuredEntry.raw_performance ?? featuredEntry.performance_valeur}
-                    </span>
-                    <span className="text-xs uppercase tracking-wide text-[color:var(--color-muted)] sm:text-sm">
-                      {featuredEntry.epreuve}
-                    </span>
-                    {featuredEntry.niveau && <LevelBadge niveau={featuredEntry.niveau} />}
-                  </div>
-                  <div className="mt-1 flex items-center gap-2 md:mt-2 md:gap-3">
-                    <Link
-                      to={`/athletes/${featuredEntry.athlete_id}`}
-                      className="btn-primary tap min-w-0 flex-1 sm:flex-none"
-                    >
-                      Voir le profil
-                      <ArrowRight className="h-4 w-4 shrink-0" />
-                    </Link>
-                    {featuredAthleteQuery.data?.ffa_id && (
-                      <a
-                        href={ffaProfileUrl(featuredAthleteQuery.data.ffa_id)}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="btn-ffa tap shrink-0"
-                        aria-label="Profil FFA"
-                      >
-                        {/* Libellé masqué sur mobile : deux CTA en toutes lettres
-                            ne tiennent pas sur une ligne dans 350 px. */}
-                        <span className="hidden sm:inline">Profil FFA</span>
-                        <ExternalLink className="h-4 w-4" />
-                      </a>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Reveal>
-        </section>
-      )}
-
-      {/* ═══ 6 · DERNIERS ARTICLES ═══ */}
+      {/* ═══ 5 · DERNIERS ARTICLES ═══ */}
       <section>
         <SectionHead
           eyebrow="Actualité"
@@ -496,7 +375,7 @@ export function HomePage() {
         )}
       </section>
 
-      {/* ═══ 7 · EN IMAGES (galerie immersive) ═══ */}
+      {/* ═══ 6 · EN IMAGES (galerie immersive) ═══ */}
       <section>
         <SectionHead
           eyebrow="En images"
@@ -542,7 +421,7 @@ export function HomePage() {
         />
       )}
 
-      {/* ═══ 8a · NOS VALEURS (split éditorial + photo concentration) ═══ */}
+      {/* ═══ 7a · NOS VALEURS (split éditorial + photo concentration) ═══ */}
       <section>
         <SectionHead eyebrow="Ce qui nous anime" title="Nos valeurs" />
         <div className="grid gap-4 lg:grid-cols-[0.85fr_1.15fr]">
@@ -583,7 +462,7 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* ═══ 8b · REJOINDRE LE CLUB (CTA) ═══ */}
+      {/* ═══ 7b · REJOINDRE LE CLUB (CTA) ═══ */}
       <Reveal>
         <div className="band border border-[color:var(--color-line)]">
           <img
@@ -616,7 +495,7 @@ export function HomePage() {
         </div>
       </Reveal>
 
-      {/* ═══ 9 · PARTENAIRES ═══ */}
+      {/* ═══ 8 · PARTENAIRES ═══ */}
       <section>
         <SectionHead eyebrow="Ils nous soutiennent" title="Partenaires" />
         {partenaires.length > 0 ? (
