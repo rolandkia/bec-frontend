@@ -1,32 +1,111 @@
-# React + TypeScript + Vite
+# BEC — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Site public du **Bordeaux Étudiants Club** (athlétisme) : présentation du club, infos pratiques,
+calendrier des compétitions, fiches athlètes et performances FFA, blog et galerie photo/vidéo.
+Une SPA React qui consomme l'API [`bec-backend`](../bec-backend).
 
-Currently, two official plugins are available:
+**Stack** : React 19 · TypeScript · Vite · Tailwind CSS 4 · TanStack Query · React Router 7 ·
+Framer Motion · Recharts · Tiptap (éditeur d'articles) · Axios · oxlint.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## Démarrage rapide
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Prérequis : Node 22+. Le backend doit tourner sur `http://127.0.0.1:8000` (`task run:api`).
 
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev     # http://localhost:5173
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+| Script | Description |
+| --- | --- |
+| `npm run dev` | Serveur de développement Vite (HMR) + proxy `/api`. |
+| `npm run build` | Vérification TypeScript (`tsc -b`) puis build de production dans `dist/`. |
+| `npm run preview` | Sert le build de production localement. |
+| `npm run lint` | oxlint. |
+
+## Configuration
+
+| Variable | Défaut | Rôle |
+| --- | --- | --- |
+| `VITE_API_BASE_URL` | `/api` | URL de base de l'API côté navigateur. À laisser vide en dev (le proxy s'en charge) et en prod (Caddy sert `/api` sur la même origine). |
+| `VITE_API_PROXY_TARGET` | `http://127.0.0.1:8000` | Backend visé par le proxy Vite en développement. |
+
+Le front n'appelle **que des URLs relatives `/api/...`** ([`src/api/client.ts`](src/api/client.ts)).
+En développement, Vite relaie ces requêtes vers le backend
+([`vite.config.ts`](vite.config.ts)) ; en production, Caddy fait le même reverse proxy
+([`Caddyfile`](Caddyfile)). Les requêtes restent donc same-origin : aucun problème de CORS ni
+d'ambiguïté `localhost` / `127.0.0.1` / IPv6.
+
+## Structure
+
+```
+src/
+├── api/          # client Axios + un module par ressource (athletes, blogs, gallery…) et types.ts
+├── pages/        # une page par route (cf. App.tsx)
+├── components/   # athletes/, blog/, calendar/, gallery/, layout/, ui/
+├── data/         # contenu éditorial statique (club, organigramme, infos pratiques, partenaires, photos)
+├── lib/          # utilitaires transverses (compression d'image, export PDF, scroll infini)
+├── utils/        # logique métier partagée avec le backend (niveau, saison, URL FFA)
+└── index.css     # design tokens Tailwind (couleurs club, typographie, variantes custom)
+```
+
+- **`api/`** — les composants n'appellent jamais Axios directement : ils passent par ces modules,
+  consommés via TanStack Query (`retry: 1`, `staleTime: 30 s`, configuré dans
+  [`src/main.tsx`](src/main.tsx)).
+- **`data/`** — contenu qui n'a pas vocation à passer par le backend (valeurs du club, créneaux
+  d'entraînement, bureau, partenaires). C'est ici qu'on édite le texte du site.
+- **`utils/`** — réplique fidèle de certaines règles du backend (`domain/niveau.py`,
+  `domain/saison.py`) : toute évolution de l'un doit être reportée dans l'autre.
+- **`public/photos/`** — assets statiques en `.webp`, distincts des médias de la galerie qui, eux,
+  sont uploadés vers Cloudinary par le backend.
+
+## Routes
+
+| Route | Page |
+| --- | --- |
+| `/` | Accueil |
+| `/club`, `/infos-pratiques`, `/competitions`, `/actualite`, `/contact` | Sections principales (hubs) |
+| `/calendrier` | Calendrier des compétitions |
+| `/blog`, `/blog/:slug` | Liste et détail des articles |
+| `/blog/admin`, `/blog/nouveau`, `/blog/:slug/modifier` | Administration éditoriale |
+| `/athletes`, `/athletes/:id` | Liste des athlètes et fiche détaillée (RP, résultats, niveau) |
+| `/records` | Records du club |
+| `/galerie`, `/galerie/albums/:id` | Galerie et albums |
+| `/galerie/admin`, `/galerie/nouveau`, `/galerie/media/:id/modifier` | Administration des médias |
+
+Les pages d'administration ne sont pas protégées par authentification : elles ne sont
+volontairement pas liées depuis la navigation.
+
+## Design system
+
+Le site est **sombre uniquement** : la variante Tailwind `dark:` est forcée en permanence via
+`@custom-variant dark (&)`. Les tokens sont définis dans [`src/index.css`](src/index.css) :
+
+- **Rouge club** (`--color-club-primary` `#b5121b`) — énergie et performance : CTA, accents.
+- **Or club** (`--color-club-accent` `#d4af37`) — excellence : podiums, records, niveau
+  international. À utiliser avec parcimonie.
+- **Surfaces** — `--color-ink` (fond), `--color-surface` / `--color-surface-2` (cartes),
+  `--color-line` (bordures), `--color-fg` / `--color-muted` (textes).
+- **Typographie** — Inter (texte), Space Grotesk (titres).
+
+Autre variante custom : `hover-hover:` restreint les effets de survol aux périphériques dotés d'un
+vrai pointeur — sur mobile, `:hover` reste « collé » après un tap et rendrait tout contenu révélé au
+survol inatteignable. Le tactile reçoit un retour `active:` à la place.
+
+## Éditeur d'articles
+
+Le blog utilise [Tiptap](https://tiptap.dev) avec des extensions maison
+([`src/components/blog/extensions/`](src/components/blog/extensions/)) : mention d'athlètes,
+images avec légende, grilles de médias, vidéos, redimensionnement au drag et upload par
+glisser-déposer. Le HTML produit est assaini côté client avec DOMPurify (et côté serveur avec nh3).
+Un article peut être exporté en PDF ([`src/lib/exportBlogPdf.ts`](src/lib/exportBlogPdf.ts)).
+
+## Déploiement
+
+Le `Dockerfile` construit le site puis le sert avec Caddy, qui joue aussi le rôle de reverse proxy
+vers le backend et applique un fallback SPA (`try_files {path} /index.html`). Le workflow
+[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) se déclenche sur `main` :
+lint + build → push de l'image sur `ghcr.io/rolandkia/bec-frontend` → déploiement par SSH sur la VM.
+Procédure d'infrastructure complète : [DEPLOYMENT.md](../DEPLOYMENT.md).
