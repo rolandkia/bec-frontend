@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
-import { faitsPalmares, figureActuelle, figureHistorique, histoireIntro } from '../data/palmares'
+import { faitsPalmares, figuresActuelles, figureHistorique, histoireIntro } from '../data/palmares'
 import { FigureCard } from '../components/club/FigureCard'
 import { PalmaresTimeline } from '../components/club/PalmaresTimeline'
 import { Reveal } from '../components/ui/motion'
@@ -19,7 +19,7 @@ export function PalmaresPage() {
         <div className="absolute inset-0 bg-gradient-to-r from-[color:var(--color-ink)] via-[color:var(--color-ink)]/85 to-[color:var(--color-ink)]/40" />
         <div className="relative px-6 py-9 sm:px-10 sm:py-16">
           <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-club-accent-light">
-            Depuis 1903
+            Depuis 1897
           </p>
           <h1 className="font-display text-3xl font-bold leading-tight tracking-tight text-white sm:text-5xl">
             Histoire &amp; palmarès
@@ -32,23 +32,36 @@ export function PalmaresPage() {
 
       {/* Le club aujourd'hui, AVANT l'histoire : un visiteur qui arrive ici veut
           d'abord savoir où en est le club, pas dérouler un siècle d'archives.
-          L'encart sert donc de porte d'entrée vers la partie historique. */}
+          La section sert donc de porte d'entrée vers la partie historique. */}
       <section>
         <div className="mb-5 sm:mb-6">
           <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-club-primary-light">
             Aujourd'hui
           </p>
           <h2 className="section-title">Le palmarès s'écrit encore</h2>
+          <p className="mt-2 max-w-2xl text-sm text-[color:var(--color-muted)]">
+            Deux athlètes du club portent ses couleurs au plus haut niveau national et
+            international.
+          </p>
         </div>
-        <Reveal>
-          <FigureCard figure={figureActuelle} />
-        </Reveal>
+        {/* Alternance photo gauche / droite d'un portrait au suivant : deux
+            encarts identiques d'affilée aplatissent la page. `direction="left"`
+            va de pair avec la photo à droite — le contenu entre du même côté que
+            l'image. L'alternance se poursuit sur l'encart 1968 juste en dessous. */}
+        <div className="space-y-6">
+          {figuresActuelles.map((figure, i) => (
+            <Reveal key={figure.nom} direction={i % 2 === 0 ? 'up' : 'left'}>
+              <FigureCard figure={figure} imageSide={i % 2 === 0 ? 'left' : 'right'} />
+            </Reveal>
+          ))}
+        </div>
       </section>
 
-      {/* La championne olympique du club, en miroir de l'encart « Aujourd'hui » :
-          photo à droite, pour donner un rythme entre les deux portraits. Elle
-          n'existait jusqu'ici que sous forme de texte (une ligne de frise, une
-          phrase d'intro) alors que c'est le plus grand titre du palmarès. */}
+      {/* La championne olympique du club, troisième et dernier portrait de la
+          page. Photo à gauche : elle prolonge l'alternance de la section
+          « Aujourd'hui » (Ducos à gauche, Afoy à droite). Elle n'existait
+          jusqu'ici que sous forme de texte (une ligne de frise, une phrase
+          d'intro) alors que c'est le plus grand titre du palmarès. */}
       <section>
         <div className="mb-5 sm:mb-6">
           <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-club-accent-light">
@@ -56,8 +69,8 @@ export function PalmaresPage() {
           </p>
           <h2 className="section-title">La championne olympique du club</h2>
         </div>
-        <Reveal direction="left">
-          <FigureCard figure={figureHistorique} imageSide="right" />
+        <Reveal>
+          <FigureCard figure={figureHistorique} />
         </Reveal>
       </section>
 

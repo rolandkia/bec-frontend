@@ -1,6 +1,7 @@
-import { Mail, MapPin, UserPlus } from 'lucide-react'
+import { Mail, MapPin, Phone, UserPlus } from 'lucide-react'
 import { club } from '../data/club'
 import { Reveal } from '../components/ui/motion'
+import { SocialLinks } from '../components/ui/SocialLinks'
 import { DemandeForm } from '../components/contact/DemandeForm'
 
 export function ContactPage() {
@@ -41,6 +42,15 @@ export function ContactPage() {
               <span className="text-[color:var(--color-muted)]">{club.contact.adresse}</span>
             </li>
             <li className="flex items-start gap-3">
+              <Phone className="mt-0.5 h-5 w-5 shrink-0 text-club-primary-light" />
+              <a
+                href={club.contact.telephoneLien}
+                className="font-semibold text-[color:var(--color-fg)] transition hover:text-club-primary-light"
+              >
+                {club.contact.telephone}
+              </a>
+            </li>
+            <li className="flex items-start gap-3">
               <Mail className="mt-0.5 h-5 w-5 shrink-0 text-club-primary-light" />
               <a
                 href={`mailto:${club.contact.email}`}
@@ -60,6 +70,11 @@ export function ContactPage() {
             <Mail aria-hidden className="h-4 w-4" strokeWidth={2} />
             Écrire un e-mail
           </a>
+          <hr className="hairline my-6" />
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--color-muted)]">
+            Suivre le club
+          </p>
+          <SocialLinks />
           <hr className="hairline my-6" />
           <p className="text-sm leading-relaxed text-[color:var(--color-muted)]">
             Pour une inscription, précise ton âge et la discipline qui t'intéresse : on te répond

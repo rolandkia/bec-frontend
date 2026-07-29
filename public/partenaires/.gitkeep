@@ -1,3 +1,14 @@
 # Logos des partenaires
-# Déposez ici les fichiers logo (ex. decathlon.png), puis référencez-les
-# dans src/data/partenaires.ts avec le chemin absolu : logo: '/partenaires/decathlon.png'
+# Déposez ici les fichiers logo, puis référencez-les dans src/data/partenaires.ts
+# avec le chemin absolu : logo: '/partenaires/mon-logo.webp'
+#
+# Conversion : cwebp -lossless -resize 512 0 <source>.png -o <nom>.webp
+# (sans perte : un logo est fait d'aplats et de texte, le q74 des photos le baverait)
+#
+# Le rendu pose le logo sur une plaque BLANCHE par défaut. Si le logo est déjà
+# clair (blanc sur noir, ou clair sur transparent), mettre logoFond: 'sombre'
+# dans src/data/partenaires.ts — sinon il disparaît.
+#
+# kine-concept-sport.webp : récupéré depuis le Google Sites du club (les URL
+# lh3.googleusercontent.com/sitesv/… renvoient 403 en curl, il faut passer par
+# un navigateur ; suffixe =s0 sur l'URL pour l'original plutôt qu'une vignette).

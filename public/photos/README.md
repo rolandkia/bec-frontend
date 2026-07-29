@@ -19,6 +19,7 @@ Sélection curée depuis `../../../bec-pictures/`, optimisée en `.webp`
 | `portrait-01.webp` | `photo_starting_block/IMG_6901.JPG` | Portrait athlète |
 | `portrait-02.webp` | `photo_inside_race/IMG_6907.JPG` | Portrait athlète |
 | `besson-maillot-bec.webp` | `photo_historique/collete-besson-portant-maillot-bec.webp` | Encart Colette Besson de `/palmares` — photo d'archive, donc de contenu avec un vrai `alt`. Retenue parce qu'elle y porte le maillot du club ; source 320×480 seulement, donc douce en 2× (pas de `-resize`, ça n'inventerait rien) |
+| `gregory-afoy.webp` | `gregory-afoy/Capture…20.37.44.png` | Encart Grégory Afoy de `/palmares` — **c'est lui** (maillot FRANCE, dossard « AFOY / CALI 22 », témoin en main : relais des Mondiaux U20 de Cali 2022), donc vrai `alt`. Source paysage 1384×1008 recadrée en portrait avant conversion : `sips --cropToHeightWidth 1008 820`, puis `cwebp -q 74` **sans** `-resize` (820 px, on n'upscale pas) |
 | `logo.webp` | `logo_bec.png` | Logo navbar/footer (alpha préservé) |
 
 Pour régénérer / ajouter : `cwebp -q 74 -resize <largeur> 0 source.png -o sortie.webp`.

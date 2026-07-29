@@ -1,3 +1,18 @@
 # Illustrations des infos pratiques
-# Déposez ici les images d'illustration, puis référencez-les par chemin absolu :
-# '/infos/mon-image.jpg'
+# Déposez ici les images d'illustration, puis référencez-les par chemin absolu
+# depuis src/data/infosPratiques.ts : photo: '/infos/mon-image.webp'
+#
+# Les deux clichés actuels, convertis depuis bec-pictures/photo-info/ :
+#
+#   groupe-jeunes.webp   (1200×1151) — recadré autour de l'enfant, ce qui écarte
+#                        la spectatrice collée au bord gauche :
+#     cwebp -q 74 -crop 450 0 1500 1438 -resize 1200 0 \
+#       photo-evan-athlete-enfant.png -o groupe-jeunes.webp
+#
+#   groupe-adultes.webp  (1600×905) — PAS de -crop : le tiers gauche vide est ce
+#                        qui reçoit le dégradé de jointure de la carte. Et q80
+#                        plutôt que 74, parce qu'un fond studio est un aplat
+#                        dégradé, exactement ce que le WebP banderole à q74 :
+#     cwebp -q 80 -resize 1600 0 photo-coach-adulte.png -o groupe-adultes.webp
+#
+# cwebp applique toujours -crop AVANT -resize, quel que soit l'ordre des drapeaux.

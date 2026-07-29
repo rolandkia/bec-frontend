@@ -11,9 +11,11 @@ import { ffaProfileUrl } from '../../utils/ffa'
  * points d'attention :
  *  - le cadrage vient de la donnée (`photoPosition`) et non d'une classe
  *    Tailwind arbitraire : `object-[…]` ne peut pas être dynamique ;
- *  - `ffaId` est optionnel (pas de fiche athle.fr pour une carrière des années
- *    1960). Sans lien FFA, c'est Wikipédia qui devient l'action principale, pour
- *    que la carte ne se retrouve pas sans bouton mis en avant.
+ *  - `ffaId` et `wikipedia` sont tous deux optionnels : pas de fiche athle.fr
+ *    pour une carrière des années 1960, pas de page Wikipédia pour un athlète
+ *    encore en activité. Celui des deux qui est présent devient l'action
+ *    principale (`btn-ffa`), l'autre passe en secondaire (`btn-outline`) ; si
+ *    aucun n'est renseigné, la rangée de boutons n'est pas rendue du tout.
  *
  * Le `<Reveal>` reste à la charge de la page : chaque encart choisit sa
  * direction d'apparition.
@@ -79,28 +81,34 @@ export function FigureCard({
               </li>
             ))}
           </ul>
-          <div className="mt-6 flex flex-wrap gap-3">
-            {figure.ffaId && (
-              <a
-                href={ffaProfileUrl(figure.ffaId)}
-                target="_blank"
-                rel="noreferrer"
-                className="btn-ffa"
-              >
-                Profil FFA
-                <ExternalLink aria-hidden className="h-4 w-4" strokeWidth={2} />
-              </a>
-            )}
-            <a
-              href={figure.wikipedia}
-              target="_blank"
-              rel="noreferrer"
-              className={figure.ffaId ? 'btn-outline' : 'btn-ffa'}
-            >
-              Sa fiche Wikipédia
-              <ExternalLink aria-hidden className="h-4 w-4" strokeWidth={2} />
-            </a>
-          </div>
+          {/* Garde extérieure : sans elle, une figure sans aucun lien laisserait
+              un conteneur vide et ses 24 px de marge sous les faits. */}
+          {(figure.ffaId || figure.wikipedia) && (
+            <div className="mt-6 flex flex-wrap gap-3">
+              {figure.ffaId && (
+                <a
+                  href={ffaProfileUrl(figure.ffaId)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn-ffa"
+                >
+                  Profil FFA
+                  <ExternalLink aria-hidden className="h-4 w-4" strokeWidth={2} />
+                </a>
+              )}
+              {figure.wikipedia && (
+                <a
+                  href={figure.wikipedia}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={figure.ffaId ? 'btn-outline' : 'btn-ffa'}
+                >
+                  Sa fiche Wikipédia
+                  <ExternalLink aria-hidden className="h-4 w-4" strokeWidth={2} />
+                </a>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

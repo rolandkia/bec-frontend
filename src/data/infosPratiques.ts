@@ -1,5 +1,20 @@
-// Infos pratiques : groupes et créneaux d'entraînement.
-// Contenu éditorial statique — à ajuster selon la saison en cours.
+// Infos pratiques : les groupes d'entraînement du club et leurs créneaux.
+//
+// SOURCE : informations transmises par le club. Il n'a que DEUX groupes —
+// « Athlé découverte » (U7–U16) et « Sprint & haies » (U18–Masters) —, tous deux
+// sur la piste de Rocquencourt (cf. `data/club.ts`). Tranches d'âge, créneaux et
+// lieu sont donc RÉELS : ils remplacent six groupes inventés (éveil, poussins,
+// benjamins, minimes, espoirs, masters) et leurs horaires fictifs.
+//
+// Les `description` sont rédigées pour le site à partir des mots du club
+// (« à partir de 17 ans jusqu'aux Masters, que vous visiez la compétition ou le
+// running loisir ») — même règle que `club.valeurs`.
+//
+// DÉLIBÉRÉMENT ABSENT : les noms des entraîneurs. Ne pas les rajouter.
+//
+// TODO : les TARIFS et les modalités d'inscription restent inconnus. La page ne
+// les mentionne donc pas du tout — plutôt qu'un montant inventé. Les demandes
+// passent par /contact, où le formulaire pose déjà l'âge et la discipline.
 
 export type GroupeEntrainement = {
   titre: string
@@ -7,63 +22,58 @@ export type GroupeEntrainement = {
   creneaux: string[]
   lieu: string
   description: string
+  /** Disciplines travaillées, en pastilles. Absent = rangée non rendue (le
+   *  groupe découverte touche à tout, et le club ne détaille pas). */
+  disciplines?: string[]
+  photo: string
+  photoAlt: string
+  /**
+   * `object-position` du cliché. Les deux sources sont en PAYSAGE alors que la
+   * colonne photo de la carte est plutôt portrait : `object-cover` en rogne les
+   * côtés, et le haut dès que le panneau est plus large que haut. À réajuster à
+   * l'œil si la longueur d'une `description` change la hauteur de la carte.
+   */
+  photoPosition?: string
+  /**
+   *  - `'scene'` (défaut) : cliché de terrain, voiles habituels.
+   *  - `'studio'` : fond clair. Les voiles de `'scene'` y sont
+   *    contre-productifs, cf. `components/club/GroupeCard`.
+   */
+  photoFond?: 'scene' | 'studio'
 }
 
-// TODO: adapter les tranches d'âge, créneaux et lieux à la réalité du club.
-export const infosPratiques: {
-  jeunes: GroupeEntrainement[]
-  adultes: GroupeEntrainement[]
-} = {
-  jeunes: [
-    {
-      titre: 'Éveil athlétique',
-      trancheAge: 'U7 – U11 (Baby, Éveil, Poussins)',
-      creneaux: ['Mercredi 14h00 – 15h30'],
-      lieu: 'Stade municipal, Bordeaux',
-      description:
-        "Découverte ludique de l'athlétisme : courir, sauter, lancer. L'accent est mis sur la motricité, le jeu et le plaisir de bouger en groupe.",
-    },
-    {
-      titre: 'Poussins & Benjamins',
-      trancheAge: 'U11 – U14',
-      creneaux: ['Mardi 17h30 – 19h00', 'Vendredi 17h30 – 19h00'],
-      lieu: 'Stade municipal, Bordeaux',
-      description:
-        "Initiation aux différentes familles de l'athlétisme (sprints, sauts, lancers, endurance) et premières compétitions par équipes.",
-    },
-    {
-      titre: 'Minimes',
-      trancheAge: 'U14 – U16',
-      creneaux: ['Mardi 18h00 – 19h30', 'Jeudi 18h00 – 19h30'],
-      lieu: 'Stade municipal, Bordeaux',
-      description:
-        "Spécialisation progressive vers une ou deux disciplines, préparation physique adaptée et compétitions individuelles.",
-    },
-  ],
-  adultes: [
-    {
-      titre: 'Cadets & Juniors',
-      trancheAge: 'U18 – U20',
-      creneaux: ['Lundi 18h30 – 20h00', 'Mercredi 18h30 – 20h00', 'Vendredi 18h30 – 20h00'],
-      lieu: 'Stade municipal, Bordeaux',
-      description:
-        "Entraînement structuré par spécialité, planification de la saison et objectifs de performance régionaux et nationaux.",
-    },
-    {
-      titre: 'Espoirs & Seniors',
-      trancheAge: 'U23 – Senior',
-      creneaux: ['Lundi 19h00 – 20h30', 'Mercredi 19h00 – 20h30', 'Samedi 10h00 – 12h00'],
-      lieu: 'Stade municipal, Bordeaux',
-      description:
-        "Groupe compétition et loisir : préparation à la compétition, remise en forme et pratique de l'athlétisme à son rythme.",
-    },
-    {
-      titre: 'Masters',
-      trancheAge: '35 ans et +',
-      creneaux: ['Mercredi 19h00 – 20h30', 'Samedi 10h00 – 12h00'],
-      lieu: 'Stade municipal, Bordeaux',
-      description:
-        "Athlétisme adapté aux vétérans, en compétition ou en entretien, dans une ambiance conviviale.",
-    },
-  ],
-}
+export const groupesEntrainement: GroupeEntrainement[] = [
+  {
+    titre: 'Athlé découverte',
+    trancheAge: 'U7 → U16',
+    creneaux: ['Mercredi 14h30 – 16h30'],
+    lieu: 'Piste de Rocquencourt, Pessac',
+    description:
+      "De l'éveil athlétique aux minimes, une séance par semaine pour découvrir l'athlétisme " +
+      'sous toutes ses formes : courir, sauter, lancer. On apprend en jouant, on progresse à ' +
+      "son rythme, et on part en compétition quand on en a envie.",
+    photo: '/infos/groupe-jeunes.webp',
+    photoAlt:
+      'Jeune athlète du BEC en chasuble rouge, sa médaille entre les dents après une compétition',
+    // Sa chevelure touche le bord haut du cadrage : tout décalage vertical le
+    // décapite dès que le panneau est plus large que haut.
+    photoPosition: 'center top',
+  },
+  {
+    titre: 'Sprint & haies',
+    trancheAge: 'U18 → Masters',
+    creneaux: ['Du lundi au vendredi, 18h – 20h', 'Samedi 10h – 12h'],
+    lieu: 'Piste de Rocquencourt, Pessac',
+    disciplines: ['Sprint', 'Haies'],
+    description:
+      "À partir de 17 ans et jusqu'aux Masters, un seul groupe pour le sprint et les haies, que " +
+      'vous visiez la compétition ou le running loisir. Six créneaux par semaine : le club est ' +
+      'sur la piste tous les soirs de la semaine, et le samedi matin.',
+    photo: '/infos/groupe-adultes.webp',
+    photoAlt: "Membre du BEC en sweat à capuche rouge floqué de l'écusson du club",
+    // Le tiers gauche du cliché est du fond studio vide : ce cadrage l'amène sous
+    // le dégradé de jointure et sort le visage de la rampe.
+    photoPosition: '30% center',
+    photoFond: 'studio',
+  },
+]

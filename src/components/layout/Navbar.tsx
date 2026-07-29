@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { club } from '../../data/club'
+import { SocialLinks } from '../ui/SocialLinks'
 
 const links = [
   { to: '/', label: 'Accueil' },
@@ -147,6 +148,11 @@ export function Navbar() {
                   </NavLink>
                 </motion.div>
               ))}
+              {/* Les réseaux ne tiennent que dans le tiroir : la nav desktop est
+                  déjà à saturation (cf. le commentaire au-dessus d'elle). */}
+              <div className="mt-2 border-t border-[color:var(--color-line)] px-3 pt-4">
+                <SocialLinks />
+              </div>
             </div>
           </motion.nav>
         )}

@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowRight, ArrowUpRight, ChevronDown, MapPin } from 'lucide-react'
+import { ArrowRight, ChevronDown, MapPin } from 'lucide-react'
 import { club } from '../data/club'
 import { jalonsAccueil } from '../data/palmares'
-import { partenaires, partenairesIntro } from '../data/partenaires'
+import { besoinsCourts, partenaires, partenairesAccroche } from '../data/partenaires'
 import { clubPhotos } from '../data/clubPhotos'
 import { parseLocalDate, splitEvents } from '../utils/events'
 import { Lightbox } from '../components/ui/Lightbox'
@@ -185,7 +185,7 @@ export function HomePage() {
           <div className="absolute inset-0 bg-gradient-to-r from-[color:var(--color-ink)] via-[color:var(--color-ink)]/80 to-[color:var(--color-ink)]/35" />
           <div className="relative px-6 py-10 sm:px-10 sm:py-16">
             <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-club-accent-light">
-              Depuis 1903
+              Depuis 1897
             </p>
             <p className="stat max-w-xl text-3xl text-white sm:text-4xl">
               Un club, une histoire
@@ -434,8 +434,10 @@ export function HomePage() {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[color:var(--color-ink)] via-[color:var(--color-ink)]/25 to-transparent" />
             <div className="relative flex h-full items-end p-6 sm:p-8">
+              {/* La légende reprend une valeur de la liste d'à côté : la faire
+                  glisser si `club.valeurs` change d'ordre ou d'intitulés. */}
               <p className="font-display text-2xl font-bold leading-tight text-white">
-                L'exigence,
+                Le goût de l'effort,
                 <br />
                 à chaque foulée.
               </p>
@@ -496,33 +498,105 @@ export function HomePage() {
       </Reveal>
 
       {/* ═══ 8 · PARTENAIRES ═══ */}
+      {/* Deux colonnes : à gauche QUI nous soutient (la plaque logo seule, la
+          description vit sur /club), à droite l'appel à de nouveaux partenaires
+          avec ce que ça finance et par où passer. La colonne de gauche disparaît
+          si `partenaires` est vide ; l'appel, lui, reste — c'est le moment où il
+          sert le plus. Le bouton mène à /contact et non à un `mailto:` : le
+          formulaire du site est la voie principale. */}
       <section>
-        <SectionHead eyebrow="Ils nous soutiennent" title="Partenaires" />
-        {partenaires.length > 0 ? (
-          <RevealGroup className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {partenaires.map((p) => (
-              <motion.a
-                key={p.nom}
-                variants={staggerItem}
-                href={p.url ?? '#'}
-                target={p.url ? '_blank' : undefined}
-                rel={p.url ? 'noreferrer' : undefined}
-                className="group card card-hover tap flex items-center justify-center p-6"
-                title={p.nom}
-              >
-                <img src={p.logo} alt={p.nom} className="max-h-12 w-auto opacity-80 transition group-hover:opacity-100" />
-              </motion.a>
-            ))}
-          </RevealGroup>
-        ) : (
-          <Reveal className="card flex flex-col items-center gap-4 p-8 text-center sm:p-12">
-            <p className="max-w-2xl text-[color:var(--color-muted)]">{partenairesIntro}</p>
-            <a href={`mailto:${club.contact.email}`} className="btn-outline">
+        <SectionHead
+          eyebrow="Ils nous soutiennent"
+          title="Partenaires"
+          to="/club"
+          more="Nos partenaires"
+        />
+        <Reveal
+          className={`grid gap-4 ${partenaires.length > 0 ? 'lg:grid-cols-[0.8fr_1.2fr]' : ''}`}
+        >
+          {partenaires.length > 0 && (
+            <div className="card p-6 sm:p-8">
+              <h3 className="font-display text-lg font-bold text-white">
+                {partenaires.length > 1 ? 'Nos partenaires' : 'Notre partenaire'}
+              </h3>
+              {/* `space-y` et non une grille : à un partenaire la grille laissait
+                  des colonnes vides, à trois elle les aurait serrés. */}
+              <div className="mt-5 space-y-4">
+                {partenaires.map((p) => {
+                  // Plaque claire par défaut (un logo d'entreprise est dessiné
+                  // pour du papier) ; `logoFond: 'sombre'` pour ceux qui sont
+                  // déjà clairs et qu'une plaque blanche effacerait —
+                  // cf. `data/partenaires`.
+                  const plaque = (
+                    <div
+                      className={`flex h-24 items-center justify-center rounded-xl px-6 ${
+                        p.logoFond === 'sombre'
+                          ? 'border border-[color:var(--color-line)]'
+                          : 'bg-white/95'
+                      }`}
+                    >
+                      <img
+                        src={p.logo}
+                        alt={p.nom}
+                        loading="lazy"
+                        className="max-h-16 w-auto object-contain"
+                      />
+                    </div>
+                  )
+                  return (
+                    <div key={p.nom}>
+                      {/* Sans `url`, pas de <a> : on n'affiche pas une affordance
+                          de clic qui ne mène nulle part. */}
+                      {p.url ? (
+                        <a href={p.url} target="_blank" rel="noreferrer" className="tap block">
+                          {plaque}
+                        </a>
+                      ) : (
+                        plaque
+                      )}
+                      <p className="mt-2.5 text-center text-sm font-semibold text-[color:var(--color-fg)]">
+                        {p.nom}
+                      </p>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          <div className="card p-6 sm:p-8">
+            <h3 className="font-display text-lg font-bold text-white">Devenir partenaire</h3>
+            <p className="mt-3 leading-relaxed text-[color:var(--color-muted)]">
+              {partenairesAccroche}
+            </p>
+            {/* Version COMPACTE des besoins : les quatre cartes détaillées
+                (`besoinsClub`, texte officiel du club) restent sur /club. */}
+            <ul className="mt-5 grid gap-2.5 sm:grid-cols-2">
+              {besoinsCourts.map((besoin) => (
+                <li
+                  key={besoin}
+                  className="flex items-start gap-2.5 text-sm text-[color:var(--color-fg)]"
+                >
+                  <span
+                    aria-hidden
+                    className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-club-primary"
+                  />
+                  <span>{besoin}</span>
+                </li>
+              ))}
+            </ul>
+            <Link to="/contact" className="btn-primary mt-7">
               Devenir partenaire
-              <ArrowUpRight className="h-4 w-4" />
-            </a>
-          </Reveal>
-        )}
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            {/* `DemandeForm` ouvre sur le motif « Inscription » ; c'est « Autre »
+                qui mentionne les partenariats. Faute de paramètre d'URL (choix
+                assumé), on l'oriente en clair. */}
+            <p className="mt-3 text-xs text-[color:var(--color-muted)]">
+              Depuis la page contact, choisis le motif « Autre ».
+            </p>
+          </div>
+        </Reveal>
       </section>
     </div>
   )

@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
+import { Mail, Phone } from 'lucide-react'
 import { club } from '../../data/club'
+import { SocialLinks } from '../ui/SocialLinks'
 
 const footerLinks = [
   { to: '/club', label: 'Le club' },
@@ -58,13 +60,27 @@ export function Footer() {
             <p className="mb-4 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--color-muted)]">
               Contact
             </p>
-            <p className="text-sm text-slate-300">{club.contact.adresse}</p>
-            <a
-              href={`mailto:${club.contact.email}`}
-              className="mt-1 inline-block text-sm text-slate-300 transition-colors hover:text-club-primary-light"
-            >
-              {club.contact.email}
-            </a>
+            {/* `flex flex-col items-start` : chaque coordonnée est une ligne à
+                part entière, et les liens ne s'étirent pas sur toute la colonne
+                (la zone cliquable resterait large et vide à droite du texte). */}
+            <div className="flex flex-col items-start gap-2">
+              <p className="text-sm leading-relaxed text-slate-300">{club.contact.adresse}</p>
+              <a
+                href={club.contact.telephoneLien}
+                className="inline-flex items-center gap-2 py-0.5 text-sm text-slate-300 transition-colors hover:text-club-primary-light"
+              >
+                <Phone aria-hidden className="h-4 w-4 shrink-0" strokeWidth={2} />
+                {club.contact.telephone}
+              </a>
+              <a
+                href={`mailto:${club.contact.email}`}
+                className="inline-flex items-center gap-2 py-0.5 text-sm text-slate-300 transition-colors hover:text-club-primary-light"
+              >
+                <Mail aria-hidden className="h-4 w-4 shrink-0" strokeWidth={2} />
+                {club.contact.email}
+              </a>
+            </div>
+            <SocialLinks className="mt-5" />
           </div>
         </div>
 

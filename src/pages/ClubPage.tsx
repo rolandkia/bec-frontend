@@ -1,11 +1,13 @@
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
+import { ArrowRight, Target } from 'lucide-react'
 import { club } from '../data/club'
-import { partenaires, partenairesIntro } from '../data/partenaires'
+import { besoinsClub, partenaires, partenairesIntro } from '../data/partenaires'
 import { listCoachs } from '../api/coachs'
 import type { CoachOut } from '../api/types'
 import { Reveal, RevealGroup, motion, staggerItem } from '../components/ui/motion'
 import { Avatar } from '../components/ui/Avatar'
+import { PartenaireCard } from '../components/club/PartenaireCard'
 import { Loading, ErrorMessage } from '../components/ui/Status'
 
 function MembreCard({ m }: { m: CoachOut }) {
@@ -134,28 +136,17 @@ export function ClubPage() {
         </>
       )}
 
-      {/* Partenaires */}
+      {/* Partenaires + besoins du club */}
       <section>
         <h2 className="section-title mb-3">Nos partenaires</h2>
         <p className="mb-6 max-w-3xl text-[color:var(--color-muted)]">{partenairesIntro}</p>
         {partenaires.length > 0 ? (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-            {partenaires.map((p) => {
-              const logo = (
-                <div className="card card-hover flex h-28 items-center justify-center p-4">
-                  <img src={p.logo} alt={p.nom} className="max-h-16 max-w-full object-contain" />
-                </div>
-              )
-              return p.url ? (
-                <a key={p.nom} href={p.url} target="_blank" rel="noreferrer" title={p.nom}>
-                  {logo}
-                </a>
-              ) : (
-                <div key={p.nom} title={p.nom}>
-                  {logo}
-                </div>
-              )
-            })}
+          // Une seule colonne tant qu'il n'y a qu'un partenaire : la carte est un
+          // split logo + description, elle a besoin de la pleine largeur.
+          <div className={`grid gap-4 ${partenaires.length > 1 ? 'lg:grid-cols-2' : ''}`}>
+            {partenaires.map((p) => (
+              <PartenaireCard key={p.nom} partenaire={p} />
+            ))}
           </div>
         ) : (
           <p className="rounded-xl border border-dashed border-[color:var(--color-line)] py-8 text-center text-[color:var(--color-muted)]">
@@ -166,6 +157,36 @@ export function ClubPage() {
             .
           </p>
         )}
+
+        {/* Ce à quoi sert concrètement un partenariat : la contrepartie chiffrée
+            du paragraphe d'intro, sans laquelle « devenir partenaire » reste une
+            formule creuse. */}
+        <h3 className="section-title mb-4 mt-12">Nos besoins</h3>
+        <RevealGroup className="grid gap-3 sm:grid-cols-2">
+          {besoinsClub.map((besoin) => (
+            <motion.div
+              key={besoin}
+              variants={staggerItem}
+              className="card flex items-start gap-3 p-5"
+            >
+              <Target
+                aria-hidden
+                className="mt-0.5 h-5 w-5 shrink-0 text-club-primary-light"
+                strokeWidth={2}
+              />
+              <p className="text-sm leading-relaxed text-[color:var(--color-muted)]">{besoin}</p>
+            </motion.div>
+          ))}
+        </RevealGroup>
+        <div className="mt-6">
+          {/* Vers le formulaire du site plutôt qu'un `mailto:` : la page contact
+              porte déjà le motif « Autre » (partenariat, presse), et la demande
+              passe par le backend au lieu du client mail du visiteur. */}
+          <Link to="/contact" className="btn-primary">
+            Devenir partenaire
+            <ArrowRight aria-hidden className="h-4 w-4" strokeWidth={2} />
+          </Link>
+        </div>
       </section>
     </div>
   )
