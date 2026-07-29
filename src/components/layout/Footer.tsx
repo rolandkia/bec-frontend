@@ -6,6 +6,9 @@ const footerLinks = [
   { to: '/competitions', label: 'Compétitions' },
   { to: '/actualite', label: 'Actualité' },
   { to: '/athletes', label: 'Athlètes' },
+  // Seul point d'entrée explicite vers les records hors accueil (la navbar reste
+  // à 7 liens : elle déborde déjà à lg).
+  { to: '/athletes?tab=records', label: 'Records' },
   { to: '/infos-pratiques', label: 'Infos pratiques' },
   { to: '/contact', label: 'Contact' },
 ]

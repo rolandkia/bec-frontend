@@ -21,6 +21,10 @@ export function useTabParam(defaultKey: string, paramName = 'tab') {
       },
       { replace: true },
     )
+    // La barre d'onglets est en haut de page : changer d'onglet depuis le bas
+    // d'une longue liste ne doit pas laisser l'utilisateur au milieu du nouveau
+    // contenu. (`ScrollToTop` ne réagit qu'au `pathname`, pas à `?tab=`.)
+    window.scrollTo({ top: 0, left: 0 })
   }
 
   return [active, setActive] as const
@@ -39,7 +43,9 @@ export function SectionTabs({
   return (
     // `.segmented` : cibles de 44 px au doigt, pleine largeur sur mobile, état
     // actif annoncé par aria-selected, et bordure alignée sur --color-line.
-    <div className="segmented mb-8" role="tablist">
+    // `sm:w-fit` : le `w-auto` de `.segmented` étirait la pilule sur toute la
+    // largeur dès qu'elle n'était pas elle-même un enfant de flex (cas ici).
+    <div className="segmented mb-8 sm:w-fit" role="tablist">
       {tabs.map((t) => (
         <button
           key={t.key}

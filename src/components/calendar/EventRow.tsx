@@ -1,18 +1,14 @@
-import type { LucideIcon } from 'lucide-react'
-import { LandPlot, Route, Trees, Medal, MapPin } from 'lucide-react'
+import { MapPin } from 'lucide-react'
 import type { EvenementOut } from '../../api/types'
-import { isUpcoming } from '../../utils/events'
-
-const typeIcon: Record<EvenementOut['type'], LucideIcon> = {
-  Piste: LandPlot,
-  Route: Route,
-  Cross: Trees,
-  Meeting: Medal,
-}
+import { isUpcoming, parseLocalDate } from '../../utils/events'
+import { typeIcon } from './eventType'
 
 export function EventRow({ event, today }: { event: EvenementOut; today?: Date }) {
-  const date = new Date(event.date)
+  // parseLocalDate (et non `new Date`) : `new Date('2026-09-01')` est minuit UTC,
+  // soit le 31 août dans un fuseau négatif.
+  const date = parseLocalDate(event.date)
   const upcoming = isUpcoming(event, today)
+  const Icon = typeIcon[event.type]
 
   return (
     <div
@@ -41,10 +37,7 @@ export function EventRow({ event, today }: { event: EvenementOut; today?: Date }
           <MapPin aria-hidden className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
           <span className="truncate">{event.lieu}</span>
           <span className="opacity-40">·</span>
-          {(() => {
-            const Icon = typeIcon[event.type]
-            return <Icon aria-hidden className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
-          })()}
+          <Icon aria-hidden className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
           <span className="uppercase tracking-wide">{event.type}</span>
         </p>
       </div>

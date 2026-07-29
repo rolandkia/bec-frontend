@@ -6,7 +6,7 @@ import { club } from '../data/club'
 import { partenaires, partenairesIntro } from '../data/partenaires'
 import { clubPhotos } from '../data/clubPhotos'
 import { ffaProfileUrl } from '../utils/ffa'
-import { splitEvents } from '../utils/events'
+import { parseLocalDate, splitEvents } from '../utils/events'
 import { Lightbox } from '../components/ui/Lightbox'
 import { EventRow } from '../components/calendar/EventRow'
 import { getClassements, getAthlete } from '../api/athletes'
@@ -242,7 +242,7 @@ export function HomePage() {
                   faisaient de cette bande le bloc le plus haut de la page. */}
               <div className="relative grid grid-cols-[auto_1fr] items-center gap-4 p-5 sm:gap-6 sm:p-10">
                 {(() => {
-                  const d = new Date(featuredEvent.date)
+                  const d = parseLocalDate(featuredEvent.date)
                   return (
                     <div className="flex h-20 w-20 shrink-0 flex-col items-center justify-center rounded-2xl bg-club-primary text-white shadow-xl shadow-club-primary/30 sm:h-28 sm:w-28">
                       <span className="tabular font-display text-3xl font-bold leading-none sm:text-5xl">
@@ -337,7 +337,7 @@ export function HomePage() {
               ))}
             </div>
             <Link
-              to="/competitions?tab=records"
+              to="/athletes?tab=records"
               className="group inline-flex items-center gap-1 self-start text-sm font-semibold text-club-accent-light transition hover:text-white sm:self-auto"
             >
               Records

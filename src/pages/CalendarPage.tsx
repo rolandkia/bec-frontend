@@ -1,122 +1,113 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import type { EvenementOut } from '../api/types'
+import { AnimatePresence, useReducedMotion } from 'framer-motion'
+import { ChevronDown } from 'lucide-react'
 import { listEvents } from '../api/events'
 import { splitEvents } from '../utils/events'
-import { EventRow } from '../components/calendar/EventRow'
+import { currentSaison } from '../utils/saison'
+import { NextEventCard } from '../components/calendar/NextEventCard'
+import { Timeline } from '../components/calendar/Timeline'
+import { TodayMarker } from '../components/calendar/TodayMarker'
 import { Loading, ErrorMessage } from '../components/ui/Status'
-import { motion, Reveal, RevealGroup, staggerItem } from '../components/ui/motion'
+import { motion, Reveal } from '../components/ui/motion'
 
-function groupByMonth(items: EvenementOut[]) {
-  const groups = new Map<string, EvenementOut[]>()
-  for (const event of items) {
-    const key = new Date(event.date).toLocaleDateString('fr-FR', {
-      month: 'long',
-      year: 'numeric',
-    })
-    const group = groups.get(key) ?? []
-    group.push(event)
-    groups.set(key, group)
-  }
-  return groups
-}
+const SAISON_EN_COURS = currentSaison()
 
-function CalendarSection({
-  title,
-  count,
-  items,
-  emptyLabel,
-  accent,
-}: {
-  title: string
-  count: number
-  items: EvenementOut[]
-  emptyLabel: string
-  accent?: boolean
-}) {
-  const groups = groupByMonth(items)
-
-  return (
-    <section>
-      <div className="mb-4 flex items-center gap-3">
-        <span className="h-5 w-1 rounded-full bg-club-primary" aria-hidden />
-        <h2 className="font-display text-xl font-bold uppercase tracking-[0.12em] text-white">
-          {title}
-        </h2>
-        <span
-          className={`badge tabular ${
-            accent
-              ? 'border border-club-primary/40 bg-club-primary/15 text-club-primary-light'
-              : 'bg-[color:var(--color-surface-2)] text-[color:var(--color-muted)]'
-          }`}
-        >
-          {count}
-        </span>
-      </div>
-
-      {items.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-[color:var(--color-line)] py-8 text-center text-[color:var(--color-muted)]">
-          {emptyLabel}
-        </p>
-      ) : (
-        <div className="space-y-6">
-          {Array.from(groups.entries()).map(([month, monthEvents]) => (
-            <div key={month}>
-              <h3 className="mb-2 text-xs font-semibold uppercase capitalize tracking-[0.14em] text-[color:var(--color-muted)]">
-                {month}
-              </h3>
-              <RevealGroup className="space-y-3">
-                {monthEvents.map((event) => (
-                  <motion.div key={event.id} variants={staggerItem}>
-                    <EventRow event={event} />
-                  </motion.div>
-                ))}
-              </RevealGroup>
-            </div>
-          ))}
-        </div>
-      )}
-    </section>
-  )
-}
-
-export function CalendarPage({ embedded = false }: { embedded?: boolean }) {
+export function CalendarPage() {
+  const [showPast, setShowPast] = useState(false)
+  const reduce = useReducedMotion()
   const eventsQuery = useQuery({ queryKey: ['events'], queryFn: listEvents })
 
   const { upcoming, past } = splitEvents(eventsQuery.data ?? [])
+  const nextEvent = upcoming[0]
 
   return (
-    <div className="space-y-12">
-      {!embedded && (
-        <Reveal>
-          <h1 className="section-title">Calendrier des compétitions</h1>
-          <p className="mt-2 text-[color:var(--color-muted)]">
-            Les prochaines échéances du club, mises à jour automatiquement selon la date du jour.
+    <div className="animate-rise">
+      {/* En-tête éditorial — même parti que la liste des athlètes */}
+      <div className="band mb-8 border border-[color:var(--color-line)]">
+        <img
+          src="/photos/race-wide.webp"
+          alt=""
+          aria-hidden
+          className="absolute inset-0 h-full w-full object-cover object-center opacity-30"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[color:var(--color-ink)] via-[color:var(--color-ink)]/85 to-[color:var(--color-ink)]/40" />
+        <div className="relative px-6 py-9 sm:px-10 sm:py-16">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-club-primary-light">
+            Calendrier · saison {SAISON_EN_COURS}
           </p>
-        </Reveal>
-      )}
+          <h1 className="font-display text-3xl font-bold leading-tight tracking-tight text-white sm:text-5xl">
+            Compétitions
+          </h1>
+          {eventsQuery.data && (
+            <p className="mt-2 text-[color:var(--color-muted)]">
+              {upcoming.length === 0
+                ? 'Aucune épreuve à venir pour le moment'
+                : `${upcoming.length} épreuve${upcoming.length > 1 ? 's' : ''} à venir`}
+            </p>
+          )}
+        </div>
+      </div>
 
       {eventsQuery.isLoading && <Loading />}
-      {eventsQuery.isError && (
-        <ErrorMessage message="Impossible de charger le calendrier." />
-      )}
+      {eventsQuery.isError && <ErrorMessage message="Impossible de charger le calendrier." />}
 
       {eventsQuery.data && (
-        <>
-          <CalendarSection
-            title="À venir"
-            count={upcoming.length}
-            items={upcoming}
-            emptyLabel="Aucune compétition à venir pour le moment."
-            accent
-          />
+        <div className="space-y-8">
+          {nextEvent ? (
+            <Reveal>
+              <NextEventCard event={nextEvent} />
+            </Reveal>
+          ) : (
+            <p className="rounded-xl border border-dashed border-[color:var(--color-line)] py-10 text-center text-[color:var(--color-muted)]">
+              Aucune compétition à venir pour le moment.
+            </p>
+          )}
 
-          <CalendarSection
-            title="Passées"
-            count={past.length}
-            items={past}
-            emptyLabel="Aucune compétition passée."
-          />
-        </>
+          {upcoming.length > 0 && <Timeline items={upcoming} nextId={nextEvent?.id} />}
+
+          <TodayMarker />
+
+          {past.length > 0 && (
+            <div>
+              <button
+                type="button"
+                onClick={() => setShowPast((v) => !v)}
+                aria-expanded={showPast}
+                aria-controls="frise-passees"
+                className="tap inline-flex min-h-11 items-center gap-2 rounded-full border border-[color:var(--color-line)] px-4 py-2 text-sm font-semibold text-[color:var(--color-muted)] transition hover:border-club-primary hover:text-white"
+              >
+                <ChevronDown
+                  aria-hidden
+                  className={`h-4 w-4 transition-transform duration-200 ${showPast ? 'rotate-180' : ''}`}
+                  strokeWidth={2}
+                />
+                {showPast
+                  ? 'Masquer les épreuves passées'
+                  : `Voir les ${past.length} épreuve${past.length > 1 ? 's' : ''} passée${past.length > 1 ? 's' : ''}`}
+              </button>
+
+              {/* Même contrat que le menu mobile de la navbar : height auto animée,
+                  simple fondu si `prefers-reduced-motion`. */}
+              <AnimatePresence initial={false}>
+                {showPast && (
+                  <motion.div
+                    id="frise-passees"
+                    initial={reduce ? { opacity: 0 } : { opacity: 0, height: 0 }}
+                    animate={reduce ? { opacity: 1 } : { opacity: 1, height: 'auto' }}
+                    exit={reduce ? { opacity: 0 } : { opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                    className="overflow-hidden"
+                  >
+                    <div className="pt-6">
+                      <Timeline items={past} muted />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+        </div>
       )}
     </div>
   )

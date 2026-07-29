@@ -5,7 +5,7 @@ import { AthleteCard } from '../components/athletes/AthleteCard'
 import { Loading, ErrorMessage } from '../components/ui/Status'
 import { RevealGroup, motion, staggerItem } from '../components/ui/motion'
 
-export function AthletesListPage() {
+export function AthletesListPage({ embedded = false }: { embedded?: boolean }) {
   const [search, setSearch] = useState('')
   const [sexe, setSexe] = useState<'tous' | 'homme' | 'femme'>('tous')
 
@@ -26,31 +26,9 @@ export function AthletesListPage() {
   }, [athletes, search, sexe])
 
   return (
-    <div className="animate-rise">
-      {/* En-tête éditorial — photo du groupe */}
-      <div className="band mb-8 border border-[color:var(--color-line)]">
-        <img
-          src="/photos/group.webp"
-          alt=""
-          aria-hidden
-          className="absolute inset-0 h-full w-full object-cover object-[center_25%] opacity-40"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-[color:var(--color-ink)] via-[color:var(--color-ink)]/85 to-[color:var(--color-ink)]/40" />
-        <div className="relative px-6 py-9 sm:px-10 sm:py-16">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-club-primary-light">
-            L'effectif
-          </p>
-          <h1 className="font-display text-3xl font-bold leading-tight tracking-tight text-white sm:text-5xl">
-            Athlètes
-          </h1>
-          {athletes && (
-            <p className="mt-2 text-[color:var(--color-muted)]">
-              {athletes.length} athlètes licenciés
-            </p>
-          )}
-        </div>
-      </div>
-
+    // Embarquée dans le hub <AthletesPage> : c'est lui qui porte la bande
+    // photo d'en-tête et l'animation d'entrée.
+    <div className={embedded ? '' : 'animate-rise'}>
       {/* Filtres */}
       <div className="mb-8 flex flex-wrap gap-3">
         <input

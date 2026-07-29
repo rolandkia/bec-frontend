@@ -1,9 +1,8 @@
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { Layout } from './components/layout/Layout'
 import { HomePage } from './pages/HomePage'
 import { ClubPage } from './pages/ClubPage'
 import { InfosPratiquesPage } from './pages/InfosPratiquesPage'
-import { CompetitionsPage } from './pages/CompetitionsPage'
 import { ActualitePage } from './pages/ActualitePage'
 import { ContactPage } from './pages/ContactPage'
 import { CalendarPage } from './pages/CalendarPage'
@@ -12,8 +11,7 @@ import { BlogDetailPage } from './pages/BlogDetailPage'
 import { BlogEditorPage } from './pages/BlogEditorPage'
 import { BlogEditPage } from './pages/BlogEditPage'
 import { BlogAdminPage } from './pages/BlogAdminPage'
-import { RecordsPage } from './pages/RecordsPage'
-import { AthletesListPage } from './pages/AthletesListPage'
+import { AthletesPage } from './pages/AthletesPage'
 import { AthleteDetailPage } from './pages/AthleteDetailPage'
 import { GalleryPage } from './pages/GalleryPage'
 import { GalleryAdminPage } from './pages/GalleryAdminPage'
@@ -28,22 +26,25 @@ function App() {
       <Route element={<Layout />}>
         <Route index element={<HomePage />} />
 
-        {/* Sections principales (hubs) */}
+        {/* Sections principales */}
         <Route path="club" element={<ClubPage />} />
         <Route path="infos-pratiques" element={<InfosPratiquesPage />} />
-        <Route path="competitions" element={<CompetitionsPage />} />
+        {/* Compétitions = le calendrier (les records sont passés sous Athlètes). */}
+        <Route path="competitions" element={<CalendarPage />} />
         <Route path="actualite" element={<ActualitePage />} />
+        <Route path="athletes" element={<AthletesPage />} />
         <Route path="contact" element={<ContactPage />} />
 
+        {/* Anciennes URL conservées (liens externes, favoris) */}
+        <Route path="calendrier" element={<Navigate to="/competitions" replace />} />
+        <Route path="records" element={<Navigate to="/athletes?tab=records" replace />} />
+
         {/* Pages internes (accès direct + réutilisées par les hubs) */}
-        <Route path="calendrier" element={<CalendarPage />} />
         <Route path="blog" element={<BlogListPage />} />
         <Route path="blog/admin" element={<BlogAdminPage />} />
         <Route path="blog/nouveau" element={<BlogEditorPage />} />
         <Route path="blog/:slug" element={<BlogDetailPage />} />
         <Route path="blog/:slug/modifier" element={<BlogEditPage />} />
-        <Route path="records" element={<RecordsPage />} />
-        <Route path="athletes" element={<AthletesListPage />} />
         <Route path="athletes/:id" element={<AthleteDetailPage />} />
         <Route path="galerie" element={<GalleryPage />} />
         <Route path="galerie/admin" element={<GalleryAdminPage />} />
