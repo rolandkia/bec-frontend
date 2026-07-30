@@ -1,5 +1,4 @@
 @import 'tailwindcss';
-@plugin '@tailwindcss/typography';
 
 /* Site en SOMBRE UNIQUEMENT : on force la variante `dark:` à s'appliquer en
    permanence. Chaque utilitaire `dark:*` déjà présent dans les composants
@@ -396,27 +395,74 @@ body::before {
 }
 
 /* ---------------------------------------------------------------------------
-   Contenu riche du blog : figures, images, vidéos, alignements & habillage.
+   Contenu riche du blog : typographie, figures, images, vidéos, habillage.
+
    Ces règles s'appliquent À LA FOIS dans l'éditeur (.ProseMirror) et dans
-   l'article rendu (.blog-rendered) pour un rendu identique.
+   l'article rendu (.blog-rendered) pour un rendu identique. Deux invariants à
+   respecter pour toute règle ajoutée ici :
+
+   1. TOUJOURS les deux portées. Là où les DOM diffèrent (l'éditeur insère un
+      <div> hôte de NodeView entre .media-grid et ses <figure>), utiliser des
+      formes descendantes / `:not(… *)` / `:has()` — JAMAIS de combinateur `>`.
+   2. Échelle de spécificité interne (à ne pas casser) :
+      `.ProseMirror figure` (0,1,1) < `.fig-*` (0,2,0)
+        < `.media-grid figure` (0,2,1) < règles de container query (0,3,x).
+
+   Le plugin `@tailwindcss/typography` n'est PAS appliqué ici : ses règles à
+   combinateur enfant (`figure > *`) ratent le wrapper de NodeView, ce qui
+   ajoutait 32 px au-dessus ET en dessous de chaque média dans l'éditeur seul —
+   une divergence structurelle que chaque nouveau NodeView aurait rouverte. Tout
+   ce que le corps d'article utilise est donc déclaré explicitement ci-dessous.
+   La liste des éléments possibles est bornée par les deux sanitizers
+   (BlogContent.tsx et blog_service.py) : ni <hr>, ni <table>, ni <code>/<pre>
+   ne peuvent survenir.
    --------------------------------------------------------------------------- */
-/* Rythme vertical HOMOGÈNE : même écart entre deux blocs de texte quels qu'ils
-   soient (titre ou paragraphe). Une `margin-block` unique sur chaque bloc + le
-   margin-collapsing donnent un espacement constant — l'écart après un titre est
-   identique à celui entre deux paragraphes, et à celui d'un retour clavier
-   (nouveau paragraphe). Les titres restent distincts par la taille/graisse seule.
-   Portée `.ProseMirror` + `.blog-rendered` (0,1,1) : bat les marges du plugin
-   `prose` (0,1,0). Les figures/médias gardent leur marge plus large (voir plus bas). */
+
+/* Le conteneur de requêtes : les règles responsive du blog se déclenchent sur la
+   LARGEUR DE LA COLONNE et non sur celle du viewport (cf. plus bas). Il est posé
+   sur le PARENT, jamais sur .ProseMirror/.blog-rendered — une container query ne
+   peut pas interroger son propre conteneur, et on doit pouvoir redéfinir
+   `--blog-block-gap` sur .blog-rendered à l'intérieur de la requête. */
+.blog-container,
+.tiptap-content {
+  container-type: inline-size;
+  container-name: blog;
+}
+
+/* Métriques de base du corps d'article. Toutes les valeurs fluides sont en `cqi`
+   (1 % de la colonne) et NON en `vw` : `vw` serait lui-même une divergence, vu
+   que l'éditeur vit sur un viewport de 1440 px dans une colonne de 768. Chaque
+   clamp est calé sur les deux largeurs réelles, 358 px (téléphone) et 768 px. */
 .ProseMirror,
 .blog-rendered {
-  --blog-block-gap: 0.9rem;
+  /* 11,2 px sur téléphone → 14,4 px sur ordinateur, en CONTINU : plus de saut au
+     point de rupture, et l'ancien palier ne s'appliquait qu'à .blog-rendered —
+     l'éditeur gardait 0,9rem sur mobile. */
+  --blog-block-gap: clamp(0.7rem, 0.525rem + 0.78cqi, 0.9rem);
+  --blog-caption-size: clamp(0.75rem, 0.6625rem + 0.39cqi, 0.85rem);
+
+  font-size: 1rem;
+  line-height: 1.7;
+  /* Le corps était en slate-300 (hérité de `prose-invert`), donc plus terne que
+     le résumé juste au-dessus. */
+  color: var(--color-fg);
+  /* Garde-fou de débordement horizontal : `prosemirror-view` fournit
+     `word-wrap: break-word` À L'ÉDITEUR SEUL, si bien qu'une URL longue se
+     coupait pendant la rédaction puis débordait de l'écran une fois publiée.
+     `break-word` et non `anywhere` : les tailles min-content des items flex et
+     des flottants restent inchangées. */
+  overflow-wrap: break-word;
 }
-.ProseMirror :is(p, h2, h3, ul, ol, blockquote),
-.blog-rendered :is(p, h2, h3, ul, ol, blockquote) {
+
+/* Rythme vertical HOMOGÈNE : même écart entre deux blocs quels qu'ils soient
+   (titre ou paragraphe). Une `margin-block` unique + le margin-collapsing
+   donnent un espacement constant. Les titres se distinguent par la taille et la
+   graisse seules. Les figures/médias gardent leur marge plus large (plus bas). */
+.ProseMirror :is(p, h1, h2, h3, h4, ul, ol, blockquote),
+.blog-rendered :is(p, h1, h2, h3, h4, ul, ol, blockquote) {
   margin-block: var(--blog-block-gap);
 }
-/* Pas de marge fantôme en haut/bas du contenu (prose le fait déjà, mais nos
-   sélecteurs plus spécifiques la réintroduiraient). */
+/* Pas de marge fantôme en haut/bas du contenu. */
 .ProseMirror > :first-child,
 .blog-rendered > :first-child {
   margin-top: 0;
@@ -426,20 +472,108 @@ body::before {
   margin-bottom: 0;
 }
 
-/* Titres de section du contenu : nettement plus petits que le titre de
-   l'article (h1, text-3xl ≈ 1.875rem) pour une hiérarchie claire. La marge est
-   gérée par la règle de rythme homogène ci-dessus. */
+/* Titres de section : échelle FLUIDE, pour qu'elle se dégrade progressivement au
+   lieu de sauter à un point de rupture. h1 plafonne sous le titre de l'article
+   (clamp(1.6rem, 7vw, 3rem), cf. `.band`) — un h1 de corps rendait auparavant à
+   2,25em (défaut de `prose`), soit 36 px, donc PLUS GROS que le titre de la page
+   sur téléphone. h4 se distingue par la graisse, pas par la taille. */
+.ProseMirror :is(h1, h2, h3, h4),
+.blog-rendered :is(h1, h2, h3, h4) {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--color-club-primary-light);
+  text-wrap: balance;
+}
+.ProseMirror h1,
+.blog-rendered h1 {
+  font-size: clamp(1.375rem, 1rem + 1.5cqi, 1.75rem);
+  line-height: 1.25;
+}
 .ProseMirror h2,
 .blog-rendered h2 {
-  font-size: 1.35rem;
-  font-weight: 700;
+  font-size: clamp(1.25rem, 1rem + 1cqi, 1.5rem);
   line-height: 1.3;
 }
 .ProseMirror h3,
 .blog-rendered h3 {
-  font-size: 1.15rem;
-  font-weight: 700;
+  font-size: clamp(1.0625rem, 0.95rem + 0.6cqi, 1.25rem);
   line-height: 1.35;
+}
+.ProseMirror h4,
+.blog-rendered h4 {
+  font-size: 1rem;
+  line-height: 1.4;
+  color: var(--color-fg);
+}
+
+/* Texte courant : liens, emphase. `a.mention` est déclaré plus bas et l'emporte. */
+.ProseMirror a,
+.blog-rendered a {
+  color: var(--color-club-primary-light);
+  font-weight: 500;
+  text-decoration: underline;
+}
+.ProseMirror strong,
+.blog-rendered strong {
+  font-weight: 600;
+  color: #fff;
+}
+.ProseMirror p,
+.blog-rendered p {
+  text-wrap: pretty;
+}
+/* Pas de `hyphens: auto` : les dictionnaires de césure varient selon le
+   navigateur et l'OS — ce serait un générateur de divergence, pas un correctif. */
+
+/* Un paragraphe vide sert d'espaceur aux rédacteurs. ProseMirror lui donne ~28 px
+   (via son <br> de remplissage) alors qu'il rendait 0 px en publié. `:not(:last-child)`
+   ignore le <p></p> final que TipTap ajoute toujours (TrailingNode). */
+.blog-rendered p:empty:not(:last-child) {
+  min-height: 1lh;
+}
+
+/* Listes. `list-style-type` et `padding-inline-start` sont OBLIGATOIRES : le
+   preflight Tailwind réinitialise les listes, et sans `prose` les puces
+   disparaîtraient. */
+.ProseMirror :is(ul, ol),
+.blog-rendered :is(ul, ol) {
+  padding-inline-start: 1.4em;
+  list-style-position: outside;
+}
+.ProseMirror ul,
+.blog-rendered ul {
+  list-style-type: disc;
+}
+.ProseMirror ol,
+.blog-rendered ol {
+  list-style-type: decimal;
+}
+/* `display: flow-root` sur les listes (plus bas, indispensable aux flottants)
+   crée un BFC : les marges des `li > p` ne peuvent plus fusionner hors de la
+   liste, si bien qu'une liste se retrouvait à 1,8rem du paragraphe précédent
+   quand deux paragraphes sont à 0,9rem. On neutralise les marges piégées. */
+.ProseMirror :is(ul, ol) > li > p:first-child,
+.blog-rendered :is(ul, ol) > li > p:first-child {
+  margin-top: 0;
+}
+.ProseMirror :is(ul, ol) > li > p:last-child,
+.blog-rendered :is(ul, ol) > li > p:last-child {
+  margin-bottom: 0;
+}
+.ProseMirror li + li,
+.blog-rendered li + li {
+  margin-top: calc(var(--blog-block-gap) * 0.4);
+}
+
+/* Citation. L'éditeur ne peut plus en produire (désactivée dans StarterKit) mais
+   les deux sanitizers l'autorisent encore : du contenu hérité peut en contenir,
+   et sans déclaration il retombait sur les guillemets typographiques de `prose`. */
+.ProseMirror blockquote,
+.blog-rendered blockquote {
+  border-inline-start: 3px solid color-mix(in oklab, var(--color-club-primary) 55%, transparent);
+  padding-inline-start: 1rem;
+  color: var(--color-muted);
+  font-style: normal;
 }
 
 /* IMPORTANT : uniquement margin-block ici. Un `margin: 2rem 0` imposerait
@@ -459,35 +593,76 @@ body::before {
   max-width: 100%;
   height: auto;
   border-radius: 0.75rem;
+  /* Reset explicite, en remplacement des `figure > *` de `prose` : ceux-ci
+     rataient le wrapper de NodeView de l'éditeur et laissaient 2em de marge
+     au-dessus et en dessous de chaque média en édition seulement. */
+  margin: 0;
+}
+
+/* La largeur d'un média est portée par sa <figure> (en %). Un attribut `width` en
+   px sur l'<img>/<video> échappait à la règle mobile — qui cible la figure — et
+   produisait un rendu différent entre téléphone et ordinateur. Les sanitizers ne
+   le laissent plus passer ; ceci couvre le contenu déjà en base. */
+.ProseMirror figure :is(img, video)[width],
+.blog-rendered figure :is(img, video)[width] {
+  width: auto;
+}
+
+/* Vidéo : réserve sa boîte AVANT le chargement. Sans cela un <video> se dessine
+   à la taille intrinsèque par défaut (300×150) et, dans une `.fig-center` en
+   `width: fit-content`, la figure s'effondrait à ~300 px jusqu'à l'arrivée des
+   métadonnées — pire encore en mode économie d'énergie iOS, qui supprime le
+   préchargement.
+
+   `aspect-ratio: auto 16 / 9` est l'outil exact : la boîte est réservée
+   immédiatement, et le ratio INTRINSÈQUE reprend la main dès qu'il est connu —
+   donc aucun letterboxing d'un clip portrait. Avec l'image d'affiche posée par
+   lib/blogMedia.ts, le ratio réel est connu dès le premier rendu et même ce
+   recalage disparaît. Le fond noir rend l'attente délibérée plutôt qu'invisible. */
+.ProseMirror figure video,
+.blog-rendered figure video {
+  width: 100%;
+  aspect-ratio: auto 16 / 9;
+  background-color: #000;
+}
+/* Une vidéo autonome sans largeur choisie prend la colonne entière, au lieu du
+   `fit-content` qui la réduisait à sa taille intrinsèque. Les figures de
+   `.media-grid`/`.media-text` sont exclues : elles ont leur propre layout. */
+.ProseMirror figure:has(video):not(.fig-sized):not(.media-grid *):not(.media-text *),
+.blog-rendered figure:has(video):not(.fig-sized):not(.media-grid *):not(.media-text *) {
+  width: 100%;
 }
 
 .ProseMirror figcaption,
 .blog-rendered figcaption {
   margin-top: 0.4rem;
   text-align: center;
-  font-size: 0.85rem;
-  color: rgb(100 116 139); /* slate-500 */
+  font-size: var(--blog-caption-size);
+  /* slate-500 sur #0a0a0a donnait un contraste de ≈4,0:1, sous le seuil AA à
+     cette taille. `--color-muted` monte à ≈9,3:1. */
+  color: var(--color-muted);
+  text-wrap: pretty;
 }
 
-/* Lecture seule : cliquer un média l'ouvre en plein écran (voir Lightbox).
-   L'affordance (curseur + léger éclaircissement au survol) n'est active que
-   sur `.blog-rendered-zoomable` (donc pas dans l'éditeur ni si désactivée). */
-.blog-rendered-zoomable figure img,
-.blog-rendered-zoomable video {
+/* Lecture seule : cliquer une IMAGE l'ouvre en plein écran (voir Lightbox).
+   Les vidéos en sont exclues — elles se lisent EN PLACE, et l'affordance
+   `zoom-in` sur une vidéo était trompeuse. Le plein écran d'une vidéo reste
+   accessible par le bouton natif de son lecteur. */
+.blog-rendered-zoomable figure img {
   cursor: zoom-in;
   transition: opacity 0.15s ease;
 }
 @media (hover: hover) and (pointer: fine) {
-  .blog-rendered-zoomable figure img:hover,
-  .blog-rendered-zoomable video:hover {
+  .blog-rendered-zoomable figure img:hover {
     opacity: 0.9;
   }
 }
 
 /* ---------------------------------------------------------------------------
    Mention d'athlète : <a class="mention">@Prénom Nom</a>. Pilule discrète, à la
-   fois dans l'éditeur (.ProseMirror) et l'article rendu (.blog-rendered). La
-   spécificité (0,1,1) l'emporte sur `prose-a:*` (Tailwind Typography). */
+   fois dans l'éditeur (.ProseMirror) et l'article rendu (.blog-rendered).
+   Spécificité (0,2,0) et position après la règle `a` générique du bloc : la
+   pilule l'emporte sur les deux plans. */
 .ProseMirror a.mention,
 .blog-rendered a.mention {
   /* `inline` + `box-decoration-break: clone` : la pilule suit le flux et peut se
@@ -671,9 +846,21 @@ body::before {
 .ProseMirror .media-grid,
 .blog-rendered .media-grid {
   display: flex;
-  gap: 0.75rem;
+  /* `wrap` + un plancher de largeur par item (plus bas) remplacent les cas
+     spéciaux `:nth-child(3)` de l'ancien media query : le passage à la ligne
+     découle de la place disponible, donc il est CONTINU et identique dans
+     l'éditeur, l'aperçu et l'article publié. */
+  flex-wrap: wrap;
+  gap: clamp(0.5rem, 0.25rem + 1cqi, 0.75rem);
   align-items: flex-start; /* hauteurs naturelles (mix portrait/paysage/vidéo) */
   margin-block: 2rem;
+  max-width: 100%;
+  /* Passe SOUS un média flottant qui précède. Un conteneur flex évite les
+     flottants : une grille placée après une figure en `fig-float-right` à 48 %
+     se retrouvait comprimée dans la gouttière restante (367 px au lieu de 768),
+     ses éléments empilés en colonne étroite. Un texte doit s'enrouler autour d'un
+     flottant ; une grille de 2 à 4 médias, non. */
+  clear: both;
 }
 /* Dans l'éditeur, chaque enfant est enveloppé par le conteneur du NodeView
    React : display:contents le rend transparent au layout flex, pour que les
@@ -689,10 +876,21 @@ body::before {
   float: none;
   margin: 0;
   /* Plancher : un item ne peut pas s'effondrer en un filet de quelques pixels
-     (garde une vignette lisible et sa poignée saisissable). */
-  min-width: min(96px, 100%);
+     (garde une vignette lisible et sa poignée saisissable). C'est aussi ce
+     plancher qui décide du passage à la ligne : à 358 px de colonne, deux images
+     tiennent côte à côte (2×136+8 = 280) — le comportement voulu — tandis qu'une
+     troisième passe en dessous, en pleine largeur. */
+  min-width: min(8.5rem, 100%);
   width: auto;
   flex: 1 1 0%; /* parts égales par défaut */
+}
+/* Une vidéo a besoin de bien plus de place : ses contrôles natifs sont illisibles
+   (voire rognés) sous ~240 px, ce qui était exactement le cas d'une grille 2-up
+   sur un écran de 390 px. Deux vidéos restent côte à côte sur ordinateur et
+   s'empilent sur téléphone, sans aucun point de rupture. */
+.ProseMirror .media-grid figure:has(video),
+.blog-rendered .media-grid figure:has(video) {
+  min-width: min(15rem, 100%);
 }
 .ProseMirror .media-grid figure.fig-sized,
 .blog-rendered .media-grid figure.fig-sized {
@@ -718,6 +916,10 @@ body::before {
 .blog-rendered .media-text {
   display: flow-root; /* BFC : contient le flottant + isole du contenu suivant */
   margin-block: 2rem;
+  max-width: 100%;
+  /* Même raison que `.media-grid` : un bloc média+texte ne doit pas se glisser
+     dans la gouttière laissée par un flottant qui le précède. */
+  clear: both;
 }
 /* Éditeur : le conteneur du NodeView React (div) qui enveloppe la <figure>
    devient transparent au layout — mais PAS la colonne de texte (.media-text-col),
@@ -757,9 +959,42 @@ body::before {
   margin-bottom: 0;
 }
 
-/* Sur mobile, on désactive l'habillage : le média passe en pleine largeur
-   et le texte n'est plus écrasé dans une colonne trop étroite. */
-@media (max-width: 640px) {
+/* ---------------------------------------------------------------------------
+   Colonne étroite : plus d'habillage, médias en pleine largeur.
+
+   CONTAINER QUERY, et non media query : le déclencheur est la largeur de la
+   COLONNE D'ARTICLE, pas celle du viewport. C'est ce qui rend le formating stable
+   d'une plateforme à l'autre — auparavant l'auteur composait dans une colonne
+   d'édition jugée sur un viewport de bureau, alors que le lecteur mobile recevait
+   d'autres règles, si bien que l'éditeur ne POUVAIT PAS montrer le rendu réel.
+   L'aperçu contraint à 390 px (cf. BlogPostForm) affiche désormais exactement ce
+   que verra un téléphone.
+
+   Pourquoi 38rem : la colonne publiée vaut
+   `min(min(vw, 1152) − 2·max(16, safe-inset), 768)`. À vw = 640 — le bord de
+   l'ancien `max-width: 640px` — elle vaut exactement 608 px = 38rem ; à 641 elle
+   vaut 609. La bascule se produit donc aux MÊMES largeurs qu'avant : le rendu des
+   articles publiés est inchangé. En prime, c'est automatiquement juste quand
+   `px-safe` grandit sur un appareil à encoche en paysage, ce qu'une media query
+   viewport n'était jamais.
+
+   Les quatre anciens blocs @media ont été fusionnés ici. Leur ORDRE était porteur
+   (trois commentaires « doit rester APRÈS » l'attestaient) uniquement parce que
+   les règles de grille devaient passer après le `!important` d'un bloc frère. Ce
+   `!important` exclut désormais les descendants de grille (`:not(.media-grid *)`),
+   donc AUCUNE règle de ce bloc n'en contredit une autre et l'ordre du fichier
+   n'est plus contraint.
+   --------------------------------------------------------------------------- */
+@container blog (max-width: 38rem) {
+  /* Tout média HORS GRILLE occupe la pleine colonne. `!important` : la largeur
+     vient d'un style inline `width:N%` posé par FigureImage/Video.renderHTML.
+     `:not(.media-grid *)` est insensible au wrapper de NodeView de l'éditeur. */
+  .ProseMirror figure:not(.media-grid *):is(.fig-sized, [class*='fig-w-'], [style*='width']),
+  .blog-rendered figure:not(.media-grid *):is(.fig-sized, [class*='fig-w-'], [style*='width']) {
+    width: 100% !important;
+  }
+
+  /* Plus d'habillage : le texte n'est plus écrasé dans une colonne trop étroite. */
   .ProseMirror .fig-float-left,
   .blog-rendered .fig-float-left,
   .ProseMirror .fig-float-right,
@@ -767,51 +1002,8 @@ body::before {
     float: none;
     margin: 1rem auto;
   }
-  /* Sur mobile, tout média occupe la pleine largeur (pas de côte à côte). */
-  .ProseMirror figure[class*='fig-w-'],
-  .blog-rendered figure[class*='fig-w-'],
-  .ProseMirror figure.fig-sized,
-  .blog-rendered figure.fig-sized,
-  .ProseMirror figure[style*='width'],
-  .blog-rendered figure[style*='width'] {
-    width: 100% !important;
-  }
-}
-
-/* Grille média sur mobile : les paires restent côte à côte (c'est tout
-   l'intérêt), 3-4 éléments passent en 2×2. IMPORTANT : ce bloc doit rester
-   APRÈS le media query ci-dessus — son `width: 100% !important` s'applique
-   aussi aux enfants de grille (même spécificité (0,2,1) avec !important),
-   seul l'ordre des sources permet de le neutraliser ici. */
-@media (max-width: 640px) {
-  .ProseMirror .media-grid,
-  .blog-rendered .media-grid {
-    gap: 0.5rem;
-  }
-  .ProseMirror .media-grid figure,
-  .blog-rendered .media-grid figure {
-    width: auto !important;
-    flex: 1 1 0%; /* parts égales : les ratios personnalisés seraient illisibles */
-  }
-  /* 3 médias ou plus : 2 par rangée. :has() plutôt que la classe
-     media-grid-N car, dans l'éditeur, ProseMirror ne réécrit pas la classe
-     du conteneur quand le nombre d'enfants change. */
-  .ProseMirror .media-grid:has(> :nth-child(3)),
-  .blog-rendered .media-grid:has(> :nth-child(3)) {
-    flex-wrap: wrap;
-  }
-  .ProseMirror .media-grid:has(> :nth-child(3)) figure,
-  .blog-rendered .media-grid:has(> :nth-child(3)) figure {
-    flex: 1 1 calc(50% - 0.25rem);
-  }
-}
-
-/* Bloc image + texte sur mobile : plus d'habillage, image pleine largeur PUIS
-   texte dessous (l'ordre DOM média → texte donne image-puis-texte quel que soit
-   `imageSide`). IMPORTANT : après le media query ci-dessus, dont le
-   `width:100% !important` sur `figure.fig-sized`/`[style*='width']` couvre déjà
-   la mise en pleine largeur du média du bloc. */
-@media (max-width: 640px) {
+  /* Bloc média + texte : média pleine largeur PUIS texte dessous (l'ordre DOM
+     média → texte donne ce résultat quel que soit `imageSide`). */
   .ProseMirror .media-text figure,
   .blog-rendered .media-text figure,
   .ProseMirror .media-text-right figure,
@@ -819,16 +1011,15 @@ body::before {
     float: none;
     margin: 0 0 1rem 0;
   }
-}
 
-/* Rythme de lecture resserré sur mobile : moins d'air entre les blocs, légendes
-   plus discrètes — l'article reste dense sans être serré. */
-@media (max-width: 640px) {
-  .blog-rendered {
-    --blog-block-gap: 0.7rem;
-  }
-  .blog-rendered figcaption {
-    font-size: 0.75rem;
+  /* Grille : les ratios choisis par l'auteur redeviennent des parts égales, ils
+     seraient illisibles à cette largeur. `flex: 1 1 0%` suffit — en ligne flex la
+     flex-basis l'emporte sur `width` pour la taille principale, donc l'ancien
+     `width: auto !important` est inutile. Le passage à la ligne, lui, est géré
+     sans point de rupture par `min-width` (cf. `.media-grid figure`). */
+  .ProseMirror .media-grid figure.fig-sized,
+  .blog-rendered .media-grid figure.fig-sized {
+    flex: 1 1 0%;
   }
 }
 
@@ -859,11 +1050,15 @@ body::before {
 
 /* pb-12 : réserve la place de la toolbar flottante du dernier média
    (position absolue sous la figure, voir .tiptap-node-toolbar).
-   Pas de padding horizontal : la colonne de contenu a ainsi la même largeur
-   utile que l'article publié (<article>, sans inset) → l'habillage et les %
-   des médias se calculent à l'identique dans l'éditeur, l'aperçu et le final. */
+
+   `mx-auto max-w-3xl`, sans padding horizontal : la colonne d'ÉDITION vaut
+   exactement la colonne d'article de BlogDetailPage (`max-w-3xl`, 768 px). Elle
+   faisait auparavant 1118 px — toute la largeur de `max-w-6xl` — si bien qu'un
+   `width:50%` posé par l'auteur était jugé sur 559 px et rendu sur 384 px, et que
+   les largeurs d'habillage différaient de 46 %. C'était la première cause
+   d'instabilité du formating d'une plateforme à l'autre. */
 .tiptap-content {
-  @apply py-4 pb-12;
+  @apply mx-auto max-w-3xl py-4 pb-12;
 }
 .tiptap-content .ProseMirror {
   min-height: 20rem;
@@ -1134,8 +1329,14 @@ body::before {
   }
 }
 
+/* Mêmes métriques que la <figcaption> publiée (cf. bloc blog) : l'input était en
+   `mt-1 text-sm` contre `0.4rem` / `--blog-caption-size`, la légende sautait donc
+   de place entre l'édition et le rendu. */
 .tiptap-caption-input {
-  @apply mt-1 w-full border-none bg-transparent text-center text-sm text-slate-500 focus:outline-none dark:text-slate-400;
+  @apply w-full border-none bg-transparent text-center focus:outline-none;
+  margin-top: 0.4rem;
+  font-size: var(--blog-caption-size);
+  color: var(--color-muted);
   cursor: text;
 }
 
@@ -1148,7 +1349,9 @@ body::before {
   left: 50%;
   transform: translateX(-50%);
   width: max-content;
-  max-width: 90vw;
+  /* 100cqw : la colonne d'édition, pas le viewport — elle ne fait plus toute
+     la largeur de la page depuis la parité de colonne. */
+  max-width: min(90vw, 100cqw);
   z-index: 20;
   margin-top: 0.5rem;
 }

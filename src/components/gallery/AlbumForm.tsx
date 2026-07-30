@@ -3,6 +3,8 @@ import { isAxiosError } from 'axios'
 import { uploadMedia } from '../../api/media'
 import { createAlbum, updateAlbum } from '../../api/gallery'
 import type { AlbumOut } from '../../api/types'
+import { ACCEPT_IMAGE } from '../../lib/mediaKind'
+import { cldThumb } from '../../lib/cloudinary'
 
 const inputClass =
   'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-club-primary focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100'
@@ -92,11 +94,11 @@ export function AlbumForm({
       </div>
       <div>
         <label className={labelClass}>Couverture</label>
-        <input type="file" accept="image/*" onChange={handleCoverChange} />
+        <input type="file" accept={ACCEPT_IMAGE} onChange={handleCoverChange} />
         {isUploading && <p className="mt-1 text-sm text-slate-500">Envoi en cours…</p>}
         {coverUrl && (
           <div className="mt-2 flex items-center gap-3">
-            <img src={coverUrl} alt="" className="h-16 w-16 rounded-lg object-cover" />
+            <img src={cldThumb(coverUrl, 200)} alt="" className="h-16 w-16 rounded-lg object-cover" />
             <button
               type="button"
               className="text-sm text-red-600 hover:underline dark:text-red-400"

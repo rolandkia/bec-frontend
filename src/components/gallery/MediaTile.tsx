@@ -1,4 +1,5 @@
 import type { MediaOut } from '../../api/types'
+import { cldPoster, cldSrcSet, cldThumb } from '../../lib/cloudinary'
 
 /** Tuile bento : remplit sa cellule de grille (object-cover), zoom au survol,
  *  légende révélée en overlay. Les vidéos affichent un badge + un bouton play. */
@@ -13,10 +14,14 @@ export function MediaTile({ media, onClick }: { media: MediaOut; onClick: () => 
     >
       {isVideo ? (
         <>
-          <video
-            src={media.url}
-            muted
-            preload="metadata"
+          {/* Image d'affiche, PAS un <video> : la vignette téléchargeait les
+              métadonnées — donc des octets vidéo — pour chaque tuile de la grille,
+              et rendait souvent un rectangle noir sur iOS. Le badge et le bouton
+              play ci-dessous portent déjà l'information « c'est une vidéo ». */}
+          <img
+            src={cldPoster(media.url, 600) ?? media.url}
+            alt={media.description ?? ''}
+            loading="lazy"
             className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
           />
           <span className="badge absolute left-2.5 top-2.5 bg-black/60 uppercase tracking-wide text-white backdrop-blur">
@@ -30,7 +35,14 @@ export function MediaTile({ media, onClick }: { media: MediaOut; onClick: () => 
         </>
       ) : (
         <img
-          src={media.url}
+          src={cldThumb(media.url, 600)}
+          srcSet={cldSrcSet(media.url, [400, 600, 900], {
+            crop: 'fill',
+            gravity: 'auto',
+            quality: 'auto',
+            format: 'auto',
+          })}
+          sizes="(max-width: 640px) 50vw, 33vw"
           alt={media.description ?? ''}
           loading="lazy"
           className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"

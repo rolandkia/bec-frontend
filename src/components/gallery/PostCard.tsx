@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { MediaOut } from '../../api/types'
+import { MediaThumb } from '../ui/MediaThumb'
 import { club } from '../../data/club'
 
 function formatDate(iso: string) {
@@ -37,7 +38,7 @@ export function PostCard({ media, onClick }: { media: MediaOut; onClick: () => v
       >
         {isVideo ? (
           <div className="relative h-full w-full">
-            <video src={media.url} muted preload="metadata" className="h-full w-full object-cover" />
+            <MediaThumb url={media.url} isVideo alt={media.description ?? ''} width={800} />
             <span className="absolute inset-0 flex items-center justify-center">
               <span className="flex h-14 w-14 items-center justify-center rounded-full bg-club-primary/90 pl-1 text-2xl text-white shadow-lg shadow-black/40 transition-transform duration-300 group-hover:scale-110">
                 ▶
@@ -45,10 +46,11 @@ export function PostCard({ media, onClick }: { media: MediaOut; onClick: () => v
             </span>
           </div>
         ) : (
-          <img
-            src={media.url}
+          <MediaThumb
+            url={media.url}
+            isVideo={false}
             alt={media.description ?? ''}
-            loading="lazy"
+            width={800}
             className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
           />
         )}

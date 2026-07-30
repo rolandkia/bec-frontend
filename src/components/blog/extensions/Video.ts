@@ -3,6 +3,7 @@ import { ReactNodeViewRenderer } from '@tiptap/react'
 import { VideoView } from './VideoView'
 import type { FigureAlign } from './FigureImage'
 import { parseFigureWidth } from './mediaSizes'
+import { stripCldTransforms } from '../../../lib/cloudinary'
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
@@ -29,7 +30,12 @@ export const Video = Node.create({
     return {
       src: {
         default: null,
-        parseHTML: (element) => videoOf(element)?.getAttribute('src') ?? null,
+        // `stripCldTransforms` : si une figure est glissée/collée depuis un
+        // ARTICLE RENDU, son src porte une transformation de livraison. La
+        // stocker en base ferait échouer la comparaison du nettoyage d'orphelins
+        // et détruire un asset encore affiché — on renormalise donc à l'entrée.
+        parseHTML: (element) =>
+          stripCldTransforms(videoOf(element)?.getAttribute('src')) || null,
       },
       caption: {
         default: '',
@@ -66,7 +72,20 @@ export const Video = Node.create({
     const className = `fig-${align}${width ? ' fig-sized' : ''}`
     const attrs: Record<string, string> = { class: className }
     if (width) attrs.style = `width: ${width}%`
-    const video = ['video', mergeAttributes({ src, controls: 'true' })] as const
+    // `playsinline` en minuscules : sérialisation DOM brute, pas du JSX. Sans lui,
+    // iOS Safari force le lecteur plein écran. `poster` n'est volontairement PAS
+    // sérialisé : il est dérivé au rendu (cf. lib/blogMedia.ts) pour pouvoir
+    // évoluer sans migration — et les deux sanitizers le retireraient de toute
+    // façon à l'enregistrement.
+    const video = [
+      'video',
+      mergeAttributes({
+        src,
+        controls: 'true',
+        playsinline: 'true',
+        preload: 'metadata',
+      }),
+    ] as const
     // Pas de <figcaption> vide : évite une marge fantôme dans l'article publié.
     return caption
       ? ['figure', mergeAttributes(attrs), video, ['figcaption', {}, caption]]

@@ -6,6 +6,7 @@ import { AlbumForm } from '../components/gallery/AlbumForm'
 import { AlbumMediaManager } from '../components/gallery/AlbumMediaManager'
 import { Loading, ErrorMessage } from '../components/ui/Status'
 import type { AlbumOut, MediaOut } from '../api/types'
+import { MediaThumb } from '../components/ui/MediaThumb'
 
 export function GalleryAdminPage() {
   const queryClient = useQueryClient()
@@ -147,11 +148,11 @@ export function GalleryAdminPage() {
             {mediaQuery.data.items.map((media) => (
               <div key={media.id} className="card overflow-hidden p-0">
                 <div className="aspect-square w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
-                  {media.resource_type === 'video' ? (
-                    <video src={media.url} muted preload="metadata" className="h-full w-full object-cover" />
-                  ) : (
-                    <img src={media.url} alt="" loading="lazy" className="h-full w-full object-cover" />
-                  )}
+                  <MediaThumb
+                    url={media.url}
+                    isVideo={media.resource_type === 'video'}
+                    width={200}
+                  />
                 </div>
                 <div className="flex items-center justify-between gap-2 p-2">
                   <Link

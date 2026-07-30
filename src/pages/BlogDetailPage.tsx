@@ -9,6 +9,7 @@ import { Lightbox } from '../components/ui/Lightbox'
 import { Loading, ErrorMessage, NotFound } from '../components/ui/Status'
 import { motion, useReducedMotion } from '../components/ui/motion'
 import { useScroll } from 'framer-motion'
+import { cldImage, cldSrcSet } from '../lib/cloudinary'
 
 /** Temps de lecture estimé (≈200 mots/min) à partir du HTML de l'article. */
 function readingMinutes(html: string): number {
@@ -98,7 +99,13 @@ export function BlogDetailPage() {
         <div className="band mb-6 border border-[color:var(--color-line)] sm:mb-8">
           <div className="relative">
             <img
-              src={post.cover_image_url}
+              src={cldImage(post.cover_image_url, 1600)}
+              srcSet={cldSrcSet(post.cover_image_url, [640, 1200, 1600], {
+                crop: 'limit',
+                quality: 'auto',
+                format: 'auto',
+              })}
+              sizes="100vw"
               alt=""
               className="block aspect-[16/10] w-full cursor-zoom-in object-cover sm:aspect-[16/7]"
               style={coverImageStyle(post.cover_position)}

@@ -6,7 +6,9 @@ const ALLOWED_TAGS = [
   'p', 'br', 'h1', 'h2', 'h3', 'h4', 'strong', 'em', 'u', 's',
   'ul', 'ol', 'li', 'blockquote', 'a', 'figure', 'figcaption', 'img', 'video',
 ]
-const ALLOWED_ATTR = ['href', 'title', 'src', 'alt', 'class', 'width', 'controls', 'rel', 'target', 'style']
+// Pas de `width` : comme dans BlogContent, la largeur d'un média est portée par
+// sa <figure> (lue ici par `figureWidthPct`), pas par le média lui-même.
+const ALLOWED_ATTR = ['href', 'title', 'src', 'alt', 'class', 'controls', 'rel', 'target', 'style']
 
 const MARGIN = 48
 const CLUB_RED: [number, number, number] = [216, 31, 42]

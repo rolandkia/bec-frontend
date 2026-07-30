@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react'
 import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { cldImage, cldPoster, cldVideo } from '../../lib/cloudinary'
 
 export interface LightboxItem {
   url: string
@@ -57,6 +58,13 @@ export function Lightbox({
   const swipeStartX = useRef<number | null>(null)
 
   function onPointerDown(e: ReactPointerEvent) {
+    // Jamais de balayage démarré SUR la vidéo : tirer la barre de progression de
+    // plus de 50 px déclenchait un `goNext()`, rendant le seek inutilisable au
+    // doigt. Le balayage reste actif sur la zone sombre et via les flèches basses.
+    if ((e.target as HTMLElement).closest('video')) {
+      swipeStartX.current = null
+      return
+    }
     swipeStartX.current = e.pointerType === 'mouse' ? null : e.clientX
   }
 
@@ -114,15 +122,22 @@ export function Lightbox({
           {current.type === 'video' ? (
             <video
               key={current.url}
-              src={current.url}
+              src={cldVideo(current.url)}
+              poster={cldPoster(current.url) ?? undefined}
               controls
+              // `autoPlay` sans `muted` est simplement ignoré par iOS (l'utilisateur
+              // appuie sur lecture) ; ajouter `muted` couperait le son d'une vidéo
+              // ouverte volontairement. `playsInline` est ce qui fait jouer la
+              // vidéo DANS l'overlay au lieu de partir dans le lecteur iOS.
               autoPlay
-              className="max-h-[72dvh] max-w-full rounded-lg"
+              playsInline
+              preload="metadata"
+              className="max-h-[72dvh] max-w-full rounded-lg bg-black"
             />
           ) : (
             <img
               key={current.url}
-              src={current.url}
+              src={cldImage(current.url, 1920)}
               alt=""
               className="max-h-[72dvh] max-w-full rounded-lg object-contain"
             />

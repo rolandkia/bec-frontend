@@ -6,6 +6,7 @@ import { MEDIA_TEXT_NAME, parentMediaTextPos, type MediaTextSide } from './Media
 import { SIZE_OPTIONS } from './mediaSizes'
 import { MediaResizeHandles } from './MediaResizeHandles'
 import { useMediaDrag } from './useMediaDrag'
+import { cldPoster, cldVideo } from '../../../lib/cloudinary'
 
 /** Choix de disposition d'un média. `center` = média seul centré ; `left`/
  *  `right` = média flottant, le texte s'enroule de l'autre côté. */
@@ -135,7 +136,16 @@ export function VideoView(props: NodeViewProps) {
       {/* La vidéo garde ses contrôles cliquables : seule la poignée ⠿ sert de
           prise pour le drag pointeur custom. */}
       <div className={`tiptap-media-wrap${isNodeSelected ? ' is-selected' : ''}`}>
-        <video src={src} controls />
+        {/* `cldVideo` : dérivé mp4/h264, sans quoi un .mov/HEVC ne se lit pas
+            dans l'éditeur (Chrome/Firefox) alors qu'il s'enverra sans erreur.
+            AFFICHAGE SEULEMENT — `renderHTML` sérialise le src brut. */}
+        <video
+          src={cldVideo(src)}
+          poster={cldPoster(src) ?? undefined}
+          controls
+          playsInline
+          preload="metadata"
+        />
         {editable && (
           <span
             className="tiptap-drag-grip"

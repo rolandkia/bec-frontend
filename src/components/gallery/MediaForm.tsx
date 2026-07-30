@@ -3,6 +3,12 @@ import { isAxiosError } from 'axios'
 import { useQuery } from '@tanstack/react-query'
 import { mediaTooLargeMessage, uploadMedia } from '../../api/media'
 import { createMedia, listAlbums, updateMedia } from '../../api/gallery'
+import {
+  ACCEPT_MEDIA,
+  mediaKind,
+  partitionMediaFiles,
+  unsupportedFileMessage,
+} from '../../lib/mediaKind'
 import type { MediaOut } from '../../api/types'
 import { AthletePicker } from './AthletePicker'
 
@@ -47,14 +53,20 @@ export function MediaForm({
 
   function handleFilesChange(e: React.ChangeEvent<HTMLInputElement>) {
     const selected = Array.from(e.target.files ?? [])
-    const tooLarge = selected.map(mediaTooLargeMessage).find(Boolean)
-    if (tooLarge) {
-      setError(tooLarge)
-      setFiles([])
-      return
+    // On ne jette QUE les fichiers problématiques : `setFiles([])` effaçait toute
+    // la sélection dès le premier refusé, y compris les dizaines de photos
+    // parfaitement valides qui l'accompagnaient.
+    const { supported, rejected } = partitionMediaFiles(selected)
+    const kept: File[] = []
+    const reasons: string[] = []
+    for (const file of rejected) reasons.push(unsupportedFileMessage([file]))
+    for (const file of supported) {
+      const tooLarge = mediaTooLargeMessage(file)
+      if (tooLarge) reasons.push(tooLarge)
+      else kept.push(file)
     }
-    setError(null)
-    setFiles(selected)
+    setError(reasons.length ? reasons.join(' ') : null)
+    setFiles(kept)
   }
 
   function removeFile(index: number) {
@@ -127,7 +139,7 @@ export function MediaForm({
       {!isEdit && (
         <div>
           <label className={labelClass}>Fichiers (images ou vidéos)</label>
-          <input type="file" accept="image/*,video/*" multiple onChange={handleFilesChange} />
+          <input type="file" accept={ACCEPT_MEDIA} multiple onChange={handleFilesChange} />
           {files.length > 0 && (
             <>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
@@ -140,8 +152,14 @@ export function MediaForm({
                     key={`${file.name}-${i}`}
                     className="group relative aspect-square overflow-hidden rounded-lg border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800"
                   >
-                    {file.type.startsWith('video/') ? (
-                      <video src={previews[i]} muted className="h-full w-full object-cover" />
+                    {mediaKind(file) === 'video' ? (
+                      <video
+                        src={previews[i]}
+                        muted
+                        playsInline
+                        preload="metadata"
+                        className="h-full w-full object-cover"
+                      />
                     ) : (
                       <img src={previews[i]} alt={file.name} className="h-full w-full object-cover" />
                     )}

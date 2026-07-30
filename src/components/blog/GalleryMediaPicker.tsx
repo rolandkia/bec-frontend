@@ -5,6 +5,7 @@ import { listMedia } from '../../api/gallery'
 import type { MediaOut } from '../../api/types'
 import { Loading, ErrorMessage } from '../ui/Status'
 import { useInfiniteScroll } from '../../lib/useInfiniteScroll'
+import { MediaThumb } from '../ui/MediaThumb'
 
 const PAGE_SIZE = 24
 
@@ -91,11 +92,7 @@ export function GalleryMediaPicker({
                     isSelected ? 'border-club-primary' : 'border-transparent'
                   }`}
                 >
-                  {m.resource_type === 'video' ? (
-                    <video src={m.url} muted preload="metadata" className="h-full w-full object-cover" />
-                  ) : (
-                    <img src={m.url} alt="" loading="lazy" className="h-full w-full object-cover" />
-                  )}
+                  <MediaThumb url={m.url} isVideo={m.resource_type === 'video'} width={200} />
                   {isSelected && (
                     <span className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-club-primary text-xs text-white">
                       ✓

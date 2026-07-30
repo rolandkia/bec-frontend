@@ -2,6 +2,7 @@ import { Node, mergeAttributes } from '@tiptap/core'
 import { ReactNodeViewRenderer } from '@tiptap/react'
 import { FigureImageView } from './FigureImageView'
 import { parseFigureWidth } from './mediaSizes'
+import { stripCldTransforms } from '../../../lib/cloudinary'
 
 /** Placement d'un média AUTONOME : uniquement `center` désormais. L'ancien
  *  habillage flottant (`float-left`/`float-right`) est remplacé par le bloc
@@ -47,7 +48,12 @@ export const FigureImage = Node.create({
     return {
       src: {
         default: null,
-        parseHTML: (element) => imgOf(element)?.getAttribute('src') ?? null,
+        // `stripCldTransforms` : si une figure est glissée/collée depuis un
+        // ARTICLE RENDU, son src porte une transformation de livraison. La stocker
+        // en base ferait échouer la comparaison du nettoyage d'orphelins et
+        // détruire un asset encore affiché — on renormalise donc à l'entrée.
+        parseHTML: (element) =>
+          stripCldTransforms(imgOf(element)?.getAttribute('src')) || null,
       },
       alt: {
         default: null,

@@ -6,6 +6,7 @@ import { listBlogMedia } from '../../api/blogs'
 import type { AlbumOut, BlogMediaOut, MediaOut } from '../../api/types'
 import { Loading, ErrorMessage } from '../ui/Status'
 import { useInfiniteScroll } from '../../lib/useInfiniteScroll'
+import { MediaThumb } from '../ui/MediaThumb'
 
 const PAGE_SIZE = 24
 
@@ -260,11 +261,7 @@ function SelectableTile({
         selected ? 'border-club-primary' : 'border-transparent hover:border-slate-300 dark:hover:border-slate-700'
       }`}
     >
-      {isVideo ? (
-        <video src={url} muted preload="metadata" className="h-full w-full object-cover" />
-      ) : (
-        <img src={url} alt="" loading="lazy" className="h-full w-full object-cover" />
-      )}
+      <MediaThumb url={url} isVideo={isVideo} width={200} />
       {selected && (
         <span className="absolute inset-0 bg-club-primary/20" />
       )}

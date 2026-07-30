@@ -2,6 +2,7 @@ import { isAxiosError } from 'axios'
 import type { Node as PMNode } from '@tiptap/pm/model'
 import type { EditorView } from '@tiptap/pm/view'
 import { mediaTooLargeMessage, uploadMedia } from '../../../api/media'
+import { mediaKind, unsupportedFileMessage } from '../../../lib/mediaKind'
 import { isMediaNode, MEDIA_GRID_NAME } from './MediaGrid'
 import { findPlaceholder, uploadPlaceholderKey } from './mediaUploadPlaceholder'
 
@@ -12,7 +13,7 @@ export interface UploadCallbacks {
 }
 
 export function isSupportedMediaFile(file: File): boolean {
-  return file.type.startsWith('image/') || file.type.startsWith('video/')
+  return mediaKind(file) !== null
 }
 
 /** Ramène une position quelconque à la frontière de bloc top-level la plus
@@ -75,8 +76,13 @@ export async function uploadFileAt(
   pos: number,
   callbacks?: UploadCallbacks,
 ): Promise<void> {
-  if (!isSupportedMediaFile(file)) return
-  const isImage = file.type.startsWith('image/')
+  // Échec explicite : un `return` nu ne posait ni erreur ni placeholder, le
+  // fichier disparaissait sans que rien ne l'indique.
+  if (!isSupportedMediaFile(file)) {
+    callbacks?.onError?.(unsupportedFileMessage([file]))
+    return
+  }
+  const isImage = mediaKind(file) === 'image'
   // Garde-fou immédiat pour les vidéos (non compressées côté client) : évite un
   // envoi de 100 Mo voué à l'échec. Les images sont downscalées avant l'envoi,
   // donc on laisse le serveur trancher après compression.

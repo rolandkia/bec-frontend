@@ -2,9 +2,14 @@ import { useRef, useState } from 'react'
 import { isAxiosError } from 'axios'
 import { uploadMedia } from '../../api/media'
 import { coverImageStyle, type CoverPosition } from '../../api/types'
+import { ACCEPT_IMAGE } from '../../lib/mediaKind'
+import { cldImage } from '../../lib/cloudinary'
 import { BlogEditor, type BlogEditorHandle } from './BlogEditor'
 import { BlogContent } from './BlogContent'
 import { CoverFocalPicker } from './CoverFocalPicker'
+
+/** Largeur d'un téléphone courant, pour l'aperçu contraint. */
+const PHONE_PREVIEW_WIDTH = 390
 
 const inputClass =
   'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-club-primary focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100'
@@ -42,6 +47,7 @@ export function BlogPostForm({
   const [isUploadingCover, setIsUploadingCover] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [previewWidth, setPreviewWidth] = useState<'phone' | 'desktop'>('desktop')
 
   // Navigation clavier : Entrée valide le champ et passe au suivant
   // (Titre → Résumé → éditeur de contenu).
@@ -153,7 +159,7 @@ export function BlogPostForm({
         <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
           Image de couverture
         </label>
-        <input type="file" accept="image/*" onChange={handleCoverChange} />
+        <input type="file" accept={ACCEPT_IMAGE} onChange={handleCoverChange} />
         {isUploadingCover && <p className="mt-1 text-sm text-slate-500">Envoi en cours…</p>}
         {coverImageUrl && (
           <>
@@ -198,27 +204,57 @@ export function BlogPostForm({
       </div>
 
       <div>
-        <p className="mb-2 text-sm font-medium text-slate-500 dark:text-slate-400">Aperçu</p>
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Aperçu</p>
+          {/* Les règles responsive de l'article réagissent désormais à la largeur
+              de sa COLONNE (container queries), pas à celle du viewport : contraindre
+              l'aperçu à 390 px affiche donc le VRAI rendu mobile, sur un écran de
+              bureau et sans redimensionner la fenêtre. */}
+          <div className="segmented" role="group" aria-label="Largeur de l'aperçu">
+            <button
+              type="button"
+              aria-pressed={previewWidth === 'phone'}
+              onClick={() => setPreviewWidth('phone')}
+            >
+              Téléphone
+            </button>
+            <button
+              type="button"
+              aria-pressed={previewWidth === 'desktop'}
+              onClick={() => setPreviewWidth('desktop')}
+            >
+              Ordinateur
+            </button>
+          </div>
+        </div>
         {/* py-5 sans padding horizontal : le contenu de l'aperçu occupe la même
             largeur utile que l'article publié pour un rendu identique. */}
         <div className="card py-5">
-          {coverImageUrl && (
-            <div className="mb-4 aspect-[5/2] w-full overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
-              <img
-                src={coverImageUrl}
-                alt=""
-                className="h-full w-full object-cover"
-                style={coverImageStyle(coverPosition)}
-              />
-            </div>
-          )}
-          <h2 className="mb-3 text-3xl font-bold text-club-primary dark:text-club-primary-light">
-            {title || 'Titre de l’article'}
-          </h2>
-          {summary && (
-            <p className="mb-4 text-lg text-slate-600 dark:text-slate-300">{summary}</p>
-          )}
-          <BlogContent html={content || '<p><em>Le contenu apparaîtra ici…</em></p>'} enableLightbox={false} />
+          <div
+            className="mx-auto w-full max-w-3xl"
+            style={previewWidth === 'phone' ? { maxWidth: PHONE_PREVIEW_WIDTH } : undefined}
+          >
+            {coverImageUrl && (
+              <div className="mb-4 aspect-[5/2] w-full overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
+                <img
+                  src={cldImage(coverImageUrl, 1200)}
+                  alt=""
+                  className="h-full w-full object-cover"
+                  style={coverImageStyle(coverPosition)}
+                />
+              </div>
+            )}
+            <h2 className="mb-3 text-3xl font-bold text-club-primary dark:text-club-primary-light">
+              {title || 'Titre de l’article'}
+            </h2>
+            {summary && (
+              <p className="mb-4 text-lg text-slate-600 dark:text-slate-300">{summary}</p>
+            )}
+            <BlogContent
+              html={content || '<p><em>Le contenu apparaîtra ici…</em></p>'}
+              enableLightbox={false}
+            />
+          </div>
         </div>
       </div>
     </div>

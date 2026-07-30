@@ -4,8 +4,21 @@ const COMPRESS_THRESHOLD = 1.5 * 1024 * 1024
 const MAX_DIMENSION = 2560
 const JPEG_QUALITY = 0.85
 
-/** Formats à ne pas recompresser : animation (gif) ou vectoriel (svg). */
-const SKIP_TYPES = new Set(['image/gif', 'image/svg+xml'])
+/** Formats à ne pas recompresser :
+ *  - gif (animation) et svg (vectoriel) : un ré-encodage canvas les détruirait ;
+ *  - heic/heif : `createImageBitmap` ne sait pas les décoder dans la quasi-totalité
+ *    des navigateurs, on brûlait un décodage et une exception par fichier pour rien ;
+ *  - avif : déjà mieux compressé qu'un JPEG de qualité 0,85.
+ *  Dans tous ces cas la livraison est prise en charge par Cloudinary (`f_auto`),
+ *  qui convertit à la volée — c'est aussi ce qui rend enfin les HEIC d'iPhone
+ *  affichables sur Chrome et Firefox. */
+const SKIP_TYPES = new Set([
+  'image/gif',
+  'image/svg+xml',
+  'image/heic',
+  'image/heif',
+  'image/avif',
+])
 
 /**
  * Compresse une image côté client (canvas natif, aucune dépendance) avant

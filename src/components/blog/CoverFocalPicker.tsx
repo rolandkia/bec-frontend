@@ -8,6 +8,7 @@ import {
   coverZoom,
   type CoverPosition,
 } from '../../api/types'
+import { cldImage } from '../../lib/cloudinary'
 
 /** Parse une valeur `object-position` ("x% y%") en pourcentages numériques. */
 function parsePosition(value: CoverPosition): { x: number; y: number } {
@@ -80,7 +81,7 @@ export function CoverFocalPicker({
         className="relative aspect-[5/2] w-full max-w-xl cursor-crosshair overflow-hidden rounded-lg border border-slate-300 bg-slate-100 select-none dark:border-slate-700 dark:bg-slate-800"
       >
         <img
-          src={src}
+          src={cldImage(src, 1200)}
           alt="Aperçu du cadrage de la couverture"
           draggable={false}
           className="h-full w-full object-cover"

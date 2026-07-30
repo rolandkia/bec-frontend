@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { AlbumOut } from '../../api/types'
+import { cldThumb } from '../../lib/cloudinary'
 
 /** Rangée horizontale de « stories » : un rond par album (façon Instagram). */
 export function AlbumStories({ albums }: { albums: AlbumOut[] }) {
@@ -17,7 +18,7 @@ export function AlbumStories({ albums }: { albums: AlbumOut[] }) {
             <span className="block rounded-full bg-[color:var(--color-ink)] p-[2px]">
               <span className="block h-16 w-16 overflow-hidden rounded-full bg-[color:var(--color-surface-2)]">
                 {album.cover_image_url ? (
-                  <img src={album.cover_image_url} alt="" loading="lazy" className="h-full w-full object-cover" />
+                  <img src={cldThumb(album.cover_image_url, 200)} alt="" loading="lazy" className="h-full w-full object-cover" />
                 ) : (
                   <span className="flex h-full w-full items-center justify-center bg-gradient-to-br from-club-primary-light to-club-primary text-xl font-bold text-white">
                     {album.title[0]?.toUpperCase() ?? '?'}

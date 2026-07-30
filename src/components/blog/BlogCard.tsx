@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { coverImageStyle, type BlogPostOut } from '../../api/types'
+import { cldImage, cldSrcSet } from '../../lib/cloudinary'
 
 function formatDate(iso: string | null) {
   if (!iso) return null
@@ -42,7 +43,13 @@ export function BlogCard({
       >
         {post.cover_image_url ? (
           <img
-            src={post.cover_image_url}
+            src={cldImage(post.cover_image_url, 800)}
+            srcSet={cldSrcSet(post.cover_image_url, [400, 800, 1200], {
+              crop: 'limit',
+              quality: 'auto',
+              format: 'auto',
+            })}
+            sizes="(max-width: 640px) 100vw, 400px"
             alt=""
             loading="lazy"
             decoding="async"

@@ -1,6 +1,7 @@
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DOMPurify from 'dompurify'
+import { fullSrcOf, rewriteBlogMedia } from '../../lib/blogMedia'
 import { Lightbox, type LightboxItem } from '../ui/Lightbox'
 
 const ALLOWED_TAGS = [
@@ -10,10 +11,16 @@ const ALLOWED_TAGS = [
   'div',
 ]
 const ALLOWED_ATTR = [
-  'href', 'title', 'src', 'alt', 'class', 'width', 'controls', 'rel', 'target', 'style',
+  'href', 'title', 'src', 'alt', 'class', 'controls', 'preload', 'playsinline',
+  'rel', 'target', 'style',
   'data-type',
   // Mention d'athlète : <a data-mention="123">@Prénom Nom</a>.
   'data-mention',
+  // Pas de `width` : la largeur d'un média est portée par sa <figure> (en %).
+  // Un `width` en px sur l'<img>/<video> échappait à la règle mobile — qui cible
+  // la figure — et produisait un rendu différent entre téléphone et ordinateur.
+  // Pas de `poster`/`srcset` non plus : ils sont ajoutés APRÈS l'assainissement
+  // par rewriteBlogMedia, depuis des valeurs générées (cf. blogMedia.ts).
 ]
 
 export function BlogContent({
@@ -23,18 +30,22 @@ export function BlogContent({
   html: string
   enableLightbox?: boolean
 }) {
-  const clean = DOMPurify.sanitize(html, {
-    ALLOWED_TAGS,
-    ALLOWED_ATTR,
-    ADD_ATTR: ['controls'],
-  })
+  // Mémoïsé : l'assainissement tournait à CHAQUE rendu, y compris à chaque
+  // changement d'index de la visionneuse.
+  const clean = useMemo(
+    () =>
+      rewriteBlogMedia(
+        DOMPurify.sanitize(html, { ALLOWED_TAGS, ALLOWED_ATTR }),
+      ),
+    [html],
+  )
 
   const containerRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
   const [lightbox, setLightbox] = useState<{ items: LightboxItem[]; index: number } | null>(null)
 
   // Un seul gestionnaire délégué : les mentions d'athlète naviguent en SPA,
-  // et un clic sur une image/vidéo ouvre la visionneuse plein écran.
+  // et un clic sur une image ouvre la visionneuse plein écran.
   function handleClick(e: React.MouseEvent<HTMLDivElement>) {
     const target = e.target as HTMLElement
 
@@ -51,22 +62,28 @@ export function BlogContent({
 
     if (!enableLightbox) return
 
-    const media = target.closest('img, video')
+    // IMAGES SEULEMENT. Une vidéo se lit EN PLACE : l'ouvrir dans la visionneuse
+    // rendait la lecture inline impossible et interceptait jusqu'aux clics sur la
+    // barre de contrôle native. Le plein écran reste accessible par le bouton
+    // natif du lecteur — affordance de plateforme, accessible au clavier, avec
+    // AirPlay et PiP en prime. `closest('img')` ne peut pas matcher un clic parti
+    // d'une <video>, donc ses contrôles sont désormais pleinement utilisables.
+    const media = target.closest('img')
     if (media && containerRef.current) {
-      const all = Array.from(
-        containerRef.current.querySelectorAll<HTMLImageElement | HTMLVideoElement>('img, video'),
-      )
+      // Même sélecteur pour la collecte et pour la recherche d'index : la
+      // correspondance est juste par construction.
+      const all = Array.from(containerRef.current.querySelectorAll<HTMLImageElement>('img'))
       const items: LightboxItem[] = all.map((el) => ({
-        url: el instanceof HTMLVideoElement ? el.currentSrc || el.src : el.src,
-        type: el instanceof HTMLVideoElement ? 'video' : 'image',
+        url: fullSrcOf(el),
+        type: 'image',
       }))
-      const index = all.indexOf(media as HTMLImageElement | HTMLVideoElement)
+      const index = all.indexOf(media)
       if (index >= 0) setLightbox({ items, index })
     }
   }
 
   return (
-    <div className="prose prose-slate max-w-none dark:prose-invert prose-headings:text-club-primary dark:prose-headings:text-club-primary-light prose-a:text-club-primary dark:prose-a:text-club-primary-light">
+    <div className="blog-container">
       <div
         ref={containerRef}
         className={`blog-rendered${enableLightbox ? ' blog-rendered-zoomable' : ''}`}

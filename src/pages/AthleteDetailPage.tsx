@@ -11,6 +11,8 @@ import { Loading, ErrorMessage, NotFound } from '../components/ui/Status'
 import { computeNiveauSaison } from '../utils/niveau'
 import { currentSaison } from '../utils/saison'
 import { ffaProfileUrl } from '../utils/ffa'
+import { getInitials } from '../utils/initials'
+import { cldPortrait } from '../lib/cloudinary'
 import { Reveal } from '../components/ui/motion'
 
 interface RPCard {
@@ -26,6 +28,8 @@ export function AthleteDetailPage() {
   const athleteId = Number(id)
   const [discipline, setDiscipline] = useState<string | null>(null)
   const [saison, setSaison] = useState<string>(TOUTES_SAISONS)
+  // Repli si l'URL Cloudinary est morte (le glyphe « image cassée » sinon).
+  const [photoFailed, setPhotoFailed] = useState(false)
 
   const athleteQuery = useQuery({
     queryKey: ['athlete', athleteId],
@@ -116,7 +120,8 @@ export function AthleteDetailPage() {
   if (!athlete) return null
 
   const currentNiveau = computeNiveauSaison(athlete.resultats, currentSaison())
-  const initials = `${athlete.prenom[0] ?? ''}${athlete.nom[0] ?? ''}`
+  const initials = getInitials(athlete.prenom, athlete.nom)
+  const showPhoto = Boolean(athlete.photo_url) && !photoFailed
 
   return (
     <div className="animate-rise">
@@ -134,27 +139,24 @@ export function AthleteDetailPage() {
             l'identité passe en surimpression au bas du portrait (donc hors flux)
             et la fiche tient sur un écran au lieu de ~800 px empilés. */}
         <div className="relative grid md:grid-cols-[minmax(0,300px)_1fr]">
-          {/* Cadrage affiche 4/5 seulement s'il y a une photo (cf. accueil). */}
+          {/* Cadrage affiche 4/5 seulement s'il y a une photo (cf. accueil). Le
+              ratio suit `showPhoto` et non `photo_url` : une URL morte doit aussi
+              basculer en 16/10, sinon le monogramme est cadré de travers. */}
           <div
             className={`relative overflow-hidden md:aspect-auto md:min-h-[320px] ${
-              athlete.photo_url ? 'aspect-[4/5]' : 'aspect-[16/10]'
+              showPhoto ? 'aspect-[4/5]' : 'aspect-[16/10]'
             }`}
           >
-            {athlete.photo_url ? (
+            {showPhoto ? (
               <img
-                src={athlete.photo_url}
+                src={cldPortrait(athlete.photo_url, 600)}
                 alt={`${athlete.prenom} ${athlete.nom}`}
                 decoding="async"
+                onError={() => setPhotoFailed(true)}
                 className="h-full w-full object-cover object-top"
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-club-primary-light to-club-primary">
-                <img
-                  src="/photos/logo.webp"
-                  alt=""
-                  aria-hidden
-                  className="absolute inset-0 m-auto h-2/3 w-2/3 object-contain opacity-[0.10]"
-                />
                 <span className="mt-[-8%] font-display text-5xl font-bold uppercase text-white/90 sm:text-7xl md:mt-0">
                   {initials}
                 </span>

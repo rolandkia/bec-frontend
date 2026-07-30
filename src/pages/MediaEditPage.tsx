@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getMedia } from '../api/gallery'
 import { MediaForm } from '../components/gallery/MediaForm'
 import { Loading, ErrorMessage, NotFound } from '../components/ui/Status'
+import { cldImage, cldPoster, cldVideo } from '../lib/cloudinary'
 
 export function MediaEditPage() {
   const { id } = useParams<{ id: string }>()
@@ -38,9 +39,16 @@ export function MediaEditPage() {
       <h1 className="section-title mb-8">Modifier le média</h1>
       <div className="mb-6 aspect-video w-full max-w-md overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
         {media.resource_type === 'video' ? (
-          <video src={media.url} controls className="h-full w-full object-contain" />
+          <video
+            src={cldVideo(media.url)}
+            poster={cldPoster(media.url) ?? undefined}
+            controls
+            playsInline
+            preload="metadata"
+            className="h-full w-full bg-black object-contain"
+          />
         ) : (
-          <img src={media.url} alt="" className="h-full w-full object-contain" />
+          <img src={cldImage(media.url)} alt="" className="h-full w-full object-contain" />
         )}
       </div>
       <MediaForm existing={media} onDone={handleDone} />

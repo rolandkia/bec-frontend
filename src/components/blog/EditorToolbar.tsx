@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import type { Editor } from '@tiptap/react'
 import type { MediaOut } from '../../api/types'
+import { ACCEPT_MEDIA } from '../../lib/mediaKind'
 import { GalleryMediaPicker } from './GalleryMediaPicker'
 
 function ToolbarButton({
@@ -113,7 +114,7 @@ export function EditorToolbar({
         ref={fileInputRef}
         type="file"
         className="hidden"
-        accept="image/*,video/*"
+        accept={ACCEPT_MEDIA}
         multiple
         onChange={handleFile}
       />

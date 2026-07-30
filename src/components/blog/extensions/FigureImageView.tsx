@@ -6,6 +6,7 @@ import { MEDIA_TEXT_NAME, parentMediaTextPos, type MediaTextSide } from './Media
 import { SIZE_OPTIONS } from './mediaSizes'
 import { MediaResizeHandles } from './MediaResizeHandles'
 import { useMediaDrag } from './useMediaDrag'
+import { cldImage } from '../../../lib/cloudinary'
 
 /** Choix de disposition d'un média. `center` = image seule centrée ; `left`/
  *  `right` = image flottante, le texte s'enroule de l'autre côté. */
@@ -142,7 +143,9 @@ export function FigureImageView(props: NodeViewProps) {
         className={`tiptap-media-wrap${isNodeSelected ? ' is-selected' : ''}${editable ? ' tiptap-grab' : ''}`}
         onPointerDown={editable ? onPointerDown : undefined}
       >
-        <img src={src} alt={alt ?? ''} draggable={false} />
+        {/* AFFICHAGE SEULEMENT (`renderHTML` sérialise le src brut) : l'éditeur
+            n'a pas besoin de l'original pleine résolution. */}
+        <img src={cldImage(src, 1000)} alt={alt ?? ''} draggable={false} />
         {editable && (
           <span
             className="tiptap-drag-grip"

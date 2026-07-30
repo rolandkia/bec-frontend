@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { AlbumOut } from '../../api/types'
+import { cldThumb } from '../../lib/cloudinary'
 
 export function AlbumCard({ album }: { album: AlbumOut }) {
   return (
@@ -10,7 +11,7 @@ export function AlbumCard({ album }: { album: AlbumOut }) {
       <div className="aspect-[4/3] w-full overflow-hidden bg-[color:var(--color-surface-2)]">
         {album.cover_image_url ? (
           <img
-            src={album.cover_image_url}
+            src={cldThumb(album.cover_image_url, 600)}
             alt=""
             loading="lazy"
             className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"

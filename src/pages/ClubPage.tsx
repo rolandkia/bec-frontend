@@ -9,6 +9,8 @@ import { Reveal, RevealGroup, motion, staggerItem } from '../components/ui/motio
 import { Avatar } from '../components/ui/Avatar'
 import { PartenaireCard } from '../components/club/PartenaireCard'
 import { Loading, ErrorMessage } from '../components/ui/Status'
+import { cldPortrait } from '../lib/cloudinary'
+import { getInitials } from '../utils/initials'
 
 function MembreCard({ m }: { m: CoachOut }) {
   return (
@@ -21,9 +23,9 @@ function MembreCard({ m }: { m: CoachOut }) {
         <div className="overflow-hidden rounded-full ring-4 ring-[color:var(--color-surface)]">
           <div className="transition-transform duration-500 ease-out group-hover:scale-110">
             <Avatar
-              src={m.photo_url ?? undefined}
+              src={m.photo_url ? cldPortrait(m.photo_url, 300) : undefined}
               alt={`${m.prenom} ${m.nom}`}
-              initials={`${m.prenom[0] ?? ''}${m.nom[0] ?? ''}`}
+              initials={getInitials(m.prenom, m.nom)}
               size="h-24 w-24 sm:h-36 sm:w-36"
               rounded="rounded-full"
               textSize="text-3xl sm:text-4xl"

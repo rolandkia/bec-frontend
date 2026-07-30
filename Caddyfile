@@ -2,7 +2,22 @@
 	encode gzip
 
 	handle_path /api/* {
-		reverse_proxy backend:8000
+		# Plafond de corps de requête. Sans lui, un POST non borné est entièrement
+		# déversé sur le disque du conteneur avant que FastAPI ne le voie. 110 Mo
+		# laisse la marge du multipart au-dessus de la limite vidéo de 100 Mo
+		# (media_service.MAX_VIDEO_UPLOAD_BYTES), qui reste la limite qui répond
+		# un 413 explicite.
+		request_body {
+			max_size 110MB
+		}
+		# Envoyer 100 Mo sur un lien montant lent, puis attendre le relais vers
+		# Cloudinary, dépasse les délais par défaut.
+		reverse_proxy backend:8000 {
+			transport http {
+				read_timeout 300s
+				write_timeout 300s
+			}
+		}
 	}
 
 	handle {

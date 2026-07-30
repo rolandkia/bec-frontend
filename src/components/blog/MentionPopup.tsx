@@ -1,4 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react'
+import { getInitials } from '../../utils/initials'
 
 export interface MentionItem {
   id: number
@@ -69,10 +70,7 @@ export const MentionPopup = forwardRef<
             onSelect(item)
           }}
         >
-          <span className="mention-popup-avatar">
-            {item.prenom[0]}
-            {item.nom[0]}
-          </span>
+          <span className="mention-popup-avatar">{getInitials(item.prenom, item.nom)}</span>
           <span className="mention-popup-name">
             {item.prenom} {item.nom}
           </span>

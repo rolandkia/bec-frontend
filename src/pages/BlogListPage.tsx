@@ -6,6 +6,7 @@ import type { BlogPostOut } from '../api/types'
 import { BlogCard } from '../components/blog/BlogCard'
 import { Loading, ErrorMessage } from '../components/ui/Status'
 import { motion, Reveal, RevealGroup, staggerItem } from '../components/ui/motion'
+import { cldImage, cldSrcSet } from '../lib/cloudinary'
 
 function formatDate(iso: string | null) {
   if (!iso) return null
@@ -29,8 +30,15 @@ function FeaturedCard({ post }: { post: BlogPostOut }) {
       <div className="relative aspect-[4/3] overflow-hidden bg-[color:var(--color-surface-2)] sm:aspect-[16/10] md:aspect-auto md:h-full">
         {post.cover_image_url ? (
           <img
-            src={post.cover_image_url}
+            src={cldImage(post.cover_image_url, 800)}
+            srcSet={cldSrcSet(post.cover_image_url, [480, 800, 1200], {
+              crop: 'limit',
+              quality: 'auto',
+              format: 'auto',
+            })}
+            sizes="(max-width: 768px) 100vw, 50vw"
             alt=""
+            loading="lazy"
             decoding="async"
             className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.05]"
             style={coverImageStyle(post.cover_position)}

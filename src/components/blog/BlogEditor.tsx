@@ -11,7 +11,8 @@ import { MediaText, MediaTextColumn } from './extensions/MediaText'
 import { MediaUploadPlaceholder } from './extensions/mediaUploadPlaceholder'
 import { createAthleteMention } from './extensions/AthleteMention'
 import { collectGaps, nearestGap } from './extensions/dropTarget'
-import { insertMediaNodes, isSupportedMediaFile, uploadFileAt, type UploadCallbacks } from './extensions/uploadToEditor'
+import { insertMediaNodes, uploadFileAt, type UploadCallbacks } from './extensions/uploadToEditor'
+import { partitionMediaFiles, unsupportedFileMessage } from '../../lib/mediaKind'
 import { listAthletes } from '../../api/athletes'
 import type { MentionItem } from './MentionPopup'
 
@@ -59,7 +60,20 @@ export const BlogEditor = forwardRef<
         underline: false,
         strike: false,
         link: false,
-        blockquote: false,
+        // `blockquote` reste ACTIF bien qu'absent de la barre d'outils : les deux
+        // sanitizers l'autorisent, donc un article hérité peut en contenir, et le
+        // désactiver le rétrogradait silencieusement en <p> dès la réouverture —
+        // même perte que ci-dessous. Il est stylé explicitement dans index.css.
+        // Ces trois-là produisaient une PERTE SILENCIEUSE : `---`, `` `x` `` ou
+        // ``` créaient un <hr>/<code>/<pre> visible dans l'éditeur mais absent
+        // des deux allowlists, donc évanoui à l'enregistrement.
+        code: false,
+        codeBlock: false,
+        horizontalRule: false,
+        // 1-4 seulement : les sanitizers retirent h5/h6 (même perte silencieuse
+        // via Mod-Alt-5). h1 et h4 restent autorisés pour qu'un article hérité qui
+        // en contient fasse l'aller-retour, au lieu d'être rétrogradé en <p>.
+        heading: { levels: [1, 2, 3, 4] },
         // Trait indiquant le point d'insertion pendant le glisser-déposer d'un média.
         dropcursor: { color: 'var(--color-club-primary)', width: 3 },
       }),
@@ -80,20 +94,25 @@ export const BlogEditor = forwardRef<
       // géré par le drag pointeur custom).
       handleDrop: (view, event, _slice, moved) => {
         if (moved) return false
-        const files = Array.from(event.dataTransfer?.files ?? []).filter(isSupportedMediaFile)
-        if (!files.length) return false
+        const dropped = Array.from(event.dataTransfer?.files ?? [])
+        // Aucun fichier du tout : on laisse ProseMirror gérer (texte, HTML…).
+        if (!dropped.length) return false
         event.preventDefault()
+        const { supported, rejected } = partitionMediaFiles(dropped)
+        if (rejected.length) setUploadError(unsupportedFileMessage(rejected))
         const gap = nearestGap(collectGaps(view), event.clientY)
         const pos = gap?.pos ?? view.state.doc.content.size
-        for (const file of files) void uploadFileAt(view, file, pos, uploadCallbacks)
+        for (const file of supported) void uploadFileAt(view, file, pos, uploadCallbacks)
         return true
       },
       // Coller une image (capture d'écran…) : upload inséré à la sélection.
       handlePaste: (view, event) => {
-        const files = Array.from(event.clipboardData?.files ?? []).filter(isSupportedMediaFile)
-        if (!files.length) return false
+        const pasted = Array.from(event.clipboardData?.files ?? [])
+        if (!pasted.length) return false
         event.preventDefault()
-        for (const file of files) void uploadFileAt(view, file, view.state.selection.to, uploadCallbacks)
+        const { supported, rejected } = partitionMediaFiles(pasted)
+        if (rejected.length) setUploadError(unsupportedFileMessage(rejected))
+        for (const file of supported) void uploadFileAt(view, file, view.state.selection.to, uploadCallbacks)
         return true
       },
     },
@@ -125,7 +144,10 @@ export const BlogEditor = forwardRef<
           )
         }}
       />
-      <EditorContent editor={editor} className="tiptap-content prose prose-slate max-w-none dark:prose-invert prose-headings:text-club-primary dark:prose-headings:text-club-primary-light prose-a:text-club-primary dark:prose-a:text-club-primary-light" />
+      {/* `.tiptap-content` porte la colonne (max-w-3xl) ET le conteneur des
+          container queries ; toute la typographie du corps est déclarée dans
+          index.css, à la fois pour `.ProseMirror` et `.blog-rendered`. */}
+      <EditorContent editor={editor} className="tiptap-content" />
     </div>
   )
 })
