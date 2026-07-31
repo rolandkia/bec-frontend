@@ -5,8 +5,20 @@ export type TabDef = { key: string; label: string }
 /**
  * Onglet actif synchronisé avec l'URL (`?tab=...`) : partageable, rechargeable
  * et adressable en lien profond (ex. `/competitions?tab=records`).
+ *
+ * Sert aussi aux FILTRES d'une vue (`?sexe=femme` sur /athletes) : même besoin
+ * d'URL partageable, mais eux ne remontent pas la page — cf. `scrollTop`.
  */
-export function useTabParam(defaultKey: string, paramName = 'tab') {
+export function useTabParam(
+  defaultKey: string,
+  paramName = 'tab',
+  /**
+   * Remonter en haut de page au changement. Vrai pour un onglet (il change tout
+   * le contenu sous lui), faux pour un filtre : on ne téléporte pas quelqu'un
+   * qui affine sa liste au milieu du défilement.
+   */
+  { scrollTop = true }: { scrollTop?: boolean } = {},
+) {
   const [searchParams, setSearchParams] = useSearchParams()
   const active = searchParams.get(paramName) ?? defaultKey
 
@@ -24,7 +36,7 @@ export function useTabParam(defaultKey: string, paramName = 'tab') {
     // La barre d'onglets est en haut de page : changer d'onglet depuis le bas
     // d'une longue liste ne doit pas laisser l'utilisateur au milieu du nouveau
     // contenu. (`ScrollToTop` ne réagit qu'au `pathname`, pas à `?tab=`.)
-    window.scrollTo({ top: 0, left: 0 })
+    if (scrollTop) window.scrollTo({ top: 0, left: 0 })
   }
 
   return [active, setActive] as const

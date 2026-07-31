@@ -51,7 +51,7 @@ export function BlogAdminPage() {
       {isError && <ErrorMessage message="Impossible de charger les articles." />}
 
       {posts && posts.length === 0 && (
-        <p className="text-slate-500 dark:text-slate-400">Aucun article pour le moment.</p>
+        <p className="text-[color:var(--color-muted)]">Aucun article pour le moment.</p>
       )}
 
       {posts && posts.length > 0 && (
@@ -66,7 +66,7 @@ export function BlogAdminPage() {
                       className={`badge ${
                         isPublished
                           ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
-                          : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
+                          : 'bg-[color:var(--color-surface-2)] text-[color:var(--color-muted)]'
                       }`}
                     >
                       {isPublished ? 'Publié' : 'Brouillon'}
@@ -75,7 +75,7 @@ export function BlogAdminPage() {
                       {post.title}
                     </h3>
                   </div>
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  <p className="mt-1 text-xs text-[color:var(--color-muted)]">
                     {isPublished && post.published_at
                       ? `Publié le ${formatDate(post.published_at)}`
                       : `Créé le ${formatDate(post.created_at)}`}
@@ -87,7 +87,7 @@ export function BlogAdminPage() {
                   {isPublished && (
                     <Link
                       to={`/blog/${post.slug}`}
-                      className="text-sm text-slate-500 hover:underline dark:text-slate-400"
+                      className="text-sm text-[color:var(--color-muted)] hover:underline"
                     >
                       Voir
                     </Link>
@@ -97,7 +97,7 @@ export function BlogAdminPage() {
                   </Link>
                   <button
                     type="button"
-                    className="text-sm font-semibold text-slate-500 hover:underline dark:text-slate-400 disabled:opacity-50"
+                    className="text-sm font-semibold text-[color:var(--color-muted)] hover:underline disabled:opacity-50"
                     disabled={exportingSlug === post.slug}
                     onClick={() => handleExportPdf(post)}
                   >

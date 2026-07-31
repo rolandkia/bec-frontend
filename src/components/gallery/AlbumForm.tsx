@@ -7,9 +7,9 @@ import { ACCEPT_IMAGE } from '../../lib/mediaKind'
 import { cldThumb } from '../../lib/cloudinary'
 
 const inputClass =
-  'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-club-primary focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100'
+  'w-full rounded-lg border border-[color:var(--color-line)] bg-[color:var(--color-surface)] px-3 py-2 text-sm text-[color:var(--color-fg)] focus:border-club-primary focus:outline-none'
 
-const labelClass = 'mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300'
+const labelClass = 'mb-1 block text-sm font-medium text-[color:var(--color-fg)]'
 
 /** Formulaire création/édition d'un album (titre, description, couverture). */
 export function AlbumForm({
@@ -95,7 +95,7 @@ export function AlbumForm({
       <div>
         <label className={labelClass}>Couverture</label>
         <input type="file" accept={ACCEPT_IMAGE} onChange={handleCoverChange} />
-        {isUploading && <p className="mt-1 text-sm text-slate-500">Envoi en cours…</p>}
+        {isUploading && <p className="mt-1 text-sm text-[color:var(--color-muted)]">Envoi en cours…</p>}
         {coverUrl && (
           <div className="mt-2 flex items-center gap-3">
             <img src={cldThumb(coverUrl, 200)} alt="" className="h-16 w-16 rounded-lg object-cover" />

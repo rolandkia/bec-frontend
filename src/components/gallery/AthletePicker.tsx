@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { listAthletes } from '../../api/athletes'
 
 const inputClass =
-  'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-club-primary focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100'
+  'w-full rounded-lg border border-[color:var(--color-line)] bg-[color:var(--color-surface)] px-3 py-2 text-sm text-[color:var(--color-fg)] focus:border-club-primary focus:outline-none'
 
 /** Sélecteur d'athlètes tagués (multi-sélection). Réutilise le filtre par
  *  sous-chaîne « prénom nom » de la liste des athlètes (comme AthletesListPage).
@@ -68,7 +68,7 @@ export function AthletePicker({
             <button
               type="button"
               key={a.id}
-              className="rounded-full border border-slate-300 px-3 py-1 text-sm transition hover:border-club-primary hover:text-club-primary dark:border-slate-700"
+              className="rounded-full border border-[color:var(--color-line)] px-3 py-1 text-sm transition hover:border-club-primary hover:text-club-primary"
               onClick={() => {
                 onChange([...value, a.id])
                 setSearch('')

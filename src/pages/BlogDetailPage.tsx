@@ -85,7 +85,7 @@ export function BlogDetailPage() {
 
       <Link
         to="/blog"
-        className="mb-6 inline-flex items-center gap-1.5 text-sm text-[color:var(--color-muted)] transition hover:text-white"
+        className="mb-6 inline-flex items-center gap-1.5 text-sm text-[color:var(--color-muted)] transition hover:text-[color:var(--color-fg)]"
       >
         <ArrowLeft className="h-4 w-4" />
         Retour au blog

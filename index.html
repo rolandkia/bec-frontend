@@ -6,7 +6,11 @@
     <!-- viewport-fit=cover : le contenu occupe tout l'écran (encoche incluse) ;
          les gouttières `px-safe` / `pb-safe` prennent le relais aux bords. -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#0A0A0A" />
+    <!-- La barre d'adresse mobile suit le thème du système, comme le site. Elle
+         s'accorde à la BASE de page (papier ou noir élevé), pas au hero : c'est
+         le fond qu'on voit dès qu'on a défilé de quelques pixels. -->
+    <meta name="theme-color" content="#F7F6F4" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#141414" media="(prefers-color-scheme: dark)" />
     <meta
       name="description"
       content="Bordeaux Étudiants Club Athlétisme : actualités, calendrier des compétitions, records et athlètes du club."
@@ -14,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <title>BEC Athlétisme</title>

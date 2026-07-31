@@ -84,7 +84,7 @@ export function GalleryAdminPage() {
         {albumsQuery.isLoading && <Loading />}
         {albumsQuery.isError && <ErrorMessage message="Impossible de charger les albums." />}
         {albumsQuery.data && albumsQuery.data.length === 0 && (
-          <p className="text-slate-500 dark:text-slate-400">Aucun album.</p>
+          <p className="text-[color:var(--color-muted)]">Aucun album.</p>
         )}
         {albumsQuery.data && albumsQuery.data.length > 0 && (
           <div className="space-y-3">
@@ -94,7 +94,7 @@ export function GalleryAdminPage() {
                   <h3 className="truncate font-semibold text-club-primary dark:text-club-primary-light">
                     {album.title}
                   </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-xs text-[color:var(--color-muted)]">
                     {album.media_count} média{album.media_count > 1 ? 's' : ''}
                   </p>
                 </div>
@@ -103,7 +103,7 @@ export function GalleryAdminPage() {
                 <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-2 sm:w-auto">
                   <Link
                     to={`/galerie/albums/${album.id}`}
-                    className="text-sm text-slate-500 hover:underline dark:text-slate-400"
+                    className="text-sm text-[color:var(--color-muted)] hover:underline"
                   >
                     Voir
                   </Link>
@@ -141,13 +141,13 @@ export function GalleryAdminPage() {
         {mediaQuery.isLoading && <Loading />}
         {mediaQuery.isError && <ErrorMessage message="Impossible de charger les médias." />}
         {mediaQuery.data && mediaQuery.data.items.length === 0 && (
-          <p className="text-slate-500 dark:text-slate-400">Aucun média.</p>
+          <p className="text-[color:var(--color-muted)]">Aucun média.</p>
         )}
         {mediaQuery.data && mediaQuery.data.items.length > 0 && (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {mediaQuery.data.items.map((media) => (
               <div key={media.id} className="card overflow-hidden p-0">
-                <div className="aspect-square w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+                <div className="aspect-square w-full overflow-hidden bg-[color:var(--color-surface-2)]">
                   <MediaThumb
                     url={media.url}
                     isVideo={media.resource_type === 'video'}

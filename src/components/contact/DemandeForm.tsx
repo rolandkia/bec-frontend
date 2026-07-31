@@ -136,7 +136,7 @@ export function DemandeForm() {
       <div className="flex flex-col items-start gap-4 py-4">
         <CircleCheck aria-hidden className="h-10 w-10 text-club-accent-light" strokeWidth={1.75} />
         <div>
-          <h3 className="font-display text-xl font-bold text-white">Demande envoyée</h3>
+          <h3 className="font-display text-xl font-bold uppercase">Demande envoyée</h3>
           <p className="mt-2 max-w-md leading-relaxed text-[color:var(--color-muted)]">
             Merci {prenom.trim()}, nous te répondons {canal} sous quelques jours.
           </p>

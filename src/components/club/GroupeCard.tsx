@@ -70,7 +70,7 @@ export function GroupeCard({
 
         <div className="p-6 sm:p-8">
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <h3 className="font-display text-2xl font-bold text-white sm:text-3xl">
+            <h3 className="font-display text-2xl font-bold uppercase sm:text-3xl">
               {groupe.titre}
             </h3>
             <span className="badge shrink-0 bg-club-primary/15 text-club-primary-light ring-1 ring-club-primary/30">
@@ -89,7 +89,7 @@ export function GroupeCard({
               {groupe.disciplines.map((d) => (
                 <li
                   key={d}
-                  className="badge bg-white/5 text-[color:var(--color-muted)] ring-1 ring-white/10"
+                  className="badge bg-[color:var(--color-surface-2)] text-[color:var(--color-muted)] ring-1 ring-[color:var(--color-line)]"
                 >
                   {d}
                 </li>

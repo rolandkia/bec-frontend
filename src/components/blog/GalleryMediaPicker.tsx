@@ -55,17 +55,17 @@ export function GalleryMediaPicker({
       {/* Sur mobile : feuille montante collée en bas (geste naturel, et on gagne
           les 32 px de marge du dialogue centré). Dialogue centré dès sm. */}
       <div
-        className="flex max-h-[88dvh] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl sm:max-h-[85dvh] sm:rounded-2xl dark:bg-slate-900"
+        className="flex max-h-[88dvh] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl bg-[color:var(--color-surface)] shadow-xl sm:max-h-[85dvh] sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-slate-200 p-4 dark:border-slate-800">
+        <div className="flex items-center justify-between border-b border-[color:var(--color-line)] p-4">
           <h2 className="text-lg font-semibold text-club-primary dark:text-club-primary-light">
             Depuis la galerie
           </h2>
           <button
             type="button"
             aria-label="Fermer"
-            className="text-2xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+            className="text-2xl text-[color:var(--color-muted)] transition hover:text-[color:var(--color-fg)]"
             onClick={onClose}
           >
             ×
@@ -76,7 +76,7 @@ export function GalleryMediaPicker({
           {isLoading && <Loading />}
           {isError && <ErrorMessage message="Impossible de charger la galerie." />}
           {!isLoading && !isError && media.length === 0 && (
-            <p className="text-slate-500 dark:text-slate-400">La galerie est vide.</p>
+            <p className="text-[color:var(--color-muted)]">La galerie est vide.</p>
           )}
           {/* 2 colonnes sur mobile : à 3, les vignettes tombaient à ~95 px,
               trop petit pour reconnaître une photo. */}
@@ -106,7 +106,7 @@ export function GalleryMediaPicker({
           {isFetchingNextPage && <Loading label="Chargement…" />}
         </div>
 
-        <div className="flex items-center justify-end gap-3 border-t border-slate-200 p-4 dark:border-slate-800">
+        <div className="flex items-center justify-end gap-3 border-t border-[color:var(--color-line)] p-4">
           <button type="button" className="btn-outline" onClick={onClose}>
             Annuler
           </button>

@@ -32,7 +32,7 @@ export function EventRow({ event, today }: { event: EvenementOut; today?: Date }
 
       <div className="min-w-0 flex-1">
         {/* line-clamp plutôt que truncate : plus de coupe à mi-mot sur mobile. */}
-        <p className="line-clamp-2 font-display font-bold leading-snug text-white">{event.nom}</p>
+        <p className="line-clamp-2 font-display font-bold leading-snug">{event.nom}</p>
         <p className="mt-1 flex items-center gap-1.5 text-sm text-[color:var(--color-muted)]">
           <MapPin aria-hidden className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
           <span className="truncate">{event.lieu}</span>

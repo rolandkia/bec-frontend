@@ -39,7 +39,7 @@ export function SocialLinks({ className = '' }: { className?: string }) {
             rel="noreferrer"
             aria-label={`${reseau.nom} du BEC Athlétisme`}
             title={reseau.nom}
-            className="tap inline-flex h-11 w-11 items-center justify-center rounded-full border border-[color:var(--color-line)] text-[color:var(--color-muted)] transition hover:border-club-primary hover:text-white"
+            className="tap inline-flex h-11 w-11 items-center justify-center rounded-full border border-[color:var(--color-line)] text-[color:var(--color-muted)] transition hover:border-club-primary hover:text-[color:var(--color-fg)]"
           >
             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden className="h-4 w-4">
               <path d={GLYPHES[reseau.id]} />

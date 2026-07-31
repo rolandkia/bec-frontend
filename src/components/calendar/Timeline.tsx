@@ -52,7 +52,7 @@ function TimelineNode({
     <motion.li variants={staggerItem} className={`${ROW} ${muted ? 'opacity-60' : ''}`}>
       {/* Jour + mois : alignés à droite contre le rail, chiffres tabulaires. */}
       <div className="pt-0.5 text-right">
-        <span className="tabular font-display text-lg font-bold leading-none text-white sm:text-xl">
+        <span className="tabular font-display text-lg font-bold leading-none sm:text-xl">
           {date.toLocaleDateString('fr-FR', { day: '2-digit' })}
         </span>
         <span className="mt-0.5 block text-[10px] font-semibold uppercase leading-none tracking-wide text-[color:var(--color-muted)]">
@@ -75,7 +75,7 @@ function TimelineNode({
       </div>
 
       <div className="min-w-0 pb-6">
-        <p className="line-clamp-2 font-display font-bold leading-snug text-white">{event.nom}</p>
+        <p className="line-clamp-2 font-display font-bold leading-snug">{event.nom}</p>
         <p className="mt-1 flex items-center gap-1.5 text-sm text-[color:var(--color-muted)]">
           <MapPin aria-hidden className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
           <span className="truncate">{event.lieu}</span>

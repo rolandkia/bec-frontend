@@ -12,7 +12,7 @@ import { CoverFocalPicker } from './CoverFocalPicker'
 const PHONE_PREVIEW_WIDTH = 390
 
 const inputClass =
-  'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-club-primary focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100'
+  'w-full rounded-lg border border-[color:var(--color-line)] bg-[color:var(--color-surface)] px-3 py-2 text-sm text-[color:var(--color-fg)] focus:border-club-primary focus:outline-none'
 
 export interface BlogFormValues {
   title: string
@@ -119,7 +119,7 @@ export function BlogPostForm({
       )}
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label className="mb-1 block text-sm font-medium text-[color:var(--color-fg)]">
           Titre
         </label>
         <input
@@ -137,7 +137,7 @@ export function BlogPostForm({
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label className="mb-1 block text-sm font-medium text-[color:var(--color-fg)]">
           Résumé
         </label>
         <input
@@ -156,11 +156,11 @@ export function BlogPostForm({
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label className="mb-1 block text-sm font-medium text-[color:var(--color-fg)]">
           Image de couverture
         </label>
         <input type="file" accept={ACCEPT_IMAGE} onChange={handleCoverChange} />
-        {isUploadingCover && <p className="mt-1 text-sm text-slate-500">Envoi en cours…</p>}
+        {isUploadingCover && <p className="mt-1 text-sm text-[color:var(--color-muted)]">Envoi en cours…</p>}
         {coverImageUrl && (
           <>
             <div className="mt-2">
@@ -178,7 +178,7 @@ export function BlogPostForm({
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label className="mb-1 block text-sm font-medium text-[color:var(--color-fg)]">
           Contenu de l'article
         </label>
         <BlogEditor ref={editorRef} initialContent={initial?.content_html ?? ''} onChange={setContent} />
@@ -205,7 +205,7 @@ export function BlogPostForm({
 
       <div>
         <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Aperçu</p>
+          <p className="text-sm font-medium text-[color:var(--color-muted)]">Aperçu</p>
           {/* Les règles responsive de l'article réagissent désormais à la largeur
               de sa COLONNE (container queries), pas à celle du viewport : contraindre
               l'aperçu à 390 px affiche donc le VRAI rendu mobile, sur un écran de
@@ -235,7 +235,7 @@ export function BlogPostForm({
             style={previewWidth === 'phone' ? { maxWidth: PHONE_PREVIEW_WIDTH } : undefined}
           >
             {coverImageUrl && (
-              <div className="mb-4 aspect-[5/2] w-full overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
+              <div className="mb-4 aspect-[5/2] w-full overflow-hidden rounded-lg bg-[color:var(--color-surface-2)]">
                 <img
                   src={cldImage(coverImageUrl, 1200)}
                   alt=""
@@ -248,7 +248,7 @@ export function BlogPostForm({
               {title || 'Titre de l’article'}
             </h2>
             {summary && (
-              <p className="mb-4 text-lg text-slate-600 dark:text-slate-300">{summary}</p>
+              <p className="mb-4 text-lg text-[color:var(--color-muted)]">{summary}</p>
             )}
             <BlogContent
               html={content || '<p><em>Le contenu apparaîtra ici…</em></p>'}

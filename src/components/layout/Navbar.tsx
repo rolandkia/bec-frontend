@@ -1,25 +1,35 @@
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { AnimatePresence, motion, useReducedMotion, useScroll, useMotionValueEvent } from 'framer-motion'
 import { club } from '../../data/club'
 import { SocialLinks } from '../ui/SocialLinks'
 
+/**
+ * Les 5 sections du site. On est passé de 8 à 5 : la nav débordait dès 1024 px,
+ * et quatre entrées répondaient deux par deux à la même question du visiteur
+ * (Club/Palmarès = l'histoire ; Infos/Contact = comment s'inscrire).
+ */
 const links = [
-  { to: '/', label: 'Accueil' },
-  { to: '/club', label: 'Club' },
-  { to: '/palmares', label: 'Palmarès' },
-  { to: '/infos-pratiques', label: 'Infos' },
+  { to: '/club', label: 'Le club' },
+  { to: '/athletes', label: 'Athlètes' },
   { to: '/competitions', label: 'Compétitions' },
-  { to: '/actualite', label: 'Actualité' },
-  // Les records vivent dans un onglet de /athletes : sans le dire ici, personne
-  // ne les trouve depuis la navigation.
-  { to: '/athletes', label: 'Athlètes & Records' },
-  { to: '/contact', label: 'Contact' },
+  { to: '/mag', label: 'Le Mag' },
 ]
 
 export function Navbar() {
   const [open, setOpen] = useState(false)
+  const [compact, setCompact] = useState(false)
   const reduce = useReducedMotion()
+  const { scrollY } = useScroll()
+
+  // Navbar élégante : elle se resserre après les premiers pixels de scroll, pour
+  // rendre de la hauteur au contenu. Piloté par `useMotionValueEvent` (et non un
+  // écouteur `scroll` + setState à chaque frame) : Framer Motion ne notifie qu'au
+  // franchissement, et le seuil de 24 px évite tout battement au repos.
+  useMotionValueEvent(scrollY, 'change', (y) => {
+    const next = y > 24
+    setCompact((prev) => (prev === next ? prev : next))
+  })
 
   // Menu mobile ouvert : on verrouille le défilement de la page derrière et on
   // referme à Échap (même contrat que <Lightbox>).
@@ -38,38 +48,52 @@ export function Navbar() {
   }, [open])
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[color:var(--color-line)] bg-[color:var(--color-ink)]/80 backdrop-blur-xl">
-      {/* Fin liseré rouge : signature du club */}
-      <div className="h-px w-full bg-gradient-to-r from-transparent via-club-primary to-transparent opacity-70" />
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-safe py-2.5 sm:py-3">
-        <NavLink to="/" className="group flex items-center gap-2.5">
+    <header
+      className={`sticky top-0 z-50 border-b bg-[color:var(--color-canvas)]/85 backdrop-blur-xl transition-colors duration-300 ${
+        compact ? 'border-[color:var(--color-line)]' : 'border-transparent'
+      }`}
+    >
+      {/* Filet rouge : signature du club. Il ne se révèle qu'une fois la page
+          défilée — au repos, l'en-tête doit se fondre dans le papier. */}
+      <div
+        aria-hidden
+        className={`h-px w-full bg-gradient-to-r from-transparent via-club-primary to-transparent transition-opacity duration-300 ${
+          compact ? 'opacity-100' : 'opacity-0'
+        }`}
+      />
+      <div
+        className={`mx-auto flex max-w-6xl items-center justify-between px-safe transition-[padding] duration-300 ${
+          compact ? 'py-2' : 'py-3.5'
+        }`}
+      >
+        <NavLink to="/" className="group flex items-center gap-3" aria-label="Accueil">
           <img
             src="/photos/logo.webp"
             alt=""
-            className="h-9 w-9 rounded-lg object-contain transition-transform duration-200 group-hover:scale-105"
+            aria-hidden
+            width={40}
+            height={40}
+            className={`object-contain transition-all duration-300 group-hover:scale-105 ${
+              compact ? 'h-8 w-8' : 'h-10 w-10'
+            }`}
           />
-          <span className="font-display text-lg font-bold uppercase tracking-[0.18em] text-white">
+          <span className="font-display text-xl font-bold uppercase tracking-[0.16em]">
             {club.sigle}
           </span>
         </NavLink>
 
-        {/* Bascule à lg et non md : les liens plus le bloc logo réclament ~800 px,
-            à 768 px la nav desktop débordait.
-            8 liens désormais (ajout de « Palmarès », et « Athlètes » devenu
-            « Athlètes & Records ») : pour rester sur une ligne à 1024 px, on a
-            resserré l'interlettrage (0.14em → 0.1em), réduit l'écart
-            (gap-8 → gap-5, gap-7 seulement à partir de xl) et raccourci
-            « Infos pratiques » en « Infos ». C'est la limite : un 9e lien
-            imposera de basculer la nav desktop à xl. */}
-        <nav className="hidden gap-6 lg:flex lg:gap-5 xl:gap-7">
+        {/* Cinq entrées tiennent largement dès `md` — l'ancienne nav à 8 liens
+            devait attendre `lg` et restait serrée. */}
+        <nav className="hidden items-center gap-7 md:flex lg:gap-9">
           {links.map((link) => (
             <NavLink
               key={link.to}
               to={link.to}
-              end={link.to === '/'}
               className={({ isActive }) =>
-                `group relative whitespace-nowrap py-1 text-xs font-semibold uppercase tracking-[0.1em] transition-colors hover:text-white ${
-                  isActive ? 'text-white' : 'text-[color:var(--color-muted)]'
+                `group relative whitespace-nowrap py-1 text-xs font-semibold uppercase tracking-[0.14em] transition-colors ${
+                  isActive
+                    ? 'text-[color:var(--color-fg)]'
+                    : 'text-[color:var(--color-muted)] hover:text-[color:var(--color-fg)]'
                 }`
               }
             >
@@ -77,23 +101,37 @@ export function Navbar() {
                 <>
                   {link.label}
                   {isActive ? (
+                    // `layoutId` : le souligné GLISSE d'un onglet à l'autre au
+                    // lieu de disparaître puis réapparaître.
                     <motion.span
                       layoutId="nav-underline"
-                      className="absolute -bottom-1 left-0 h-0.5 w-full rounded-full bg-club-primary"
-                      transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 500, damping: 40 }}
+                      className="absolute -bottom-1 left-0 h-0.5 w-full bg-club-primary"
+                      transition={
+                        reduce ? { duration: 0 } : { type: 'spring', stiffness: 500, damping: 40 }
+                      }
                     />
                   ) : (
-                    <span className="absolute -bottom-1 left-0 h-0.5 w-0 rounded-full bg-club-primary/60 transition-all duration-300 group-hover:w-full" />
+                    <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-club-primary/50 transition-all duration-300 group-hover:w-full" />
                   )}
                 </>
               )}
             </NavLink>
           ))}
+
+          {/* « Nous rejoindre » est l'action, pas une rubrique : elle sort de la
+              liste et devient le CTA de l'en-tête (une seule action primaire par
+              écran). */}
+          <NavLink
+            to="/rejoindre"
+            className="btn-primary !px-5 !py-2.5 !text-[0.7rem] !tracking-[0.14em]"
+          >
+            Nous rejoindre
+          </NavLink>
         </nav>
 
         <button
           type="button"
-          className="tap inline-flex h-11 w-11 items-center justify-center rounded-lg border border-[color:var(--color-line)] text-[color:var(--color-muted)] transition hover:border-club-primary hover:text-white lg:hidden"
+          className="tap inline-flex h-11 w-11 items-center justify-center rounded-full border border-[color:var(--color-line)] text-[color:var(--color-fg)] transition hover:border-club-primary md:hidden"
           onClick={() => setOpen((o) => !o)}
           aria-label={open ? 'Fermer le menu' : 'Ouvrir le menu'}
           aria-expanded={open}
@@ -121,10 +159,10 @@ export function Navbar() {
             animate={reduce ? { opacity: 1 } : { opacity: 1, height: 'auto' }}
             exit={reduce ? { opacity: 0 } : { opacity: 0, height: 0 }}
             transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-            className="overflow-hidden border-t border-[color:var(--color-line)] lg:hidden"
+            className="overflow-hidden border-t border-[color:var(--color-line)] md:hidden"
           >
-            <div className="flex flex-col gap-1 px-safe py-3 pb-safe">
-              {links.map((link, i) => (
+            <div className="flex flex-col gap-1 px-safe py-4 pb-safe">
+              {[...links, { to: '/rejoindre', label: 'Nous rejoindre' }].map((link, i) => (
                 <motion.div
                   key={link.to}
                   initial={reduce ? false : { opacity: 0, x: -16 }}
@@ -133,14 +171,13 @@ export function Navbar() {
                 >
                   <NavLink
                     to={link.to}
-                    end={link.to === '/'}
                     onClick={() => setOpen(false)}
                     className={({ isActive }) =>
-                      // py-3 → 44 px de cible tactile.
-                      `tap block rounded-lg px-3 py-3 text-sm font-semibold uppercase tracking-wide transition ${
+                      // py-3.5 → 48 px de cible tactile.
+                      `tap block rounded-md px-4 py-3.5 font-display text-lg font-bold uppercase tracking-wide transition ${
                         isActive
-                          ? 'bg-club-primary/15 text-white'
-                          : 'text-[color:var(--color-muted)] hover:bg-[color:var(--color-surface-2)] hover:text-white'
+                          ? 'bg-club-primary text-white'
+                          : 'hover:bg-[color:var(--color-surface-2)]'
                       }`
                     }
                   >
@@ -148,9 +185,9 @@ export function Navbar() {
                   </NavLink>
                 </motion.div>
               ))}
-              {/* Les réseaux ne tiennent que dans le tiroir : la nav desktop est
-                  déjà à saturation (cf. le commentaire au-dessus d'elle). */}
-              <div className="mt-2 border-t border-[color:var(--color-line)] px-3 pt-4">
+              {/* Les réseaux ne tiennent que dans le tiroir : la nav desktop
+                  porte déjà le CTA. */}
+              <div className="mt-3 border-t border-[color:var(--color-line)] px-4 pt-5">
                 <SocialLinks />
               </div>
             </div>

@@ -6,7 +6,8 @@ import { ffaProfileUrl } from '../../utils/ffa'
  * Encart portrait d'une figure du club, en ouverture de /palmares : photo pleine
  * hauteur d'un côté, badge OR + paragraphe + faits datés de l'autre.
  *
- * Extrait du JSX qui était inliné dans `pages/PalmaresPage.tsx` le jour où la
+ * Extrait du JSX qui était inliné dans l'ancienne `pages/PalmaresPage.tsx` (fusionnée
+ * dans `ClubPage`, section `#palmares`) le jour où la
  * page a eu deux portraits (Colette Besson 1968, Clément Ducos 2024). Deux
  * points d'attention :
  *  - le cadrage vient de la donnée (`photoPosition`) et non d'une classe
@@ -63,7 +64,7 @@ export function FigureCard({
             <Trophy aria-hidden className="h-3.5 w-3.5" strokeWidth={2} />
             {figure.badge}
           </span>
-          <h3 className="mt-3 font-display text-2xl font-bold text-white sm:text-3xl">
+          <h3 className="mt-3 font-display text-2xl font-bold uppercase sm:text-3xl">
             {figure.nom}
           </h3>
           <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--color-muted)]">

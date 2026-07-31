@@ -116,7 +116,7 @@ export function GalleryPage({ embedded = false }: { embedded?: boolean }) {
           {albums && albums.length === 0 && (
             <p className="rounded-xl border border-dashed border-[color:var(--color-line)] py-8 text-center text-[color:var(--color-muted)]">
               Aucun album pour le moment. Créez-en un depuis{' '}
-              <Link to="/galerie/admin" className="font-semibold text-club-primary-light hover:text-white">
+              <Link to="/galerie/admin" className="font-semibold text-club-primary-light hover:opacity-70">
                 la gestion de la galerie
               </Link>
               .

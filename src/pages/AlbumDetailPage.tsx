@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getAlbum, listAlbumMedia } from '../api/gallery'
 import { MediaFeed } from '../components/gallery/MediaFeed'
@@ -31,12 +32,16 @@ export function AlbumDetailPage() {
 
   return (
     <div className="animate-rise">
-      <Link to="/galerie" className="mb-6 inline-block text-sm text-slate-500 underline dark:text-slate-400">
-        ← Retour à la galerie
+      <Link
+        to="/galerie"
+        className="mb-6 inline-flex items-center gap-1.5 text-sm text-[color:var(--color-muted)] transition hover:text-[color:var(--color-fg)]"
+      >
+        <ArrowLeft aria-hidden className="h-4 w-4" strokeWidth={2} />
+        Retour à la galerie
       </Link>
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="mb-2 text-3xl font-bold text-club-primary dark:text-club-primary-light">
+          <h1 className="mb-2 font-display text-3xl font-bold uppercase">
             {album.title}
           </h1>
           {album.description && (

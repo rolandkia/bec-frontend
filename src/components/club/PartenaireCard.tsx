@@ -30,7 +30,7 @@ export function PartenaireCard({ partenaire }: { partenaire: Partenaire }) {
           <img src={logo} alt={nom} loading="lazy" className="max-h-24 w-full object-contain" />
         </div>
         <div className="p-6 sm:p-8">
-          <h3 className="font-display text-xl font-bold text-white">{nom}</h3>
+          <h3 className="font-display text-xl font-bold uppercase">{nom}</h3>
           {description && (
             <p className="mt-3 leading-relaxed text-[color:var(--color-muted)]">{description}</p>
           )}

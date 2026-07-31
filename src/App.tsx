@@ -2,10 +2,8 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { Layout } from './components/layout/Layout'
 import { HomePage } from './pages/HomePage'
 import { ClubPage } from './pages/ClubPage'
-import { PalmaresPage } from './pages/PalmaresPage'
-import { InfosPratiquesPage } from './pages/InfosPratiquesPage'
-import { ActualitePage } from './pages/ActualitePage'
-import { ContactPage } from './pages/ContactPage'
+import { RejoindrePage } from './pages/RejoindrePage'
+import { MagPage } from './pages/MagPage'
 import { CalendarPage } from './pages/CalendarPage'
 import { BlogListPage } from './pages/BlogListPage'
 import { BlogDetailPage } from './pages/BlogDetailPage'
@@ -27,21 +25,32 @@ function App() {
       <Route element={<Layout />}>
         <Route index element={<HomePage />} />
 
-        {/* Sections principales */}
+        {/* ─── Les 5 sections de la navigation ────────────────────────────────
+            Le Club (histoire + palmarès + équipe + partenaires) · Athlètes
+            (effectif + records) · Compétitions (calendrier) · Le Mag (articles +
+            galerie) · Nous rejoindre (groupes + contact).
+            La nav en comptait 8 et débordait dès 1024 px ; surtout, quatre
+            d'entre elles répondaient deux par deux à la même question du
+            visiteur (l'histoire du club, ou comment s'inscrire). */}
         <Route path="club" element={<ClubPage />} />
-        <Route path="palmares" element={<PalmaresPage />} />
-        <Route path="infos-pratiques" element={<InfosPratiquesPage />} />
-        {/* Compétitions = le calendrier (les records sont passés sous Athlètes). */}
-        <Route path="competitions" element={<CalendarPage />} />
-        <Route path="actualite" element={<ActualitePage />} />
         <Route path="athletes" element={<AthletesPage />} />
-        <Route path="contact" element={<ContactPage />} />
+        <Route path="competitions" element={<CalendarPage />} />
+        <Route path="mag" element={<MagPage />} />
+        <Route path="rejoindre" element={<RejoindrePage />} />
 
-        {/* Anciennes URL conservées (liens externes, favoris) */}
+        {/* ─── Anciennes URL (liens externes, favoris, moteurs) ───────────────
+            Toutes conservées : aucune adresse déjà partagée ne doit tomber en
+            404. Les quatre premières datent de la refonte de l'arborescence. */}
+        <Route path="palmares" element={<Navigate to="/club#palmares" replace />} />
+        <Route path="infos-pratiques" element={<Navigate to="/rejoindre" replace />} />
+        <Route path="contact" element={<Navigate to="/rejoindre#contact" replace />} />
+        <Route path="actualite" element={<Navigate to="/mag" replace />} />
         <Route path="calendrier" element={<Navigate to="/competitions" replace />} />
         <Route path="records" element={<Navigate to="/athletes?tab=records" replace />} />
 
-        {/* Pages internes (accès direct + réutilisées par les hubs) */}
+        {/* Pages internes (accès direct + réutilisées par les hubs). `/galerie`
+            reste une route RÉELLE et non une redirection : ses pages profondes
+            (albums, édition de média) en dépendent. */}
         <Route path="blog" element={<BlogListPage />} />
         <Route path="blog/admin" element={<BlogAdminPage />} />
         <Route path="blog/nouveau" element={<BlogEditorPage />} />

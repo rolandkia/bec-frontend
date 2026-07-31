@@ -30,7 +30,7 @@ export function mediaTooLargeMessage(file: File): string | null {
   // Pour une vidéo, il n'y a pas de compression navigateur : le seul remède est
   // côté utilisateur, autant lui dire lequel.
   return isVideo
-    ? `${head} Réduisez la définition avant l'envoi — sur iPhone : Réglages › Appareil photo › Formats › 1080p 30 i/s — ou raccourcissez la vidéo.`
+    ? `${head} Réduisez la définition avant l'envoi. Sur iPhone : Réglages › Appareil photo › Formats › 1080p 30 i/s. Vous pouvez aussi raccourcir la vidéo.`
     : `${head} Réduisez ou compressez l'image avant l'envoi.`
 }
 

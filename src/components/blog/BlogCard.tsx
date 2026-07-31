@@ -78,7 +78,7 @@ export function BlogCard({
           </p>
         )}
         <h3
-          className={`font-display font-bold leading-snug text-white transition-colors group-hover:text-club-primary-light ${
+          className={`font-display font-bold leading-snug transition-colors group-hover:text-club-primary-light ${
             row
               ? 'line-clamp-2 text-[15px] sm:mb-2 sm:line-clamp-none sm:text-lg'
               : 'mb-2 line-clamp-2 text-lg'
@@ -90,7 +90,7 @@ export function BlogCard({
           // En rangée le résumé est masqué : la vignette de 96 px ne laisse la
           // place qu'à la date et au titre. Il réapparaît en carte.
           <p
-            className={`text-sm leading-relaxed text-slate-300 ${
+            className={`text-sm leading-relaxed text-[color:var(--color-muted)] ${
               row ? 'hidden sm:line-clamp-3 sm:block' : 'line-clamp-3'
             }`}
           >

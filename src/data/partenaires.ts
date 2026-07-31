@@ -23,8 +23,8 @@ export type Partenaire = {
 
 /** Version longue — en tête de la section « Nos partenaires » de /club. */
 export const partenairesIntro =
-  "Un club associatif ne vit pas uniquement des cotisations. Le soutien de partenaires — " +
-  "entreprises locales, collectivités, équipementiers — nous permet de financer le matériel " +
+  "Un club associatif ne vit pas uniquement des cotisations. Le soutien de partenaires " +
+  "(entreprises locales, collectivités, équipementiers) nous permet de financer le matériel " +
   "technique, d'alléger le coût des licences pour les familles, d'organiser les déplacements " +
   "en compétition et d'encadrer nos jeunes dans les meilleures conditions. En retour, nous " +
   "offrons à nos partenaires une visibilité auprès d'une communauté sportive engagée et la " +

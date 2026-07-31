@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { Play } from 'lucide-react'
 import type { MediaOut } from '../../api/types'
 import { MediaThumb } from '../ui/MediaThumb'
 import { club } from '../../data/club'
@@ -25,7 +26,7 @@ export function PostCard({ media, onClick }: { media: MediaOut; onClick: () => v
           {club.sigle}
         </span>
         <div className="min-w-0">
-          <p className="truncate text-sm font-bold text-white">{club.sigle}</p>
+          <p className="truncate text-sm font-bold">{club.sigle}</p>
           {meta && <p className="truncate text-xs text-[color:var(--color-muted)]">{meta}</p>}
         </div>
       </div>
@@ -40,8 +41,8 @@ export function PostCard({ media, onClick }: { media: MediaOut; onClick: () => v
           <div className="relative h-full w-full">
             <MediaThumb url={media.url} isVideo alt={media.description ?? ''} width={800} />
             <span className="absolute inset-0 flex items-center justify-center">
-              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-club-primary/90 pl-1 text-2xl text-white shadow-lg shadow-black/40 transition-transform duration-300 group-hover:scale-110">
-                ▶
+              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-club-primary/90 text-white shadow-lg shadow-black/40 transition-transform duration-300 group-hover:scale-110">
+                <Play aria-hidden className="h-7 w-7 translate-x-px" fill="currentColor" strokeWidth={0} />
               </span>
             </span>
           </div>
@@ -59,8 +60,8 @@ export function PostCard({ media, onClick }: { media: MediaOut; onClick: () => v
       {(media.description || media.athletes.length > 0) && (
         <div className="space-y-2 px-4 py-3">
           {media.description && (
-            <p className="text-sm text-slate-200">
-              <span className="font-semibold text-white">{club.sigle}</span> {media.description}
+            <p className="text-sm text-[color:var(--color-muted)]">
+              <span className="font-semibold text-[color:var(--color-fg)]">{club.sigle}</span> {media.description}
             </p>
           )}
           {media.athletes.length > 0 && (

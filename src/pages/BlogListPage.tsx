@@ -72,7 +72,7 @@ function FeaturedCard({ post }: { post: BlogPostOut }) {
         </h2>
         {post.summary && (
           // 2 lignes en surimpression (la photo doit rester lisible), 4 en panneau.
-          <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-slate-300 md:mt-0 md:line-clamp-4">
+          <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-[color:var(--color-muted)] md:mt-0 md:line-clamp-4">
             {post.summary}
           </p>
         )}

@@ -143,7 +143,7 @@ export function Lightbox({
             />
           )}
           {renderCaption && (
-            <div className="mt-3 max-w-2xl text-center text-sm text-slate-200">
+            <div className="mt-3 max-w-2xl text-center text-sm text-white/85">
               {renderCaption(current, index)}
             </div>
           )}
@@ -179,7 +179,7 @@ export function Lightbox({
           >
             ‹
           </button>
-          <p className="tabular text-sm text-slate-400">
+          <p className="tabular text-sm text-white/60">
             {index + 1} / {count}
           </p>
           <button

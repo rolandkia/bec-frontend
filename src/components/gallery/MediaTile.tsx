@@ -1,3 +1,4 @@
+import { Play } from 'lucide-react'
 import type { MediaOut } from '../../api/types'
 import { cldPoster, cldSrcSet, cldThumb } from '../../lib/cloudinary'
 
@@ -28,8 +29,8 @@ export function MediaTile({ media, onClick }: { media: MediaOut; onClick: () => 
             Vidéo
           </span>
           <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
-            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-club-primary/90 pl-1 text-xl text-white shadow-lg shadow-black/40 transition-transform duration-300 group-hover:scale-110">
-              ▶
+            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-club-primary/90 text-white shadow-lg shadow-black/40 transition-transform duration-300 group-hover:scale-110">
+              <Play aria-hidden className="h-6 w-6 translate-x-px" fill="currentColor" strokeWidth={0} />
             </span>
           </span>
         </>
@@ -58,7 +59,7 @@ export function MediaTile({ media, onClick }: { media: MediaOut; onClick: () => 
           {media.description && (
             <p className="truncate text-sm font-semibold text-white">{media.description}</p>
           )}
-          {media.lieu && <p className="truncate text-xs text-slate-300">{media.lieu}</p>}
+          {media.lieu && <p className="truncate text-xs text-white/75">{media.lieu}</p>}
         </div>
       )}
     </button>

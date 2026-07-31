@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { FolderOpen, ImagePlus, List, ListOrdered, Redo2, Undo2 } from 'lucide-react'
 import type { Editor } from '@tiptap/react'
 import type { MediaOut } from '../../api/types'
 import { ACCEPT_MEDIA } from '../../lib/mediaKind'
@@ -83,28 +84,28 @@ export function EditorToolbar({
       <span className="tb-sep" />
 
       <ToolbarButton title="Liste à puces" active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}>
-        • —
+        <List aria-hidden className="h-4 w-4" strokeWidth={2} />
       </ToolbarButton>
       <ToolbarButton title="Liste numérotée" active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()}>
-        1.
+        <ListOrdered aria-hidden className="h-4 w-4" strokeWidth={2} />
       </ToolbarButton>
 
       <span className="tb-sep" />
 
       <ToolbarButton title="Insérer des images ou des vidéos" disabled={uploading} onClick={() => triggerUpload()}>
-        🖼
+        <ImagePlus aria-hidden className="h-4 w-4" strokeWidth={2} />
       </ToolbarButton>
       <ToolbarButton title="Insérer depuis la galerie" onClick={() => setGalleryOpen(true)}>
-        🗂
+        <FolderOpen aria-hidden className="h-4 w-4" strokeWidth={2} />
       </ToolbarButton>
 
       <span className="tb-sep" />
 
       <ToolbarButton title="Annuler" onClick={() => editor.chain().focus().undo().run()}>
-        ↶
+        <Undo2 aria-hidden className="h-4 w-4" strokeWidth={2} />
       </ToolbarButton>
       <ToolbarButton title="Rétablir" onClick={() => editor.chain().focus().redo().run()}>
-        ↷
+        <Redo2 aria-hidden className="h-4 w-4" strokeWidth={2} />
       </ToolbarButton>
 
       {uploading && <span className="tb-status">Envoi en cours…</span>}

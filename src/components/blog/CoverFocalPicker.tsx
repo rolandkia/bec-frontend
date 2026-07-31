@@ -72,13 +72,13 @@ export function CoverFocalPicker({
 
   return (
     <div className="mt-2">
-      <p className="mb-1 text-sm text-slate-500 dark:text-slate-400">
+      <p className="mb-1 text-sm text-[color:var(--color-muted)]">
         Cadrage : cliquez ou glissez pour choisir la zone visible (aperçu du rendu réel).
       </p>
       <div
         ref={boxRef}
         onPointerDown={onPointerDown}
-        className="relative aspect-[5/2] w-full max-w-xl cursor-crosshair overflow-hidden rounded-lg border border-slate-300 bg-slate-100 select-none dark:border-slate-700 dark:bg-slate-800"
+        className="relative aspect-[5/2] w-full max-w-xl cursor-crosshair overflow-hidden rounded-lg border border-[color:var(--color-line)] bg-[color:var(--color-surface-2)] select-none"
       >
         <img
           src={cldImage(src, 1200)}
@@ -94,23 +94,23 @@ export function CoverFocalPicker({
       </div>
 
       <div className="mt-2 flex items-center gap-2">
-        <span className="text-sm text-slate-500 dark:text-slate-400">Zoom</span>
+        <span className="text-sm text-[color:var(--color-muted)]">Zoom</span>
         <button
           type="button"
           title="Dézoomer"
-          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-lg leading-none text-slate-700 transition hover:border-club-primary disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[color:var(--color-line)] bg-[color:var(--color-surface)] text-lg leading-none text-[color:var(--color-fg)] transition hover:border-club-primary disabled:opacity-40"
           disabled={zoom <= COVER_ZOOM_MIN}
           onClick={() => setZoom(zoom - ZOOM_STEP)}
         >
           −
         </button>
-        <span className="w-12 text-center text-sm tabular-nums text-slate-600 dark:text-slate-300">
+        <span className="w-12 text-center text-sm tabular-nums text-[color:var(--color-muted)]">
           {zoom.toFixed(1)}×
         </span>
         <button
           type="button"
           title="Zoomer"
-          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-lg leading-none text-slate-700 transition hover:border-club-primary disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[color:var(--color-line)] bg-[color:var(--color-surface)] text-lg leading-none text-[color:var(--color-fg)] transition hover:border-club-primary disabled:opacity-40"
           disabled={zoom >= COVER_ZOOM_MAX}
           onClick={() => setZoom(zoom + ZOOM_STEP)}
         >
@@ -119,7 +119,7 @@ export function CoverFocalPicker({
         {zoom !== COVER_ZOOM_MIN && (
           <button
             type="button"
-            className="ml-1 text-sm text-slate-500 hover:underline dark:text-slate-400"
+            className="ml-1 text-sm text-[color:var(--color-muted)] hover:underline"
             onClick={() => setZoom(COVER_ZOOM_MIN)}
           >
             Réinitialiser

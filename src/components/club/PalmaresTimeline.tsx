@@ -42,7 +42,7 @@ function FaitNode({ fait, isFirst }: { fait: FaitPalmares; isFirst: boolean }) {
       <div className="pt-0.5 text-right">
         <span
           className={`stat text-sm leading-none sm:text-lg ${
-            fait.majeur ? 'text-club-accent-light' : 'text-white'
+            fait.majeur ? 'text-club-accent-light' : ''
           }`}
         >
           {fait.annee}
@@ -68,7 +68,7 @@ function FaitNode({ fait, isFirst }: { fait: FaitPalmares; isFirst: boolean }) {
         </p>
         <p
           className={`mt-1 font-display font-bold leading-snug ${
-            fait.majeur ? 'text-club-accent-light' : 'text-white'
+            fait.majeur ? 'text-club-accent-light' : ''
           }`}
         >
           {fait.titre}

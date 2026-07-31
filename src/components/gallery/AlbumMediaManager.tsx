@@ -127,24 +127,24 @@ export function AlbumMediaManager({
     >
       {/* Feuille montante sur mobile, dialogue centré dès sm (cf. GalleryMediaPicker). */}
       <div
-        className="flex max-h-[88dvh] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl sm:max-h-[85dvh] sm:rounded-2xl dark:bg-slate-900"
+        className="flex max-h-[88dvh] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl bg-[color:var(--color-surface)] shadow-xl sm:max-h-[85dvh] sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-slate-200 p-4 dark:border-slate-800">
+        <div className="flex items-center justify-between border-b border-[color:var(--color-line)] p-4">
           <h2 className="truncate text-lg font-semibold text-club-primary dark:text-club-primary-light">
             Photos de « {album.title} »
           </h2>
           <button
             type="button"
             aria-label="Fermer"
-            className="text-2xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+            className="text-2xl text-[color:var(--color-muted)] transition hover:text-[color:var(--color-fg)]"
             onClick={onClose}
           >
             ×
           </button>
         </div>
 
-        <div className="border-b border-slate-200 px-4 py-3 dark:border-slate-800">
+        <div className="border-b border-[color:var(--color-line)] px-4 py-3">
           <div className="segmented">
             {(['gallery', 'blogs'] as const).map((s) => (
               <button
@@ -171,7 +171,7 @@ export function AlbumMediaManager({
               {galleryQuery.isLoading && <Loading />}
               {galleryQuery.isError && <ErrorMessage message="Impossible de charger la galerie." />}
               {!galleryQuery.isLoading && !galleryQuery.isError && media.length === 0 && (
-                <p className="text-slate-500 dark:text-slate-400">La galerie est vide.</p>
+                <p className="text-[color:var(--color-muted)]">La galerie est vide.</p>
               )}
               {/* 2 colonnes sur mobile : à 3, ~95 px par vignette. */}
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -193,7 +193,7 @@ export function AlbumMediaManager({
               {blogQuery.isLoading && <Loading />}
               {blogQuery.isError && <ErrorMessage message="Impossible de charger les images des blogs." />}
               {blogQuery.data && blogQuery.data.length === 0 && (
-                <p className="text-slate-500 dark:text-slate-400">
+                <p className="text-[color:var(--color-muted)]">
                   Aucune image d'article à importer (elles sont déjà dans la galerie).
                 </p>
               )}
@@ -214,8 +214,8 @@ export function AlbumMediaManager({
           )}
         </div>
 
-        <div className="flex items-center justify-between gap-3 border-t border-slate-200 p-4 dark:border-slate-800">
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+        <div className="flex items-center justify-between gap-3 border-t border-[color:var(--color-line)] p-4">
+          <p className="text-sm text-[color:var(--color-muted)]">
             {changeCount > 0
               ? `${changeCount} modification${changeCount > 1 ? 's' : ''} en attente`
               : 'Aucune modification'}
@@ -258,7 +258,7 @@ function SelectableTile({
       type="button"
       onClick={onClick}
       className={`relative aspect-square overflow-hidden rounded-lg border-2 transition ${
-        selected ? 'border-club-primary' : 'border-transparent hover:border-slate-300 dark:hover:border-slate-700'
+        selected ? 'border-club-primary' : 'border-transparent hover:border-[color:var(--color-line)]'
       }`}
     >
       <MediaThumb url={url} isVideo={isVideo} width={200} />

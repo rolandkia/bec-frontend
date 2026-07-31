@@ -46,7 +46,7 @@ export const groupesEntrainement: GroupeEntrainement[] = [
   {
     titre: 'Athlé découverte',
     trancheAge: 'U7 → U16',
-    creneaux: ['Mercredi 14h30 – 16h30'],
+    creneaux: ['Mercredi, de 14h30 à 16h30'],
     lieu: 'Piste de Rocquencourt, Pessac',
     description:
       "De l'éveil athlétique aux minimes, une séance par semaine pour découvrir l'athlétisme " +
@@ -62,7 +62,7 @@ export const groupesEntrainement: GroupeEntrainement[] = [
   {
     titre: 'Sprint & haies',
     trancheAge: 'U18 → Masters',
-    creneaux: ['Du lundi au vendredi, 18h – 20h', 'Samedi 10h – 12h'],
+    creneaux: ['Du lundi au vendredi, de 18h à 20h', 'Samedi, de 10h à 12h'],
     lieu: 'Piste de Rocquencourt, Pessac',
     disciplines: ['Sprint', 'Haies'],
     description:

@@ -12,7 +12,7 @@ export function PerformanceTable({ resultats }: { resultats: ResultatOut[] }) {
 
   if (resultats.length === 0) {
     return (
-      <p className="py-6 text-center text-slate-500 dark:text-slate-400">
+      <p className="py-6 text-center text-[color:var(--color-muted)]">
         Aucun résultat pour cette sélection.
       </p>
     )
@@ -28,19 +28,19 @@ export function PerformanceTable({ resultats }: { resultats: ResultatOut[] }) {
   return (
     <div>
       {/* Liste empilée sur mobile : plus lisible qu'un tableau écrasé/à faire défiler. */}
-      <ul className="divide-y divide-slate-100 rounded-lg border border-slate-200 md:hidden dark:divide-slate-800 dark:border-slate-800">
+      <ul className="divide-y divide-[color:var(--color-line)] rounded-md border border-[color:var(--color-line)] md:hidden">
         {pageItems.map((r) => (
           <li key={r.id} className="px-4 py-3">
             <div className="flex items-center justify-between gap-3">
               <span className="font-medium">{r.epreuve}</span>
-              <span className="font-semibold text-slate-700 dark:text-slate-200">
+              <span className="font-semibold text-[color:var(--color-fg)]">
                 {r.raw_performance ?? r.performance_valeur ?? '—'}
                 {r.performance_dq && (
                   <span className="ml-1 text-red-500">({r.performance_dq})</span>
                 )}
               </span>
             </div>
-            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
+            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-[color:var(--color-muted)]">
               {r.date && <span>{new Date(r.date).toLocaleDateString('fr-FR')}</span>}
               {r.lieu && <span>{r.lieu}</span>}
               {r.place != null && <span>Place {r.place}</span>}
@@ -52,10 +52,10 @@ export function PerformanceTable({ resultats }: { resultats: ResultatOut[] }) {
       </ul>
 
       {/* Tableau complet à partir de md : assez de largeur pour toutes les colonnes. */}
-      <div className="hidden rounded-lg border border-slate-200 md:block dark:border-slate-800">
+      <div className="hidden rounded-md border border-[color:var(--color-line)] md:block">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-200 bg-slate-50 text-left text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+            <tr className="border-b border-[color:var(--color-line)] bg-[color:var(--color-surface-2)] text-left text-[color:var(--color-muted)]">
               <th className="px-4 py-2">Date</th>
               <th className="px-4 py-2">Épreuve</th>
               <th className="px-4 py-2">Performance</th>
@@ -67,7 +67,7 @@ export function PerformanceTable({ resultats }: { resultats: ResultatOut[] }) {
           </thead>
           <tbody>
             {pageItems.map((r) => (
-              <tr key={r.id} className="border-t border-slate-100 dark:border-slate-800">
+              <tr key={r.id} className="border-t border-[color:var(--color-line)]">
                 <td className="px-4 py-2">
                   {r.date ? new Date(r.date).toLocaleDateString('fr-FR') : '—'}
                 </td>
@@ -89,12 +89,12 @@ export function PerformanceTable({ resultats }: { resultats: ResultatOut[] }) {
       </div>
 
       {pageCount > 1 && (
-        <div className="mt-3 flex items-center justify-between gap-3 text-sm text-slate-500 dark:text-slate-400">
+        <div className="mt-3 flex items-center justify-between gap-3 text-sm text-[color:var(--color-muted)]">
           <button
             type="button"
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={currentPage === 1}
-            className="rounded-lg border border-slate-200 px-3 py-1.5 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-800"
+            className="tap rounded-md border border-[color:var(--color-line)] px-3 py-1.5 transition disabled:cursor-not-allowed disabled:opacity-50"
           >
             Précédent
           </button>
@@ -105,7 +105,7 @@ export function PerformanceTable({ resultats }: { resultats: ResultatOut[] }) {
             type="button"
             onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
             disabled={currentPage === pageCount}
-            className="rounded-lg border border-slate-200 px-3 py-1.5 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-800"
+            className="tap rounded-md border border-[color:var(--color-line)] px-3 py-1.5 transition disabled:cursor-not-allowed disabled:opacity-50"
           >
             Suivant
           </button>

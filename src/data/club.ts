@@ -9,7 +9,7 @@ export const club = {
   histoire:
     "Né en 1897 sous le nom de Bordeaux Université Club, le club prend en 1903 celui de " +
     "Bordeaux Étudiants Club, à l'initiative de Paul Fournial, pour devenir le club des " +
-    "étudiants bordelais — le doyen des clubs universitaires français. Plus d'un siècle plus " +
+    "étudiants bordelais, le doyen des clubs universitaires français. Plus d'un siècle plus " +
     "tard, la section athlétisme réunit des athlètes de tous niveaux, du loisir à la " +
     "compétition nationale, autour d'un encadrement technique exigeant et bienveillant.",
   // Les quatre valeurs affichées par le club. Les intitulés sont les siens, repris

@@ -127,7 +127,7 @@ export function AthleteDetailPage() {
     <div className="animate-rise">
       <Link
         to="/athletes"
-        className="mb-6 inline-flex items-center gap-1.5 text-sm text-[color:var(--color-muted)] transition hover:text-white"
+        className="mb-6 inline-flex items-center gap-1.5 text-sm text-[color:var(--color-muted)] transition hover:text-[color:var(--color-fg)]"
       >
         <ArrowLeft className="h-4 w-4" />
         Retour aux athlètes
@@ -169,10 +169,10 @@ export function AthleteDetailPage() {
               Athlète du club
             </p>
             <h1
-              className="font-display font-bold leading-[1.02] tracking-tight text-white"
+              className="font-display font-bold leading-[1.02] tracking-tight"
               style={{ fontSize: 'clamp(1.75rem, 7.5vw, 3rem)' }}
             >
-              <span className="block text-[0.58em] font-semibold text-white/70">
+              <span className="block text-[0.58em] font-semibold text-[color:var(--color-muted)]">
                 {athlete.prenom}
               </span>
               <span className="block uppercase">{athlete.nom}</span>
@@ -221,7 +221,7 @@ export function AthleteDetailPage() {
                     {discipline}
                   </p>
                   {/* Record officiel = distinction → OR (politique d'usage de l'or) */}
-                  <p className="stat mt-1 text-3xl text-club-accent">
+                  <p className="stat mt-1 text-3xl text-club-accent-light">
                     {principale.raw_performance ?? principale.performance_valeur}
                   </p>
                   <p className="mt-1 text-xs text-[color:var(--color-muted)]">
@@ -234,10 +234,10 @@ export function AthleteDetailPage() {
                       neutre — l'or reste réservé au record OFFICIEL. */}
                   {officiel && nonHomologue && (
                     <div className="mt-3 ml-1 border-l-2 border-[color:var(--color-line)] pl-3">
-                      <span className="badge bg-white/5 text-[color:var(--color-muted)] ring-1 ring-white/10">
+                      <span className="badge bg-[color:var(--color-surface-2)] text-[color:var(--color-muted)] ring-1 ring-[color:var(--color-line)]">
                         Non homologué
                       </span>
-                      <p className="tabular mt-1 font-display text-lg font-bold text-white">
+                      <p className="tabular mt-1 font-display text-lg font-bold">
                         {nonHomologue.raw_performance ?? nonHomologue.performance_valeur}
                       </p>
                       <p className="mt-0.5 text-xs text-[color:var(--color-muted)]">
@@ -250,7 +250,7 @@ export function AthleteDetailPage() {
 
                   {!officiel && nonHomologue && (
                     <span
-                      className="badge mt-2 inline-flex bg-white/5 text-[color:var(--color-muted)] ring-1 ring-white/10"
+                      className="badge mt-2 inline-flex bg-[color:var(--color-surface-2)] text-[color:var(--color-muted)] ring-1 ring-[color:var(--color-line)]"
                       title={`Non homologué (vent ${nonHomologue.vent ?? '?'} m/s)`}
                     >
                       Non homologué
@@ -278,7 +278,7 @@ export function AthleteDetailPage() {
                 {n.niveau ? (
                   <LevelBadge niveau={n.niveau} />
                 ) : (
-                  <span className="badge bg-white/5 text-[color:var(--color-muted)] ring-1 ring-white/10">
+                  <span className="badge bg-[color:var(--color-surface-2)] text-[color:var(--color-muted)] ring-1 ring-[color:var(--color-line)]">
                     —
                   </span>
                 )}

@@ -8,9 +8,12 @@ export function Layout() {
     <div className="flex min-h-dvh flex-col">
       <ScrollToTop />
       <Navbar />
-      {/* px-safe = max(1rem, encoche) : la gouttière de 16 px que `.band`
-          compense par `-mx-4` reste la même, les coins arrondis sont respectés. */}
-      <main className="mx-auto w-full max-w-6xl flex-1 px-safe py-6 sm:py-8">
+      {/* Le conteneur du site vit ICI, une seule fois : px-safe = max(1rem,
+          encoche), donc `.band` (-mx-4) et `.chapter` (marge négative en vw)
+          retrouvent le bord de l'écran sans double gouttière.
+          Plus de padding VERTICAL : un chapitre d'ouverture (`PageHero`) doit
+          toucher la navbar. Chaque page pose son propre rythme vertical. */}
+      <main className="mx-auto w-full max-w-6xl flex-1 px-safe">
         <Outlet />
       </main>
       <Footer />

@@ -15,7 +15,7 @@ export function AlbumStories({ albums }: { albums: AlbumOut[] }) {
           className="group tap rail-item flex w-20 flex-shrink-0 flex-col items-center gap-1.5"
         >
           <span className="rounded-full bg-gradient-to-br from-club-primary-light to-club-primary p-[2.5px] transition-transform duration-200 group-hover:scale-105">
-            <span className="block rounded-full bg-[color:var(--color-ink)] p-[2px]">
+            <span className="block rounded-full bg-[color:var(--color-canvas)] p-[2px]">
               <span className="block h-16 w-16 overflow-hidden rounded-full bg-[color:var(--color-surface-2)]">
                 {album.cover_image_url ? (
                   <img src={cldThumb(album.cover_image_url, 200)} alt="" loading="lazy" className="h-full w-full object-cover" />

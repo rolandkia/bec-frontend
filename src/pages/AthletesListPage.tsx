@@ -4,10 +4,23 @@ import { listAthletes } from '../api/athletes'
 import { AthleteCard } from '../components/athletes/AthleteCard'
 import { Loading, ErrorMessage } from '../components/ui/Status'
 import { RevealGroup, motion, staggerItem } from '../components/ui/motion'
+import type { Sexe } from './AthletesPage'
 
-export function AthletesListPage({ embedded = false }: { embedded?: boolean }) {
+/**
+ * `sexe` est piloté par le hub <AthletesPage> (et stocké dans l'URL) : ce filtre
+ * choisit aussi la PHOTO du hero, qui ne vit pas dans ce composant. La recherche
+ * texte, elle, n'a pas d'effet visuel au-dessus et reste locale.
+ */
+export function AthletesListPage({
+  embedded = false,
+  sexe,
+  onSexeChange,
+}: {
+  embedded?: boolean
+  sexe: Sexe
+  onSexeChange: (sexe: Sexe) => void
+}) {
   const [search, setSearch] = useState('')
-  const [sexe, setSexe] = useState<'tous' | 'homme' | 'femme'>('tous')
 
   const { data: athletes, isLoading, isError } = useQuery({
     queryKey: ['athletes'],
@@ -40,7 +53,7 @@ export function AthletesListPage({ embedded = false }: { embedded?: boolean }) {
         />
         <div className="segmented">
           {(['tous', 'homme', 'femme'] as const).map((s) => (
-            <button key={s} type="button" aria-pressed={sexe === s} onClick={() => setSexe(s)}>
+            <button key={s} type="button" aria-pressed={sexe === s} onClick={() => onSexeChange(s)}>
               {s === 'tous' ? 'Tous' : s === 'homme' ? 'Hommes' : 'Femmes'}
             </button>
           ))}
@@ -54,10 +67,10 @@ export function AthletesListPage({ embedded = false }: { embedded?: boolean }) {
           Aucun athlète ne correspond à ces critères.
         </p>
       )}
-      {/* Ne monter le RevealGroup qu'une fois les données présentes : sinon son
-          animation `whileInView` (once: true) se déclenche sur le conteneur vide
-          pendant le chargement, et les cartes ajoutées ensuite restent invisibles
-          (opacité 0) tout en étant cliquables. */}
+      {/* Grille montée seulement quand il y a des cartes : le message « aucun
+          athlète » ci-dessus la remplace. Le cas « cartes ajoutées après la
+          révélation du groupe » (filtre, recherche) est désormais traité dans
+          `RevealGroup` lui-même — il n'y a plus de carte invisible à opacité 0. */}
       {filtered.length > 0 && (
         <RevealGroup className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {filtered.map((athlete) => (

@@ -1,6 +1,6 @@
 export function Loading({ label = 'Chargement…' }: { label?: string }) {
   return (
-    <div className="flex items-center justify-center py-16 text-slate-500 dark:text-slate-400">
+    <div className="flex items-center justify-center py-16 text-[color:var(--color-muted)]">
       <span className="animate-pulse">{label}</span>
     </div>
   )
@@ -30,7 +30,7 @@ export function NotFound({
       <h1 className="mb-2 text-2xl font-semibold text-club-primary dark:text-club-primary-light">
         {title}
       </h1>
-      <p className="text-slate-500 dark:text-slate-400">{message}</p>
+      <p className="text-[color:var(--color-muted)]">{message}</p>
     </div>
   )
 }

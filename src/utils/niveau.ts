@@ -87,13 +87,22 @@ export function niveauTier(niveau: string): NiveauTier {
         'bg-gradient-to-r from-club-primary to-club-primary-light text-white shadow-md shadow-club-primary/30',
     }
   }
+  // ═══ Paliers bas : pastilles OPAQUES ET SOMBRES ═══════════════════════════
+  // `LevelBadge` est posé dans DEUX contextes qui n'ont rien en commun : par
+  // dessus une tuile d'athlète (photo, ou dégradé rouge du monogramme) sur
+  // `/athletes`, et dans un panneau blanc sur la fiche athlète. Une pastille
+  // teintée (`bg-club-primary/10 text-club-primary`) disparaissait donc sur la
+  // tuile rouge, et une pastille gris clair y disparaissait aussi.
+  // D'où le parti : un jeton opaque en encre CONSTANTE (`--color-ink`, qui ne
+  // suit pas le chapitre) + texte blanc. Lisible sur n'importe quel fond, sans
+  // que le composant ait à savoir où il est monté.
   if (score >= 200) {
     return {
       tier: 2,
       chevrons: 2,
       star: false,
       className:
-        'bg-club-primary/15 text-club-primary ring-1 ring-club-primary/40 shadow-sm dark:text-club-primary-light',
+        'bg-[color:var(--color-ink)]/85 text-white ring-1 ring-club-primary/70 shadow-sm backdrop-blur-sm',
     }
   }
   if (score >= 100) {
@@ -101,8 +110,7 @@ export function niveauTier(niveau: string): NiveauTier {
       tier: 1,
       chevrons: 1,
       star: false,
-      className:
-        'bg-club-primary/10 text-club-primary ring-1 ring-club-primary/25 dark:text-club-primary-light',
+      className: 'bg-[color:var(--color-ink)]/80 text-white ring-1 ring-white/25 backdrop-blur-sm',
     }
   }
   // Départemental (1-7) et niveau inconnu (0)
@@ -110,6 +118,6 @@ export function niveauTier(niveau: string): NiveauTier {
     tier: 0,
     chevrons: 0,
     star: false,
-    className: 'bg-white/5 text-[color:var(--color-muted)] ring-1 ring-white/10',
+    className: 'bg-[color:var(--color-ink)]/70 text-white/85 ring-1 ring-white/20 backdrop-blur-sm',
   }
 }

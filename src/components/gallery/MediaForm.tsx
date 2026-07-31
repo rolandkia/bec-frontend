@@ -13,9 +13,9 @@ import type { MediaOut } from '../../api/types'
 import { AthletePicker } from './AthletePicker'
 
 const inputClass =
-  'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-club-primary focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100'
+  'w-full rounded-lg border border-[color:var(--color-line)] bg-[color:var(--color-surface)] px-3 py-2 text-sm text-[color:var(--color-fg)] focus:border-club-primary focus:outline-none'
 
-const labelClass = 'mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300'
+const labelClass = 'mb-1 block text-sm font-medium text-[color:var(--color-fg)]'
 
 /** Formulaire de média de galerie. En création (`existing` absent) : envoi
  *  multi-fichiers vers Cloudinary puis création d'une entrée par fichier avec
@@ -142,7 +142,7 @@ export function MediaForm({
           <input type="file" accept={ACCEPT_MEDIA} multiple onChange={handleFilesChange} />
           {files.length > 0 && (
             <>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              <p className="mt-1 text-sm text-[color:var(--color-muted)]">
                 {files.length} fichier{files.length > 1 ? 's' : ''} sélectionné
                 {files.length > 1 ? 's' : ''}
               </p>
@@ -150,7 +150,7 @@ export function MediaForm({
                 {files.map((file, i) => (
                   <div
                     key={`${file.name}-${i}`}
-                    className="group relative aspect-square overflow-hidden rounded-lg border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800"
+                    className="group relative aspect-square overflow-hidden rounded-lg border border-[color:var(--color-line)] bg-[color:var(--color-surface-2)]"
                   >
                     {mediaKind(file) === 'video' ? (
                       <video

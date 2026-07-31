@@ -213,7 +213,7 @@ export const jalonsAccueil = [
  * deux athlètes de haut niveau que le club met lui-même en avant.
  *
  * L'ordre pilote l'alternance photo gauche / droite dans la page : la modifier
- * ici suffit, `PalmaresPage` s'aligne dessus (et Colette Besson enchaîne
+ * ici suffit, la section `#palmares` de `ClubPage` s'aligne dessus (et Colette Besson enchaîne
  * ensuite du côté opposé au dernier de la liste).
  */
 export const figuresActuelles: FigurePortrait[] = [
@@ -301,7 +301,7 @@ export const figureHistorique: FigurePortrait = {
     "Saint-Omer, elle revient d'Athènes l'année suivante avec deux médailles d'argent et deux " +
     "records du monde. Elle reste la plus grande championne de l'histoire du club.",
   faits: [
-    "Championne olympique du 400 m (Mexico 1968), en 52 s 03 — record d'Europe",
+    "Championne olympique du 400 m (Mexico 1968), en 52 s 03, record d'Europe",
     "Seule médaille d'or française de l'athlétisme des Jeux de 1968",
     "Double médaillée d'argent aux championnats d'Europe 1969 (Athènes) : 400 m en 51 s 7 et " +
       '4 × 400 m en 3 min 30 s 8, deux records du monde',

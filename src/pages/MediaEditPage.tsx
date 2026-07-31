@@ -37,7 +37,7 @@ export function MediaEditPage() {
   return (
     <div className="animate-rise">
       <h1 className="section-title mb-8">Modifier le média</h1>
-      <div className="mb-6 aspect-video w-full max-w-md overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
+      <div className="mb-6 aspect-video w-full max-w-md overflow-hidden rounded-lg bg-[color:var(--color-surface-2)]">
         {media.resource_type === 'video' ? (
           <video
             src={cldVideo(media.url)}

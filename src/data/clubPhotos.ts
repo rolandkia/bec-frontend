@@ -2,8 +2,8 @@
  * Photos club curées (statiques, servies depuis `public/photos/gallery/*.webp`).
  *
  * COLLECTION COMPLÈTE : toutes les photos de `bec-pictures/`, regroupées par
- * thème (starting-block, course, podium, groupe, concentration, portrait) et
- * optimisées en `.webp` (`cwebp -q 72 -resize 1500 0`). Ce sont des ASSETS
+ * thème (interclub, starting-block, course, podium, groupe, concentration,
+ * portrait) et optimisées en `.webp` (`cwebp -q 72 -resize 1500 0`). Ce sont des ASSETS
  * front-end — distincts des médias de la galerie back-end (upload → Cloudinary).
  * Alimente la bande « Le club en mouvement » (accueil) et la section « Le club
  * en images » (galerie), avec la visionneuse (Lightbox). L'ordre est entrelacé
@@ -18,6 +18,26 @@ export interface ClubPhoto {
 const P = '/photos/gallery'
 
 export const clubPhotos: ClubPhoto[] = [
+  // Les interclubs OUVRENT la collection : ce sont les seules photos où le club
+  // apparaît AU COMPLET, et de loin les plus émotionnelles (fumigènes, blason
+  // brandi, tout le monde en rouge). Elles portent l'« esprit d'équipe » que les
+  // photos individuelles ne peuvent pas raconter.
+  {
+    src: `${P}/interclub-1.webp`,
+    alt: "L'équipe du BEC célébrant les interclubs, fumigènes rouge et or",
+    legende: 'Interclubs : la victoire ensemble',
+  },
+  {
+    src: `${P}/interclub-2.webp`,
+    alt: 'Un athlète du BEC brandissant le drapeau du club devant le groupe',
+    legende: 'Interclubs : le drapeau',
+  },
+  {
+    src: `${P}/group-11.webp`,
+    alt: 'Sept athlètes du club en tenue rouge, portrait de groupe en studio',
+    legende: 'Le collectif',
+  },
+
   { src: `${P}/start-1.webp`, alt: 'Athlète dans les starting-blocks', legende: 'Dans les blocs' },
   { src: `${P}/race-1.webp`, alt: 'Athlète en pleine course', legende: 'En course' },
   { src: `${P}/podium-1.webp`, alt: 'Athlètes du club sur le podium', legende: 'Sur le podium' },
@@ -57,4 +77,20 @@ export const clubPhotos: ClubPhoto[] = [
   { src: `${P}/group-7.webp`, alt: 'Le groupe du club', legende: "L'équipe" },
   { src: `${P}/group-8.webp`, alt: 'Le groupe du club', legende: "L'équipe" },
   { src: `${P}/group-9.webp`, alt: 'Le groupe du club', legende: "L'équipe" },
+
+  {
+    src: `${P}/interclub-3.webp`,
+    alt: 'Le groupe du BEC réuni sur la pelouse du stade après les interclubs',
+    legende: 'Interclubs : après la dernière course',
+  },
+  {
+    src: `${P}/group-10.webp`,
+    alt: 'Le club réuni lors de la soirée annuelle',
+    legende: 'La vie du club',
+  },
+  {
+    src: `${P}/portrait-2.webp`,
+    alt: 'Jeune athlète du club, sa médaille entre les dents',
+    legende: 'La relève',
+  },
 ]

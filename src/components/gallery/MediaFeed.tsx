@@ -80,7 +80,7 @@ export function MediaFeed({
     return (
       <div className="space-y-1">
         {m.description && <p className="text-base text-white">{m.description}</p>}
-        <p className="text-slate-300">
+        <p className="text-white/70">
           {[m.lieu, m.date ? formatDate(m.date) : null].filter(Boolean).join(' · ')}
         </p>
         {m.athletes.length > 0 && (

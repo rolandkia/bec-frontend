@@ -1,9 +1,46 @@
 @import 'tailwindcss';
 
-/* Site en SOMBRE UNIQUEMENT : on force la variante `dark:` à s'appliquer en
-   permanence. Chaque utilitaire `dark:*` déjà présent dans les composants
-   devient ainsi le style définitif (et l'emporte sur sa version claire). */
-@custom-variant dark (&);
+/* ═══════════════════════════════════════════════════════════════════════════
+   BEC ATHLÉTISME — SOCLE DU DESIGN SYSTEM
+   Style : Editorial Grid / Magazine + Swiss Modernism (grille 12, base 8 px,
+   contraste maximal, un accent dominant).
+
+   ARCHITECTURE « DEUX CHAPITRES ». Le site est CLAIR par défaut (papier chaud) ;
+   les moments de tension du récit sont des sections NOIRES. Les deux tons
+   partagent EXACTEMENT le même contrat de tokens sémantiques : une section noire
+   est un conteneur `.chapter-dark` qui REDÉFINIT ces variables sur son
+   sous-arbre. Conséquence : aucun composant n'a besoin de savoir dans quel
+   chapitre il vit — `bg-surface` / `text-fg` / `border-line` sont justes des deux
+   côtés. C'est ce qui évite de dupliquer chaque classe en `dark:*`.
+
+   Deux familles de couleur de marque, et la distinction est structurelle :
+     • …-primary / …-accent  = APLATS (fond de bouton, pastille, filet).
+       Valeur CONSTANTE : du blanc dessus doit rester lisible dans les deux tons.
+     • …-primary-light / …-accent-light = TEXTE coloré (sur-titres, liens,
+       chiffres). Valeur DÉPENDANTE DU TON : #B5121B est à 6,5:1 sur le papier
+       mais seulement 2,5:1 sur le noir — il FAUT deux valeurs.
+   Les noms `club-primary*` / `club-accent*` sont conservés de l'itération
+   précédente : ~980 lignes de CSS d'article/éditeur (plus bas) et de nombreux
+   utilitaires `text-club-primary-light` s'y appuient déjà correctement.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* La variante `dark:` ne s'applique plus PARTOUT (le site n'est plus dark-only) :
+   elle signifie « JE RENDS SUR UN FOND SOMBRE », ce qui couvre DEUX cas : le
+   thème sombre du système, et un chapitre noir posé dans le thème clair.
+
+   C'est un OU, et c'est ce qui rend le système tenable : les deux cas veulent
+   exactement le même traitement. Si les chapitres s'INVERSAIENT en thème sombre
+   (chapitres clairs sur base sombre), ce serait un OU EXCLUSIF et les ~50
+   utilitaires `dark:*` des écrans d'admin et du chrome TipTap se retourneraient
+   à contresens. Ici, au contraire, ils redeviennent tous justes. */
+@custom-variant dark {
+  &:where(.chapter-dark, .chapter-dark *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    @slot;
+  }
+}
 
 /* Sur téléphone, `:hover` reste « collé » après un tap (iOS) et tout contenu
    révélé au survol est purement inatteignable au doigt. Les effets et contenus
@@ -12,90 +49,194 @@
 @custom-variant hover-hover (@media (hover: hover) and (pointer: fine));
 
 @theme {
-  /* ROUGE du club = énergie / performance (CTA, accents). */
-  --color-club-primary: #b5121b; /* rouge profond (brief) */
-  --color-club-primary-light: #f2555e; /* rouge clair lisible (liens/hover sur noir) */
-  --color-club-primary-dark: #7f1015; /* rouge hover (brief) */
+  /* ─── APLATS de marque (constants dans les deux tons) ───────────────────── */
+  /* Rouge du club = énergie / performance. Blanc dessus = 6,5:1 ✓ */
+  --color-club-primary: #b5121b;
+  --color-club-primary-dark: #7f1015; /* survol d'aplat */
+  /* Or du club = excellence. Noir dessus = 9,6:1 ✓ (JAMAIS de blanc sur l'or) */
+  --color-club-accent: #d4af37;
 
-  /* OR du club = EXCELLENCE (podiums, records, niveau international, détails premium).
-     À utiliser AVEC PARCIMONIE — cf. « Politique OR » plus bas. L'identité réelle du
-     club (blason + maillots) est rouge ET or, ce qui justifie ce second accent. */
-  --color-club-accent: #d4af37; /* or */
-  --color-club-accent-light: #e6c65c; /* or clair */
+  /* ─── TEXTE coloré (redéfini par `.chapter-dark`) ───────────────────────── */
+  --color-club-primary-light: #b5121b; /* 6,5:1 sur le papier ✓ */
+  --color-club-accent-light: #8a6b12; /* or ASSOMBRI : #d4af37 ne fait que 2:1 sur papier */
 
-  /* Surfaces sombres neutres et cinématiques (brief) */
-  --color-ink: #0a0a0a; /* fond de base (near-black) */
-  --color-surface: #141414; /* cartes / surfaces élevées */
-  --color-surface-2: #1d1d1d; /* surfaces plus élevées (hover, pills) */
-  --color-line: #262626; /* filets / bordures (neutre) */
-  --color-fg: #f8f8f8; /* texte principal */
-  --color-muted: #b8b8b8; /* texte secondaire */
+  /* ─── Surfaces — THÈME CLAIR, hors chapitre (le défaut) ─────────────────── */
+  /* Trois états existent pour ces quatre tokens : papier (ici), sombre ÉLEVÉ
+     (thème sombre, base de page) et noir PROFOND (chapitre). Cf. le bloc
+     « TROIS NIVEAUX DE SURFACE » plus bas. */
+  --color-canvas: #f7f6f4; /* papier chaud : s'accorde au studio orange/or */
+  --color-surface: #ffffff; /* cartes */
+  --color-surface-2: #efede9; /* pastilles, survols, rails */
+  --color-line: #e2e0dc; /* filets — le séparateur principal (Swiss) */
+  --color-fg: #0b0b0b; /* texte principal — 18,9:1 ✓ */
+  --color-muted: #5a5a5a; /* texte secondaire — 6,4:1 ✓ */
 
-  /* Typographie */
+  /* Encre CONSTANTE : le texte posé sur une surface toujours claire (bouton
+     blanc, plaque de logo partenaire). Ne suit PAS le chapitre — c'est tout
+     l'intérêt. Ne pas l'utiliser comme fond de page : c'est `--color-canvas`. */
+  --color-ink: #0b0b0b;
+
+  /* ─── Typographie ──────────────────────────────────────────────────────── */
+  /* Barlow Condensed : condensé = piste d'athlétisme, et à largeur égale un
+     titre porte deux fois plus loin qu'en display large. Réservé aux titres et
+     aux chiffres ; jamais pour du texte courant (illisible en petit). */
+  --font-display: 'Barlow Condensed', 'Inter', ui-sans-serif, system-ui, sans-serif;
   --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-display: 'Space Grotesk', 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  /* ─── Échelle typographique FLUIDE (source unique) ──────────────────────── */
+  --text-hero: clamp(2.25rem, 8vw, 7rem);
+  --text-h1: clamp(2.25rem, 6.5vw, 4rem);
+  --text-h2: clamp(1.75rem, 4.5vw, 2.75rem);
+  --text-h3: clamp(1.25rem, 2.5vw, 1.5rem);
+
+  /* ─── Rayons : 0 pour l'éditorial, arrondi pour les cartes ──────────────── */
+  --radius-none: 0;
+  --radius-xs: 4px;
+  --radius-md: 12px;
+  --radius-lg: 24px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TROIS NIVEAUX DE SURFACE, DEUX NIVEAUX DE TEXTE
+
+   Le site suit `prefers-color-scheme`. En thème sombre, TOUT est sombre et
+   l'alternance narrative ne passe plus par la bascule de ton mais par la
+   PROFONDEUR : la base est un noir élevé, les chapitres un noir profond.
+
+                     │ base de page  │ chapitre (.chapter-dark)
+     thème CLAIR     │ #f7f6f4       │ #0a0a0a
+     thème SOMBRE    │ #141414       │ #0a0a0a
+
+   D'où la répartition des tokens, qui évite de tout tripler :
+     • TEXTE et ACCENTS  → deux états seulement (clair / sombre).
+     • SURFACES          → trois états (papier / sombre élevé / noir profond).
+     • APLATS de marque et --color-ink → constants, jamais redéfinis. Un bouton
+       rouge est le même rouge partout : c'est ce qui tient l'identité.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Palette de TEXTE sombre ────────────────────────────────────────────────
+   Ces quatre valeurs sont IDENTIQUES pour un chapitre noir et pour la base en
+   thème sombre : dans les deux cas on écrit sur du sombre. Le sélecteur est
+   donc partagé, et c'est la seule duplication (le bloc `:root` sous la media
+   query ci-dessous) que CSS nous impose faute de mixins. */
+.chapter-dark {
+  --color-fg: #f8f8f8; /* 18,4:1 sur #0a0a0a · 17,4:1 sur #141414 ✓ */
+  --color-muted: #b0b0b0; /* 7,7:1 · 8,6:1 ✓ */
+  --color-club-primary-light: #f2555e; /* 6,0:1 · 5,6:1 ✓ (#b5121b n'y ferait que 2,5) */
+  --color-club-accent-light: #d4af37; /* l'or vit ICI : 9,0:1 · 8,9:1 ✓ */
+
+  color-scheme: dark;
+  background-color: var(--color-canvas);
+  color: var(--color-fg);
+}
+
+/* ─── Surfaces d'un chapitre : le NOIR PROFOND, dans les deux thèmes ──────── */
+.chapter-dark {
+  --color-canvas: #0a0a0a;
+  --color-surface: #161616;
+  --color-surface-2: #1f1f1f;
+  --color-line: #2a2a2a;
+
+  --tooltip-bg: #161616;
+  --tooltip-text: #f8f8f8;
+  --tooltip-border: rgba(42, 42, 42, 0.9);
 }
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 
-  /* Infobulle des graphes (Recharts) — hors de portée des variantes Tailwind dark: */
-  --tooltip-bg: #141414;
-  --tooltip-text: #f8f8f8;
-  --tooltip-border: rgba(38, 38, 38, 0.9);
+  /* Infobulle des graphes (Recharts) — hors de portée des variantes Tailwind. */
+  --tooltip-bg: #ffffff;
+  --tooltip-text: #0b0b0b;
+  --tooltip-border: rgba(226, 224, 220, 0.9);
+}
+
+/* ═══ THÈME SOMBRE DU SYSTÈME ═════════════════════════════════════════════ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+
+    /* Base de page : noir ÉLEVÉ, pour laisser aux chapitres un cran plus bas. */
+    --color-canvas: #141414;
+    --color-surface: #1c1c1c;
+    --color-surface-2: #262626;
+    --color-line: #2f2f2f;
+
+    /* Mêmes quatre valeurs que `.chapter-dark` ci-dessus (cf. commentaire). */
+    --color-fg: #f8f8f8;
+    --color-muted: #b0b0b0;
+    --color-club-primary-light: #f2555e;
+    --color-club-accent-light: #d4af37;
+
+    --tooltip-bg: #1c1c1c;
+    --tooltip-text: #f8f8f8;
+    --tooltip-border: rgba(47, 47, 47, 0.9);
+  }
+
+  /* INVARIANT D'ORDRE : `.chapter-dark` (0,1,0) et `:root` (0,1,0) ont la MÊME
+     spécificité, donc seul l'ordre source tranche. Ce bloc doit rester APRÈS
+     `:root`, ici comme hors media query — sinon les chapitres perdent leur noir
+     profond et l'alternance disparaît en thème sombre, sans erreur visible. */
+  .chapter-dark {
+    --color-canvas: #0a0a0a;
+    --color-surface: #161616;
+    --color-surface-2: #1f1f1f;
+    --color-line: #262626;
+  }
+
+  /* L'écart #0a0a0a / #141414 est perceptible mais discret, et le chapitre
+     « palmarès » de /club n'a pas de photo pour le souligner. Un filet haut et
+     bas lui redonne son assise. `inset box-shadow` et NON `border` : une bordure
+     ajouterait 2 px à la hauteur de chaque chapitre. */
+  .chapter-dark {
+    box-shadow:
+      inset 0 1px 0 var(--color-line),
+      inset 0 -1px 0 var(--color-line);
+  }
 }
 
 html {
   /* La navbar est `sticky` : sans cela, une ancre atterrit sous l'en-tête. */
-  scroll-padding-top: 4.5rem;
+  scroll-padding-top: 5.5rem;
+  /* Le récit se lit d'un scroll : les ancres de la sous-nav de /club glissent. */
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 body {
+  background: var(--color-canvas);
   color: var(--color-fg);
   font-family: var(--font-sans);
   /* dvh : la barre d'outils dynamique d'iOS Safari fait mentir 100vh. */
   min-height: 100dvh;
-  background: var(--color-ink);
-}
-
-/* Atmosphère (halos rouges + or) posée sur une COUCHE FIXE composée plutôt que
-   via `background-attachment: fixed` sur le body : quatre dégradés radiaux
-   attachés forçaient un repaint plein écran à chaque frame de scroll sur
-   mobile (et se comportaient de façon erratique sur iOS Safari). */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background:
-    /* halo or discret (excellence) — atmosphère, pas de chrome */
-    radial-gradient(
-      1000px 560px at 92% -10%,
-      color-mix(in oklab, var(--color-club-accent) 6%, transparent),
-      transparent 58%
-    ),
-    /* halos rouges cinématiques, adoucis sur le fond neutre */
-    radial-gradient(
-      1100px 620px at 88% -12%,
-      color-mix(in oklab, var(--color-club-primary) 12%, transparent),
-      transparent 60%
-    ),
-    radial-gradient(
-      900px 520px at -8% 4%,
-      color-mix(in oklab, var(--color-club-primary) 7%, transparent),
-      transparent 55%
-    );
+  -webkit-font-smoothing: antialiased;
 }
 
 @layer base {
   h1,
   h2,
-  h3 {
+  h3,
+  h4 {
     font-family: var(--font-display);
-    letter-spacing: -0.02em;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
   }
-  /* Chiffres alignés (scoreboard, records, dates) */
+
+  /* Anneau de focus VISIBLE dans les deux tons : `currentColor` suit le texte du
+     chapitre, donc il ne disparaît jamais sur un fond inversé. Le décalage le
+     détache d'un fond photo. */
+  :focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  /* Chiffres alignés (scoreboard, records, dates, chronos). */
   .tabular {
     font-variant-numeric: tabular-nums;
     font-feature-settings: 'tnum' 1;
@@ -103,17 +244,119 @@ body::before {
 }
 
 @layer components {
-  /* Carte de base réutilisable (surfaces sombres) */
-  .card {
-    @apply rounded-2xl border shadow-sm transition duration-200;
-    border-color: var(--color-line);
-    background: color-mix(in oklab, var(--color-surface) 88%, transparent);
-    backdrop-filter: blur(8px);
+  /* ─── CHAPITRES ────────────────────────────────────────────────────────────
+     `.chapter` = section pleine largeur qui déborde le conteneur `max-w-6xl`.
+     Le fond vient du token, donc un chapitre noir et un chapitre clair
+     s'écrivent avec la même classe — seul `.chapter-dark` change (cf. plus haut).
+     La marge négative est compensée en interne pour que le contenu reste aligné
+     sur la colonne du site. */
+  .chapter {
+    position: relative;
+    background: var(--color-canvas);
+    color: var(--color-fg);
+    /* Recouvre les gouttières : `<Chapter>` est monté à l'intérieur du
+       conteneur centré, mais doit toucher les deux bords de l'écran. */
+    margin-inline: calc(50% - 50vw);
+    padding-inline: calc(50vw - 50%);
+    overflow: hidden;
   }
 
-  /* À combiner avec .card pour un effet de survol dynamique. Le soulèvement est
-     réservé aux vrais pointeurs : sur iOS, `:hover` reste collé après un tap et
-     la carte restait figée en position soulevée. Au doigt, retour = enfoncement. */
+  /* Grain léger : casse le vide d'un aplat noir sur grand écran, et masque le
+     banding des dégradés de voile. Purement décoratif → aria-hidden côté DOM. */
+  .grain::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* Section pleine largeur ARRONDIE (bande immersive à l'intérieur d'une page
+     claire : split photo, bandeau de titre). À distinguer de `.chapter`, qui va
+     de bord à bord. Le voile de lisibilité est posé par le composant. */
+  .band {
+    @apply relative -mx-4 overflow-hidden sm:mx-0 sm:rounded-lg;
+  }
+
+  /* ─── TYPOGRAPHIE DE COMPOSANT ──────────────────────────────────────────── */
+
+  /* Sur-titre de section. Une seule source de vérité : il était recopié en
+     `text-xs font-semibold uppercase tracking-[0.18em] text-club-primary-light`
+     dans une vingtaine d'endroits. */
+  .eyebrow {
+    @apply mb-3 text-xs font-semibold uppercase tracking-[0.18em];
+    color: var(--color-club-primary-light);
+    font-family: var(--font-sans);
+  }
+
+  /* Sur-titre posé SUR UNE PHOTO : blanc, la couleur passant dans un repère
+     plein à gauche. En texte coloré il ne tient pas son contraste — `#f2555e`
+     sur un ciel bleu clair, ou sur le fond orange du cliché studio, tombe à
+     ~2:1. Un aplat de 3 px, lui, se lit sur n'importe quelle photo.
+     À utiliser partout où un sur-titre est en surimpression d'une image ;
+     `.eyebrow` reste réservé aux sections sur fond plein. */
+  .eyebrow-photo {
+    @apply mb-4 flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-white;
+    font-family: var(--font-sans);
+  }
+  .eyebrow-photo::before {
+    content: '';
+    flex: none;
+    width: 3px;
+    height: 0.85em;
+    background: var(--color-club-primary);
+  }
+  /* Variante OR : réservée à l'excellence (podium, palmarès, records). */
+  .eyebrow-photo-gold::before {
+    background: var(--color-club-accent);
+  }
+
+  .title-hero {
+    @apply font-display font-bold uppercase;
+    font-size: var(--text-hero);
+    line-height: 0.88;
+    letter-spacing: -0.02em;
+  }
+  .title-page {
+    @apply font-display font-bold uppercase;
+    font-size: var(--text-h1);
+    line-height: 0.95;
+    letter-spacing: -0.015em;
+  }
+  /* Titre de section — 12 appels du site le doublaient d'un `text-3xl` explicite
+     qui court-circuitait l'échelle (30 px sur un écran de 390 px). */
+  .section-title {
+    @apply font-display font-bold uppercase;
+    font-size: var(--text-h2);
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    color: var(--color-fg);
+  }
+
+  /* Bloc de chiffre éditorial (scoreboard, stats, records) : pas de fond de
+     carte, le CHIFFRE porte la hiérarchie. Toujours appelé avec un `text-*`
+     explicite → volontairement sans font-size ici. */
+  .stat {
+    @apply font-display font-bold leading-[0.85] tracking-tight;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+  }
+  /* Chiffre HÉROS : fluide, donc jamais tronqué dans une colonne de 130 px. */
+  .stat-hero {
+    font-size: clamp(2.75rem, 12vw, 5rem);
+  }
+
+  /* ─── SURFACES ──────────────────────────────────────────────────────────── */
+  .card {
+    @apply rounded-md border transition duration-200;
+    border-color: var(--color-line);
+    background: var(--color-surface);
+  }
+
+  /* À combiner avec `.card`. Le soulèvement est réservé aux vrais pointeurs :
+     sur iOS, `:hover` reste collé après un tap et la carte restait figée en
+     position soulevée. Au doigt, le retour est un enfoncement. */
   .card-hover {
     transition:
       transform 0.2s ease,
@@ -123,21 +366,40 @@ body::before {
   .card-hover:active {
     transform: scale(0.985);
   }
-  /* Tailwind v4 place déjà `hover:*` derrière @media (hover: hover) ; les règles
+  /* Tailwind place déjà `hover:*` derrière @media (hover: hover) ; les règles
      écrites à la main comme celle-ci, non. Sans ce garde-fou, la carte restait
      bordée de rouge après un tap sur iOS. */
   @media (hover: hover) and (pointer: fine) {
     .card-hover:hover {
       transform: translateY(-0.25rem);
       border-color: color-mix(in oklab, var(--color-club-primary) 55%, var(--color-line));
-      box-shadow: 0 22px 48px -24px color-mix(in oklab, var(--color-club-primary) 55%, transparent);
+      box-shadow: 0 18px 40px -22px color-mix(in oklab, var(--color-club-primary) 45%, transparent);
     }
   }
 
-  /* Retour TACTILE : sans survol, rien ne confirme l'appui. Légère compression.
-     `transform` est libre — les utilitaires Tailwind v4 passent par les
-     propriétés `translate`/`scale` —, donc `.tap` se compose avec `.card-hover`
-     et `group-hover:scale-*` sans conflit. */
+  /* Filet neutre : le séparateur principal du système (Swiss). */
+  .hairline {
+    height: 1px;
+    background: var(--color-line);
+    border: 0;
+  }
+
+  /* Filet OR (excellence) — s'estompe aux extrémités. */
+  .rule-gold {
+    height: 1px;
+    border: 0;
+    background: linear-gradient(
+      to right,
+      transparent,
+      color-mix(in oklab, var(--color-club-accent) 80%, transparent),
+      transparent
+    );
+  }
+
+  /* ─── RETOUR TACTILE ────────────────────────────────────────────────────── */
+  /* Sans survol, rien ne confirme l'appui. `transform` reste libre — les
+     utilitaires Tailwind v4 passent par `translate`/`scale` —, donc `.tap` se
+     compose avec `.card-hover` et `group-hover:scale-*` sans conflit. */
   .tap {
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
@@ -147,25 +409,114 @@ body::before {
     transform: scale(0.97);
   }
 
-  /* Groupe de boutons « segmenté » (pilule) : contrôle le plus répété du site
-     (Hommes/Femmes, all-time/saison, onglets galerie…). Pleine largeur sur
-     mobile — il ne peut donc plus déborder —, largeur naturelle dès sm. L'état
-     actif est porté par `aria-pressed`/`aria-selected` : annoncé aux lecteurs
-     d'écran, et plus de ternaire de classes recopié à chaque appel. */
+  /* ─── BOUTONS ───────────────────────────────────────────────────────────── */
+  /* Gabarit commun en sélecteur GROUPÉ, et non via `@apply .btn` dans chaque
+     variante : Tailwind v4 refuse d'`@apply` une classe composant déclarée dans
+     le même layer (« Cannot apply unknown utility class »). */
+  .btn,
+  .btn-primary,
+  .btn-accent,
+  .btn-outline,
+  .btn-ffa {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold uppercase tracking-[0.08em] transition duration-200;
+  }
+
+  /* CTA principal : aplat rouge, blanc dessus (6,5:1 dans les deux tons). */
+  .btn-primary {
+    @apply text-white shadow-sm;
+    background: var(--color-club-primary);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      background: var(--color-club-primary-dark);
+      box-shadow: 0 14px 30px -14px color-mix(in oklab, var(--color-club-primary) 70%, transparent);
+    }
+  }
+
+  /* CTA secondaire : aplat contrasté avec le chapitre. `--color-fg` en fond et
+     `--color-canvas` en texte → blanc-sur-noir dans un chapitre noir,
+     noir-sur-papier dans un chapitre clair, sans une seule classe `dark:`. */
+  .btn-accent {
+    @apply shadow-sm;
+    background: var(--color-fg);
+    color: var(--color-canvas);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .btn-accent:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 30px -14px color-mix(in oklab, var(--color-fg) 45%, transparent);
+    }
+  }
+
+  .btn-outline {
+    @apply border;
+    border-color: color-mix(in oklab, var(--color-fg) 30%, transparent);
+    color: var(--color-fg);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .btn-outline:hover {
+      transform: translateY(-2px);
+      border-color: var(--color-fg);
+      background: color-mix(in oklab, var(--color-fg) 6%, transparent);
+    }
+  }
+
+  /* Bouton « profil FFA » : sobre, liséré or (pages athlètes). */
+  .btn-ffa {
+    @apply border;
+    border-color: color-mix(in oklab, var(--color-club-accent) 55%, var(--color-line));
+    color: var(--color-fg);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .btn-ffa:hover {
+      transform: translateY(-2px);
+      border-color: var(--color-club-accent);
+      color: var(--color-club-accent-light);
+    }
+  }
+
+  /* Au doigt, tous les boutons atteignent 44 px de haut (cible tactile) et
+     reçoivent un retour d'appui ; à la souris ils gardent leur gabarit compact
+     et leur soulèvement au survol. */
+  @media (hover: none) {
+    .btn,
+    .btn-primary,
+    .btn-accent,
+    .btn-outline,
+    .btn-ffa {
+      min-height: 2.75rem;
+    }
+    .btn:active,
+    .btn-primary:active,
+    .btn-accent:active,
+    .btn-outline:active,
+    .btn-ffa:active {
+      transform: scale(0.97);
+    }
+  }
+
+  /* ─── CONTRÔLES ─────────────────────────────────────────────────────────── */
+  /* Groupe « segmenté » (pilule) : le contrôle le plus répété du site
+     (Hommes/Femmes, all-time/saison, onglets). Pleine largeur sur mobile — il ne
+     peut donc plus déborder —, largeur naturelle dès sm. L'état actif est porté
+     par `aria-pressed`/`aria-selected` : annoncé aux lecteurs d'écran, et plus de
+     ternaire de classes recopié à chaque appel. */
   .segmented {
     @apply flex w-full rounded-full border p-0.5 sm:w-auto;
     border-color: var(--color-line);
-    background: var(--color-surface);
+    background: var(--color-surface-2);
   }
   .segmented > button {
-    @apply min-w-0 flex-1 truncate rounded-full px-3 py-2.5 text-sm font-medium transition sm:flex-none sm:px-4 sm:py-1.5;
+    @apply min-w-0 flex-1 truncate rounded-full px-4 py-2.5 text-sm font-semibold transition sm:flex-none sm:py-1.5;
     color: var(--color-muted);
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
   }
   .segmented > button[aria-pressed='true'],
   .segmented > button[aria-selected='true'] {
-    @apply bg-club-primary text-white shadow-sm;
+    background: var(--color-club-primary);
+    color: #fff;
   }
   @media (hover: hover) and (pointer: fine) {
     .segmented > button:hover {
@@ -175,6 +526,31 @@ body::before {
     .segmented > button[aria-selected='true']:hover {
       color: #fff;
     }
+  }
+
+  /* Menu déroulant natif réutilisable. */
+  .select {
+    @apply rounded-xs border px-3 py-2 text-sm transition focus:border-club-primary focus:outline-none focus:ring-2;
+    border-color: var(--color-line);
+    background: var(--color-surface);
+    color: var(--color-fg);
+  }
+
+  /* Champ de formulaire (contact). Même gabarit tactile que `.btn`. */
+  .field {
+    @apply w-full rounded-xs border px-4 py-3 text-base transition;
+    border-color: var(--color-line);
+    background: var(--color-surface);
+    color: var(--color-fg);
+    min-height: 2.75rem;
+  }
+  .field::placeholder {
+    color: var(--color-muted);
+  }
+  .field:focus {
+    outline: none;
+    border-color: var(--color-club-primary);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-club-primary) 22%, transparent);
   }
 
   /* Rangée « rail » : sur mobile on FAIT GLISSER au doigt plutôt que d'empiler
@@ -194,158 +570,44 @@ body::before {
     scroll-snap-align: start;
   }
 
-  .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition duration-200;
+  /* ─── BADGES ────────────────────────────────────────────────────────────── */
+  .badge,
+  .badge-gold,
+  .badge-live {
+    @apply inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em];
   }
 
-  /* CTA principal : rouge plein */
-  .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-full bg-club-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-club-primary/30 hover:brightness-110;
-  }
-
-  /* CTA secondaire : bouton blanc (fort contraste sur fond sombre / photo) */
-  .btn-accent {
-    @apply inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[color:var(--color-ink)] shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/30 hover:brightness-95;
-  }
-
-  .btn-outline {
-    @apply inline-flex items-center justify-center gap-2 rounded-full border px-5 py-2.5 text-sm font-semibold transition duration-200 hover:-translate-y-0.5;
-    border-color: var(--color-line);
-    color: var(--color-fg);
-  }
-  @media (hover: hover) and (pointer: fine) {
-    .btn-outline:hover {
-      border-color: var(--color-club-primary-light);
-      color: var(--color-club-primary-light);
-    }
-  }
-
-  /* Titre de section FLUIDE : les 12 `section-title text-3xl` du site
-     court-circuitaient le `text-2xl sm:text-3xl` de la classe (30 px sur un
-     écran de 390 px). Une seule source de vérité, en clamp. */
-  .section-title {
-    @apply font-display font-bold tracking-tight;
-    font-size: clamp(1.45rem, 4.4vw, 1.875rem);
-    line-height: 1.15;
-    text-wrap: balance;
-    color: var(--color-fg);
-  }
-
-  .badge {
-    @apply inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold;
-  }
-
-  /* Menu déroulant natif réutilisable (sombre) */
-  .select {
-    @apply rounded-lg border px-3 py-2 text-sm shadow-sm transition focus:border-club-primary focus:outline-none focus:ring-2 focus:ring-club-primary/30;
-    border-color: var(--color-line);
-    background: var(--color-surface);
-    color: var(--color-fg);
-  }
-
-  /* Au doigt, tous les boutons atteignent 44 px de haut (cible tactile) et
-     reçoivent un retour d'appui ; à la souris ils gardent leur gabarit compact
-     d'origine et leur soulèvement au survol. */
-  @media (hover: none) {
-    .btn,
-    .btn-primary,
-    .btn-accent,
-    .btn-outline,
-    .btn-ffa {
-      min-height: 2.75rem;
-    }
-    .btn:active,
-    .btn-primary:active,
-    .btn-accent:active,
-    .btn-outline:active,
-    .btn-ffa:active {
-      transform: scale(0.97);
-    }
-  }
-
-  /* ═══════════════════════════════════════════════════════════════════════
-     POLITIQUE OR (--color-club-accent : #d4af37)
+  /* ═════════════════════════════════════════════════════════════════════════
+     POLITIQUE OR (--color-club-accent)
      L'or ne sert QU'À l'excellence méritée : 1re place d'un podium, records /
      records personnels, niveau international, liens « Records », et fins filets
      premium. JAMAIS pour les boutons, la navigation, le corps de texte ou les
      surfaces génériques (qui restent neutres + rouge). Le rouge = énergie /
-     performance ; l'or = distinction.
-     ═══════════════════════════════════════════════════════════════════════ */
-
-  /* Bloc de chiffre éditorial (scoreboard, stats, records) — se distingue de
-     .card : pas de fond de carte, le CHIFFRE porte la hiérarchie. */
-  .stat {
-    @apply font-display font-bold leading-[0.9] tracking-tight;
-    font-variant-numeric: tabular-nums;
-    font-feature-settings: 'tnum' 1;
-  }
-
-  /* Chiffre HÉROS (scoreboard de l'accueil, meilleure perf de l'athlète à la
-     une) : taille fluide, donc jamais tronqué dans une colonne de 130 px sur
-     mobile. Classe séparée de `.stat`, qui est toujours appelée avec un
-     `text-*` explicite (un font-size dans `.stat` créerait un conflit). */
-  .stat-hero {
-    font-size: clamp(2.25rem, 11vw, 4rem);
-  }
-
-  /* Section pleine largeur (déborde le conteneur max-w-6xl) pour les bandes
-     immersives / splits / fonds photo. Le voile de lisibilité est posé par le
-     composant lui-même. */
-  .band {
-    @apply relative -mx-4 overflow-hidden sm:mx-0 sm:rounded-3xl;
-  }
-
-  /* Filet neutre fin (séparateur discret). */
-  .hairline {
-    height: 1px;
-    background: var(--color-line);
-    border: 0;
-  }
-
-  /* Filet OR premium (excellence) — dégradé qui s'estompe aux extrémités. */
-  .rule-gold {
-    height: 1px;
-    border: 0;
-    background: linear-gradient(
-      to right,
-      transparent,
-      color-mix(in oklab, var(--color-club-accent) 70%, transparent),
-      transparent
-    );
-  }
-
-  /* Bouton « profil FFA » : sobre, avec icône lien externe (pages athlètes). */
-  .btn-ffa {
-    @apply inline-flex items-center justify-center gap-2 rounded-full border px-5 py-2.5 text-sm font-semibold transition duration-200 hover:-translate-y-0.5;
-    border-color: color-mix(in oklab, var(--color-club-accent) 45%, var(--color-line));
-    color: var(--color-fg);
-  }
-  @media (hover: hover) and (pointer: fine) {
-    .btn-ffa:hover {
-      border-color: var(--color-club-accent);
-      color: var(--color-club-accent-light);
-      box-shadow: 0 12px 30px -18px color-mix(in oklab, var(--color-club-accent) 60%, transparent);
-    }
-  }
-
-  /* Badge OR (record / distinction) — usage parcimonieux. */
+     performance ; l'or = distinction. L'identité réelle du club (blason +
+     maillots) est rouge ET or, ce qui justifie ce second accent.
+     ATTENTION : en ton CLAIR, l'or #d4af37 ne fait que 2:1 sur le papier —
+     n'utiliser en TEXTE que `--color-club-accent-light` (assombri), et réserver
+     #d4af37 aux aplats, filets et grands chiffres.
+     ═════════════════════════════════════════════════════════════════════════ */
   .badge-gold {
-    @apply inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold;
-    background: color-mix(in oklab, var(--color-club-accent) 16%, transparent);
+    background: color-mix(in oklab, var(--color-club-accent) 18%, transparent);
     color: var(--color-club-accent-light);
-    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-club-accent) 40%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-club-accent) 45%, transparent);
   }
 
   /* Badge « à venir / live » — rouge d'énergie. */
   .badge-live {
-    @apply inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold;
-    background: color-mix(in oklab, var(--color-club-primary) 18%, transparent);
+    background: color-mix(in oklab, var(--color-club-primary) 12%, transparent);
     color: var(--color-club-primary-light);
-    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-club-primary) 45%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-club-primary) 40%, transparent);
   }
 }
 
-/* Animation d'entrée douce */
+/* ─── UTILITAIRES ────────────────────────────────────────────────────────────
+   `@utility` (et non `@layer utilities`) : c'est ce qui rend la classe
+   VARIANTABLE en Tailwind v4 — indispensable pour `sm:animate-marquee`. */
+
+/* Animation d'entrée douce (pages sans orchestration Framer Motion). */
 @keyframes rise {
   from {
     opacity: 0;
@@ -356,11 +618,8 @@ body::before {
     transform: translateY(0);
   }
 }
-
-/* `@utility` (et non `@layer utilities`) : c'est ce qui rend la classe
-   VARIANTABLE en Tailwind v4 — indispensable pour `sm:animate-marquee`. */
 @utility animate-rise {
-  animation: rise 0.5s ease-out both;
+  animation: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* Gouttières respectant les encoches / coins arrondis (viewport-fit=cover). */
@@ -516,7 +775,8 @@ body::before {
 .ProseMirror strong,
 .blog-rendered strong {
   font-weight: 600;
-  color: #fff;
+  /* Était `#fff` du temps du site dark-only : invisible sur le papier. */
+  color: var(--color-fg);
 }
 .ProseMirror p,
 .blog-rendered p {
@@ -732,7 +992,7 @@ body::before {
 .mention-popup-empty {
   padding: 0.5rem 0.75rem;
   font-size: 0.85rem;
-  color: rgb(100 116 139); /* slate-500 */
+  color: var(--color-muted);
 }
 
 /* Alignement centré (seul alignement bloc produit par l'éditeur).
@@ -1029,20 +1289,30 @@ body::before {
    du dernier média ; les coins arrondis sont portés par la toolbar elle-même.
    --------------------------------------------------------------------------- */
 .tiptap-toolbar {
-  @apply flex flex-wrap items-center gap-1 rounded-t-2xl border-b border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-800 dark:bg-slate-900/60;
+  @apply flex flex-wrap items-center gap-1 rounded-t-2xl border-b px-3 py-2;
+  border-color: var(--color-line);
+  background: var(--color-surface-2);
 }
 
 .tb-btn {
-  @apply inline-flex h-8 min-w-8 items-center justify-center rounded-md px-2 text-sm text-slate-700 transition hover:bg-slate-200 dark:text-slate-200 dark:hover:bg-slate-700;
+  @apply inline-flex h-8 min-w-8 items-center justify-center rounded-md px-2 text-sm transition;
+  color: var(--color-fg);
+}
+@media (hover: hover) and (pointer: fine) {
+  .tb-btn:hover {
+    background: color-mix(in oklab, var(--color-fg) 10%, transparent);
+  }
 }
 .tb-btn.is-active {
   @apply bg-club-primary text-white hover:bg-club-primary;
 }
 .tb-sep {
-  @apply mx-1 h-5 w-px bg-slate-300 dark:bg-slate-700;
+  @apply mx-1 h-5 w-px;
+  background: var(--color-line);
 }
 .tb-status {
-  @apply ml-2 text-xs text-slate-500 dark:text-slate-400;
+  @apply ml-2 text-xs;
+  color: var(--color-muted);
 }
 .tb-error {
   @apply text-red-600 dark:text-red-400;
@@ -1083,7 +1353,7 @@ body::before {
   float: left;
   height: 0;
   pointer-events: none;
-  @apply text-slate-400;
+  color: var(--color-muted);
 }
 
 /* Conteneur du média dans l'éditeur : ancre les poignées de redimensionnement
@@ -1356,10 +1626,14 @@ body::before {
   margin-top: 0.5rem;
 }
 .tiptap-node-toolbar-sep {
-  @apply mx-1 h-5 w-px bg-slate-300 dark:bg-slate-700;
+  @apply mx-1 h-5 w-px;
+  background: var(--color-line);
 }
 .tiptap-node-toolbar button {
-  @apply inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-300 bg-white text-xs text-slate-700 transition hover:border-club-primary dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200;
+  @apply inline-flex h-7 w-7 items-center justify-center rounded-md border text-xs transition hover:border-club-primary;
+  border-color: var(--color-line);
+  background: var(--color-surface);
+  color: var(--color-fg);
 }
 .tiptap-node-toolbar button.is-active {
   @apply border-club-primary bg-club-primary text-white;

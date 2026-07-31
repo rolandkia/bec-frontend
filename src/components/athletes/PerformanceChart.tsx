@@ -53,7 +53,7 @@ export function PerformanceChart({ resultats }: { resultats: ResultatOut[] }) {
 
   if (points.length === 0) {
     return (
-      <p className="py-6 text-center text-slate-500 dark:text-slate-400">
+      <p className="py-6 text-center text-[color:var(--color-muted)]">
         Pas assez de données pour tracer une courbe d'évolution.
       </p>
     )
@@ -61,7 +61,7 @@ export function PerformanceChart({ resultats }: { resultats: ResultatOut[] }) {
 
   return (
     <div className="card p-4">
-      <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">
+      <p className="mb-3 text-xs text-[color:var(--color-muted)]">
         {isTemps
           ? 'Temps (en secondes) : la courbe descend quand l’athlète progresse (temps plus court).'
           : 'Distance / points : la courbe monte quand l’athlète progresse (valeur plus élevée).'}
@@ -82,7 +82,7 @@ export function PerformanceChart({ resultats }: { resultats: ResultatOut[] }) {
                 <stop offset="100%" stopColor="var(--color-club-primary)" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-800" />
+            <CartesianGrid strokeDasharray="3 3" className="stroke-[color:var(--color-line)]" />
             <XAxis
               dataKey="t"
               type="number"
@@ -97,13 +97,13 @@ export function PerformanceChart({ resultats }: { resultats: ResultatOut[] }) {
               minTickGap={28}
               interval="preserveStartEnd"
               stroke="currentColor"
-              className="text-slate-400"
+              className="text-[color:var(--color-muted)]"
             />
             <YAxis
               domain={['auto', 'auto']}
               tick={{ fontSize: 10 }}
               stroke="currentColor"
-              className="text-slate-400"
+              className="text-[color:var(--color-muted)]"
               width={36}
             />
             <Tooltip

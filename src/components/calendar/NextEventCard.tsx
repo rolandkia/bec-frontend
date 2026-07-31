@@ -34,7 +34,7 @@ export function NextEventCard({ event, today }: { event: EvenementOut; today?: D
         </div>
 
         <div className="min-w-0">
-          <h2 className="font-display text-xl font-bold leading-tight text-white sm:text-3xl">
+          <h2 className="font-display text-xl font-bold leading-tight sm:text-3xl">
             {event.nom}
           </h2>
           {/* first-letter et non capitalize : en français seul le jour prend la

@@ -10,6 +10,7 @@
  */
 import {
   motion,
+  AnimatePresence,
   useReducedMotion,
   useScroll,
   useTransform,
@@ -118,6 +119,10 @@ export function RevealGroup({
   once?: boolean
 }) {
   const reduce = useReducedMotion()
+  const ref = useRef<HTMLDivElement>(null)
+  // Cf. Reveal : seuil indépendant de la hauteur du groupe (une grille de
+  // 12 cartes ne peut pas franchir 15 % d'elle-même).
+  const inView = useInView(ref, { once, amount: 'some', margin: '0px 0px -15% 0px' })
 
   if (reduce) {
     return <div {...(rest as ComponentPropsWithoutRef<'div'>)}>{children}</div>
@@ -125,11 +130,20 @@ export function RevealGroup({
 
   return (
     <motion.div
+      ref={ref}
       initial="hidden"
-      whileInView="show"
-      // Cf. Reveal : seuil indépendant de la hauteur du groupe (une grille de
-      // 12 cartes ne peut pas franchir 15 % d'elle-même).
-      viewport={{ once, amount: 'some', margin: '0px 0px -15% 0px' }}
+      // `animate` piloté à la main, PAS `whileInView` : un groupe dont les
+      // enfants changent après coup (liste filtrée, recherche, pagination) est
+      // le cas que `whileInView` ne sait pas tenir. Ses enfants héritent
+      // `initial: 'hidden'` du contexte, donc ils NAISSENT à opacité 0 ; or
+      // `whileInView` démarre `isActive: false` sur chaque nouvel enfant et
+      // n'est réveillé que par l'IntersectionObserver, qui ne se propage
+      // qu'aux enfants présents à cet instant — et ne se redéclenche plus
+      // ensuite avec `once`. Les cartes ajoutées restaient donc invisibles
+      // tout en étant cliquables. `animate` est le seul type actif par défaut :
+      // un enfant monté plus tard résout la variante héritée et s'anime
+      // lui-même, cascade comprise.
+      animate={inView ? 'show' : 'hidden'}
       variants={staggerContainer(stagger)}
       {...rest}
     >
@@ -213,6 +227,8 @@ type ParallaxImageProps = {
   fetchPriority?: 'high' | 'low' | 'auto'
   /** amplitude de translation (px) — bornée discrète par le brief */
   strength?: number
+  /** styles additionnels (typiquement `objectPosition` — cf. <Chapter>) */
+  style?: CSSProperties
 }
 
 export function ParallaxImage({
@@ -222,6 +238,7 @@ export function ParallaxImage({
   loading,
   fetchPriority,
   strength = 40,
+  style,
 }: ParallaxImageProps) {
   const reduce = useReducedMotion()
   const ref = useRef<HTMLDivElement>(null)
@@ -232,7 +249,17 @@ export function ParallaxImage({
   const y = useTransform(scrollYProgress, [0, 1], [-strength, strength])
 
   if (reduce) {
-    return <img src={src} alt={alt} className={className} loading={loading} fetchPriority={fetchPriority} />
+    return (
+      <img
+        src={src}
+        alt={alt}
+        aria-hidden={alt === '' || undefined}
+        className={className}
+        loading={loading}
+        fetchPriority={fetchPriority}
+        style={style}
+      />
+    )
   }
 
   return (
@@ -240,10 +267,11 @@ export function ParallaxImage({
       <motion.img
         src={src}
         alt={alt}
+        aria-hidden={alt === '' || undefined}
         loading={loading}
         fetchPriority={fetchPriority}
         className={className}
-        style={{ y, scale: 1.14 }}
+        style={{ ...style, y, scale: 1.14 }}
       />
     </div>
   )
@@ -291,4 +319,384 @@ export function Marquee({
   )
 }
 
-export { motion, useReducedMotion }
+/* ═══════════════════════════════════════════════════════════════════════════
+   CHAPITRES — la grammaire narrative du site.
+
+   Le récit alterne des sections CLAIRES (papier) et NOIRES (tension). Un
+   chapitre noir porte `.chapter-dark`, qui redéfinit les tokens sémantiques sur
+   son sous-arbre (cf. index.css) : le contenu à l'intérieur s'écrit avec les
+   mêmes classes qu'ailleurs et s'inverse tout seul.
+   ═══════════════════════════════════════════════════════════════════════════ */
+type ChapterProps = {
+  children: ReactNode
+  /** ton du chapitre — `dark` inverse tous les tokens de son sous-arbre */
+  tone?: 'light' | 'dark'
+  /** photo de fond (déjà en .webp, servie depuis /photos) */
+  image?: string
+  /** texte alternatif de la photo ; vide ⇒ décorative (aria-hidden) */
+  imageAlt?: string
+  /** cadrage de la photo (`object-position`) */
+  focus?: string
+  /**
+   * Intensité du voile de lisibilité posé sur la photo.
+   * `soft`/`strong` = dégradé concentré en bas, pour une photo qui a une zone
+   * sombre où poser le texte. `flat` ajoute en plus un voile UNIFORME : à
+   * réserver aux photos claires de bout en bout (le cliché studio sur fond
+   * orange), où un dégradé ne peut rien — le texte y tombe forcément sur du
+   * clair, quelle que soit sa position.
+   */
+  veil?: 'none' | 'soft' | 'strong' | 'flat'
+  /** parallaxe verticale discrète sur la photo */
+  parallax?: boolean
+  /** grain léger (casse le vide d'un aplat noir sur grand écran) */
+  grain?: boolean
+  /**
+   * Image du LCP (hero de l'accueil) : chargée en `eager` + priorité haute, et
+   * JAMAIS sous parallaxe. Un seul `priority` par page — au-delà, on se met en
+   * concurrence avec soi-même sur la bande passante.
+   */
+  priority?: boolean
+  className?: string
+  id?: string
+}
+
+export function Chapter({
+  children,
+  tone = 'light',
+  image,
+  imageAlt = '',
+  focus = 'center',
+  veil = 'soft',
+  parallax = false,
+  grain = false,
+  priority = false,
+  className = '',
+  id,
+}: ChapterProps) {
+  const dark = tone === 'dark'
+  const reduce = useReducedMotion()
+  // La parallaxe est incompatible avec l'image du LCP : elle la place sous un
+  // conteneur animé dès le premier rendu, ce que le navigateur ne peut pas
+  // précharger aussi tôt.
+  const withParallax = parallax && !priority
+
+  // Attributs communs aux deux rendus de la photo de fond (statique / fondu).
+  const imgProps = {
+    src: image,
+    alt: imageAlt,
+    'aria-hidden': imageAlt === '' || undefined,
+    loading: (priority ? 'eager' : 'lazy') as 'eager' | 'lazy',
+    fetchPriority: (priority ? 'high' : undefined) as 'high' | undefined,
+    decoding: (priority ? 'sync' : 'async') as 'sync' | 'async',
+    className: 'absolute inset-0 h-full w-full object-cover',
+    style: { objectPosition: focus },
+  }
+
+  return (
+    <section
+      id={id}
+      className={`chapter ${dark ? 'chapter-dark' : ''} ${grain && dark ? 'grain' : ''} ${className}`}
+    >
+      {image &&
+        (withParallax ? (
+          <ParallaxImage
+            src={image}
+            alt={imageAlt}
+            className="absolute inset-0 h-full w-full object-cover"
+            style={{ objectPosition: focus }}
+          />
+        ) : reduce ? (
+          <img {...imgProps} />
+        ) : (
+          /* FONDU ENCHAÎNÉ quand `image` change (chapitre piloté par un onglet
+             ou un filtre : cf. /athletes). Sur les chapitres à photo littérale
+             la clé ne bouge jamais — un seul enfant, aucun nœud ajouté, aucun
+             changement de comportement.
+
+             `initial={false}` : au chargement de la page la photo s'affiche
+             pleine opacité tout de suite, on ne met pas un fondu sur le LCP.
+             La photo sortante TIENT son opacité pendant que l'entrante monte
+             (délai sur son `exit`) : sans ça les deux se croisent à mi-course
+             et le fond du chapitre apparaît une fraction de seconde entre les
+             deux clichés — un flash noir. L'entrante est rendue APRÈS la
+             sortante, donc peinte au-dessus, et `AnimatePresence` conserve
+             l'élément précédent tel quel : la photo qui s'en va garde son
+             propre cadrage, elle ne saute pas. */
+          <AnimatePresence initial={false}>
+            <motion.img
+              key={image}
+              {...imgProps}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0, transition: { duration: 0.25, delay: 0.6 } }}
+              transition={{ duration: 0.6, ease: EASE }}
+            />
+          </AnimatePresence>
+        ))}
+
+      {/* Voile de lisibilité. Dégradé DEPUIS LE BAS, et concentré dans le tiers
+          bas : le haut de la photo (ciel, gradins, fumigènes) reste INTACT —
+          c'est là qu'est l'émotion —, tandis que le texte, toujours posé en bas,
+          gagne son contraste. Un voile étalé jusqu'en haut virait le ciel bleu
+          au gris sale et éteignait les visages du groupe.
+          Second voile latéral léger : le texte occupe la moitié gauche. */}
+      {image && veil !== 'none' && (
+        <>
+          {/* Voile UNIFORME, seulement pour `flat` : sur une photo claire de bout
+              en bout, aucun dégradé ne sauve le texte. 38 % suffisent à faire
+              passer un sur-titre de 12 px de 3,9:1 à ~6,7:1, en laissant la
+              photo lisible (mesuré au pixel). */}
+          {veil === 'flat' && (
+            <div
+              aria-hidden
+              className="absolute inset-0"
+              style={{ background: 'color-mix(in oklab, var(--color-canvas) 38%, transparent)' }}
+            />
+          )}
+          <div
+            aria-hidden
+            className="absolute inset-0"
+            style={{
+              background: `linear-gradient(to top,
+                var(--color-canvas) 0%,
+                color-mix(in oklab, var(--color-canvas) ${veil === 'strong' ? '88%' : '78%'}, transparent) 22%,
+                color-mix(in oklab, var(--color-canvas) ${veil === 'strong' ? '45%' : '28%'}, transparent) 52%,
+                transparent 82%)`,
+            }}
+          />
+          <div
+            aria-hidden
+            className="absolute inset-0"
+            style={{
+              background: `linear-gradient(to right,
+                color-mix(in oklab, var(--color-canvas) ${veil === 'strong' ? '55%' : '40%'}, transparent) 0%,
+                transparent 65%)`,
+            }}
+          />
+        </>
+      )}
+
+      <div className="relative mx-auto w-full max-w-6xl px-safe">{children}</div>
+    </section>
+  )
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   MaskReveal — la grande image se DÉVOILE par un volet (`clip-path: inset`)
+   plutôt que d'apparaître en fondu. Réservé aux photos pleine largeur : c'est
+   le geste le plus « editorial » du lot, il perd tout son sens répété partout.
+   `clip-path` est composité par le GPU (aucun reflow).
+   ─────────────────────────────────────────────────────────────────────────── */
+export function MaskReveal({
+  children,
+  /** sens d'ouverture du volet */
+  from = 'bottom',
+  duration = 0.9,
+  className,
+}: {
+  children: ReactNode
+  from?: 'bottom' | 'left'
+  duration?: number
+  className?: string
+}) {
+  const reduce = useReducedMotion()
+
+  if (reduce) return <div className={className}>{children}</div>
+
+  const closed = from === 'left' ? 'inset(0 100% 0 0)' : 'inset(100% 0 0 0)'
+
+  return (
+    <motion.div
+      className={className}
+      initial={{ clipPath: closed }}
+      whileInView={{ clipPath: 'inset(0 0 0 0)' }}
+      viewport={{ once: true, amount: 'some', margin: '0px 0px -12% 0px' }}
+      transition={{ duration, ease: EASE }}
+    >
+      {children}
+    </motion.div>
+  )
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   ScrubImage — image dont le cadrage est PILOTÉ PAR LA POSITION DE SCROLL
+   (« scrub »), et non par une durée. Le mouvement est donc exactement celui du
+   doigt / de la molette : c'est ce qui donne la sensation de tension continue.
+   Le parent doit être `sticky`.
+
+   UNE SEULE section du site en est équipée (le chapitre « Le départ ») :
+   multiplier les sections épinglées se bat contre le scroll natif et dégrade
+   nettement le ressenti sur mobile.
+   ─────────────────────────────────────────────────────────────────────────── */
+export function ScrubImage({
+  src,
+  alt = '',
+  focus = 'center',
+  className = '',
+}: {
+  src: string
+  alt?: string
+  focus?: string
+  className?: string
+}) {
+  const reduce = useReducedMotion()
+  const ref = useRef<HTMLDivElement>(null)
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] })
+  // Resserrage lent : la photo « avance » vers le lecteur pendant la traversée.
+  const scale = useTransform(scrollYProgress, [0, 1], [1.25, 1])
+  const y = useTransform(scrollYProgress, [0, 1], ['-6%', '6%'])
+
+  if (reduce) {
+    return (
+      <img
+        src={src}
+        alt={alt}
+        aria-hidden={alt === '' || undefined}
+        className={`absolute inset-0 h-full w-full object-cover ${className}`}
+        style={{ objectPosition: focus }}
+      />
+    )
+  }
+
+  return (
+    <div ref={ref} className="absolute inset-0 overflow-hidden">
+      <motion.img
+        src={src}
+        alt={alt}
+        aria-hidden={alt === '' || undefined}
+        className={`h-full w-full object-cover ${className}`}
+        style={{ scale, y, objectPosition: focus }}
+      />
+    </div>
+  )
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   SplitLines — un titre entre LIGNE PAR LIGNE, chaque ligne glissant de sous un
+   masque. Le découpage est explicite (tableau de chaînes) et non calculé au
+   rendu : mesurer les retours à la ligne réels imposerait une lecture de layout
+   à chaque redimensionnement, et une ligne coupée par le navigateur pendant
+   l'animation ferait sauter le masque.
+
+   `overflow-hidden` est sur un span de niveau bloc par ligne : c'est lui le
+   volet. `pb` compense les jambages (g, y, j) que le masque couperait sinon.
+   ─────────────────────────────────────────────────────────────────────────── */
+export function SplitLines({
+  lines,
+  className = '',
+  delay = 0,
+  stagger = 0.06,
+  as: Tag = 'h1',
+  trigger = 'inView',
+}: {
+  lines: string[]
+  className?: string
+  delay?: number
+  stagger?: number
+  as?: 'h1' | 'h2' | 'p' | 'div'
+  /**
+   * `'mount'` pour un titre AU-DESSUS de la ligne de flottaison (hero, bandeau
+   * de page) : il doit s'animer à l'arrivée, pas « quand il entre à l'écran »,
+   * puisqu'il y est déjà. C'est aussi le seul mode fiable à l'intérieur d'un
+   * conteneur à variants (`initial`/`animate` orchestrés par un parent) : le
+   * parent y prend la main sur l'`animate` de ses descendants motion, et le
+   * `whileInView` de l'enfant ne se déclenche jamais — c'est ce qui laissait la
+   * 2e ligne du hero bloquée sous son masque.
+   */
+  trigger?: 'inView' | 'mount'
+}) {
+  const reduce = useReducedMotion()
+
+  if (reduce) {
+    return (
+      <Tag className={className}>
+        {lines.map((line, i) => (
+          <span key={i} className="block">
+            {line}
+          </span>
+        ))}
+      </Tag>
+    )
+  }
+
+  const inView = trigger === 'inView'
+
+  return (
+    <Tag className={className}>
+      {lines.map((line, i) => (
+        // `overflow-hidden` fait le volet ; `pb` compense les jambages (g, y, j)
+        // que le masque couperait sinon.
+        <span key={i} className="block overflow-hidden pb-[0.12em]">
+          <motion.span
+            className="block"
+            initial={{ y: '110%' }}
+            {...(inView
+              ? {
+                  whileInView: { y: '0%' },
+                  viewport: { once: true, amount: 'some' as const, margin: '0px 0px -10% 0px' },
+                }
+              : { animate: { y: '0%' } })}
+            transition={{ duration: 0.7, ease: EASE, delay: delay + i * stagger }}
+          >
+            {line}
+          </motion.span>
+        </span>
+      ))}
+    </Tag>
+  )
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   MagneticButton — le bouton s'incline VERS le curseur (≤ 5 px). Micro-retour
+   qui rend les CTA « vivants » sans les déplacer assez pour qu'on les rate.
+
+   Souris fine UNIQUEMENT : au doigt il n'y a pas de curseur à suivre, et le
+   `.tap` du système fournit déjà le retour d'appui. On n'attache donc aucun
+   écouteur sur tactile (zéro coût).
+   ─────────────────────────────────────────────────────────────────────────── */
+export function MagneticButton({
+  children,
+  className = '',
+  strength = 5,
+  ...rest
+}: ComponentPropsWithoutRef<typeof motion.div> & {
+  children: ReactNode
+  strength?: number
+}) {
+  const reduce = useReducedMotion()
+  const ref = useRef<HTMLDivElement>(null)
+  const [offset, setOffset] = useState({ x: 0, y: 0 })
+
+  const fine = typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches
+
+  if (reduce || !fine) {
+    return (
+      <div className={`inline-flex ${className}`} {...(rest as ComponentPropsWithoutRef<'div'>)}>
+        {children}
+      </div>
+    )
+  }
+
+  return (
+    <motion.div
+      ref={ref}
+      className={`inline-flex ${className}`}
+      animate={offset}
+      transition={{ type: 'spring', stiffness: 260, damping: 22, mass: 0.4 }}
+      onPointerMove={(e) => {
+        const r = ref.current?.getBoundingClientRect()
+        if (!r) return
+        setOffset({
+          x: ((e.clientX - (r.left + r.width / 2)) / (r.width / 2)) * strength,
+          y: ((e.clientY - (r.top + r.height / 2)) / (r.height / 2)) * strength,
+        })
+      }}
+      onPointerLeave={() => setOffset({ x: 0, y: 0 })}
+      {...rest}
+    >
+      {children}
+    </motion.div>
+  )
+}
+
+export { motion, useReducedMotion, EASE }
