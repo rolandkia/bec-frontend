@@ -197,6 +197,42 @@ export function useSlideshow(count: number, intervalMs = 7000) {
 }
 
 /* ───────────────────────────────────────────────────────────────────────────
+   DÉRIVE DE ZOOM (cf. la prop `drift` de <Chapter>) — le fondu ne dure que
+   0,6 s, donc une photo de diaporama restait STRICTEMENT immobile les 6,4 s
+   suivantes : rien ne disait qu'il y avait un diaporama, et le changement
+   arrivait comme une surprise. Une lente entrée dans l'image suffit à le dire.
+
+   Portée par un CONTENEUR au-dessus du fondu, et non par les photos
+   elles-mêmes. Deux raisons, la seconde étant rédhibitoire :
+
+   1. le fondu devient un vrai fondu — les deux clichés partagent la même
+      échelle pendant la demi-seconde où ils se superposent, donc aucun décalage
+      de cadrage entre l'entrant et le sortant ;
+   2. `AnimatePresence initial={false}` (nécessaire pour ne pas fondre le LCP)
+      fait rendre son premier enfant DIRECTEMENT à son état `animate`. Une
+      échelle posée sur la photo restait donc collée à sa valeur finale pendant
+      toute la durée de la première photo — mesuré : 1,06 immobile de 0 à 7 s,
+      la dérive ne démarrait qu'à la deuxième. Les images clés ne sauvent pas
+      ce cas, la suppression vaut pour tout le sous-arbre. Le conteneur, lui,
+      n'est pas un enfant d'`AnimatePresence` : son `initial` est respecté.
+
+   ALLER-RETOUR (`repeatType: 'mirror'`) et non un cycle qui se réarme : la
+   dérive tourne en continu, indépendamment du minuteur des photos. Un retour
+   sec de 1,06 à 1,00 se verrait, et une durée calée sur les 7 s de l'intervalle
+   figerait l'image pile au moment du changement — soit exactement l'immobilité
+   qu'on cherche à supprimer, au pire moment. 9 s en linéaire : une courbe
+   d'accélération se voit sur une durée aussi longue (l'image « freine » en
+   fin de course), une vitesse constante ne se lit que comme de la profondeur.
+
+   1,06 : en dessous le mouvement n'est pas perceptible sur 7 s ; au-delà il
+   devient une animation, et la photo se recadre assez pour perdre un visage en
+   bord de cadre. L'échelle ne descend jamais sous 1, donc aucun bord d'image ne
+   peut apparaître (`.chapter` est par ailleurs en `overflow: hidden`).
+   ─────────────────────────────────────────────────────────────────────────── */
+const DRIFT_SECONDS = 9
+const DRIFT_SCALE = 1.06
+
+/* ───────────────────────────────────────────────────────────────────────────
    CountUp — anime un nombre de 0 → cible quand il entre dans le viewport.
    Accepte une chaîne (« 120+ », « 20+ », « 6 ») : le préfixe/suffixe non
    numérique est conservé, seule la partie chiffrée est animée. `prefers-
@@ -389,6 +425,18 @@ type ChapterProps = {
   veil?: 'none' | 'soft' | 'strong' | 'flat'
   /** parallaxe verticale discrète sur la photo */
   parallax?: boolean
+  /**
+   * Lente entrée dans la photo (cf. DRIFT_SECONDS / DRIFT_SCALE). RÉSERVÉ aux
+   * bandeaux dont la photo alterne au minuteur : c'est le seul cas où le fond
+   * change tout seul, donc le seul qui ait besoin de l'annoncer.
+   *
+   * Volontairement PAS le défaut. Sur la photo du LCP (`priority`), une
+   * transformation qui tourne dès le premier rendu se paie au chargement ; et
+   * sur un chapitre dont la photo est choisie par un onglet ou un filtre
+   * (/athletes), il n'y a aucun défilement à signaler — l'utilisateur sait
+   * déjà pourquoi l'image a changé, c'est lui qui l'a demandé.
+   */
+  drift?: boolean
   /** grain léger (casse le vide d'un aplat noir sur grand écran) */
   grain?: boolean
   /**
@@ -401,6 +449,33 @@ type ChapterProps = {
   id?: string
 }
 
+/**
+ * Conteneur de la dérive de zoom (cf. DRIFT_SECONDS). `active` à faux ⇒ aucun
+ * nœud ajouté : les chapitres sans dérive gardent exactement le DOM d'avant.
+ */
+function DriftBox({ active, children }: { active: boolean; children: ReactNode }) {
+  if (!active) return <>{children}</>
+
+  return (
+    // Pas d'`aria-hidden` ici : c'est la photo elle-même qui porte le sien
+    // quand elle est décorative (cf. `imgProps`), et une photo de contenu au
+    // vrai `alt` ne doit pas être masquée par son conteneur d'animation.
+    <motion.div
+      className="absolute inset-0"
+      initial={{ scale: 1 }}
+      animate={{ scale: DRIFT_SCALE }}
+      transition={{
+        duration: DRIFT_SECONDS,
+        ease: 'linear',
+        repeat: Infinity,
+        repeatType: 'mirror',
+      }}
+    >
+      {children}
+    </motion.div>
+  )
+}
+
 export function Chapter({
   children,
   tone = 'light',
@@ -409,6 +484,7 @@ export function Chapter({
   focus = 'center',
   veil = 'soft',
   parallax = false,
+  drift = false,
   grain = false,
   priority = false,
   className = '',
@@ -420,6 +496,12 @@ export function Chapter({
   // conteneur animé dès le premier rendu, ce que le navigateur ne peut pas
   // précharger aussi tôt.
   const withParallax = parallax && !priority
+  // La dérive vit dans la SEULE branche du fondu, jamais sous parallaxe (le
+  // conteneur y porte déjà une transformation pilotée par le scroll) et jamais
+  // sur l'image du LCP, pour la même raison que la parallaxe. Sous
+  // `prefers-reduced-motion` la branche n'est pas rendue du tout : rien à
+  // désactiver ici, et le diaporama est de son côté gelé par `useSlideshow`.
+  const withDrift = drift && !priority && !withParallax && !reduce
 
   // Attributs communs aux deux rendus de la photo de fond (statique / fondu).
   const imgProps = {
@@ -462,17 +544,33 @@ export function Chapter({
              deux clichés — un flash noir. L'entrante est rendue APRÈS la
              sortante, donc peinte au-dessus, et `AnimatePresence` conserve
              l'élément précédent tel quel : la photo qui s'en va garde son
-             propre cadrage, elle ne saute pas. */
-          <AnimatePresence initial={false}>
-            <motion.img
-              key={image}
-              {...imgProps}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0, transition: { duration: 0.25, delay: 0.6 } }}
-              transition={{ duration: 0.6, ease: EASE }}
-            />
-          </AnimatePresence>
+             propre cadrage, elle ne saute pas.
+
+             La DÉRIVE est portée par la même image que le fondu, mais avec sa
+             propre transition — 9 s en linéaire contre 0,6 s en courbe. Écrite
+             en IMAGES CLÉS (`[1, DRIFT_SCALE]`) et non en simple valeur cible :
+             `initial={false}` fait rendre le premier enfant directement à son
+             état `animate`, ce qui ferait démarrer la toute première photo déjà
+             zoomée, immobile pour ses 7 s. Un tableau part toujours de sa
+             première valeur, donc la dérive joue dès le chargement, tandis que
+             l'opacité (valeur simple) continue, elle, de ne pas se fondre.
+
+             La DÉRIVE de zoom, quand elle est demandée, est posée par le
+             conteneur ci-dessous et non ici : cf. le commentaire de
+             DRIFT_SECONDS, `initial={false}` empêcherait la première photo de
+             l'animer. */
+          <DriftBox active={withDrift}>
+            <AnimatePresence initial={false}>
+              <motion.img
+                key={image}
+                {...imgProps}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0, transition: { duration: 0.25, delay: 0.6 } }}
+                transition={{ duration: 0.6, ease: EASE }}
+              />
+            </AnimatePresence>
+          </DriftBox>
         ))}
 
       {/* Voile de lisibilité. Dégradé DEPUIS LE BAS, et concentré dans le tiers

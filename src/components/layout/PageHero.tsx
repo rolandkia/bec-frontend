@@ -83,6 +83,10 @@ export function PageHero({
       image={photo.src}
       focus={photo.focus ?? 'center 30%'}
       veil={veil}
+      // Un jeu de plusieurs photos = un minuteur (cf. `photos`), donc un fond
+      // qui change tout seul : c'est le seul cas qui a besoin de la dérive de
+      // zoom pour le dire. Sur une photo unique, il n'y a rien à annoncer.
+      drift={photos.length > 1}
       grain
       className="mb-10 flex min-h-[52svh] items-end sm:mb-16 sm:min-h-[60svh]"
     >

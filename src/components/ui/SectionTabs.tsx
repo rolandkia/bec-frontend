@@ -53,8 +53,11 @@ export function SectionTabs({
   onChange: (key: string) => void
 }) {
   return (
-    // `.segmented` : cibles de 44 px au doigt, pleine largeur sur mobile, état
-    // actif annoncé par aria-selected, et bordure alignée sur --color-line.
+    // `.segmented` : pleine largeur sur mobile, état actif annoncé par
+    // aria-selected, bordure alignée sur --color-line. Les 44 px de cible
+    // tactile et le retour d'appui viennent du bloc `@media (hover: none)` de
+    // la classe (cf. index.css) — ce commentaire les annonçait avant qu'ils
+    // n'existent, la règle n'en donnait que 40 et aucun feedback au doigt.
     // `sm:w-fit` : le `w-auto` de `.segmented` étirait la pilule sur toute la
     // largeur dès qu'elle n'était pas elle-même un enfant de flex (cas ici).
     <div className="segmented mb-8 sm:w-fit" role="tablist">

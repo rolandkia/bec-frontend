@@ -28,12 +28,24 @@ const SCENES = {
   effectif: {
     tous: {
       eyebrow: "L'effectif",
-      // Le club au complet aux interclubs : fumigènes, ciel bleu franc, tout le
-      // monde en maillot, l'écusson brandi. Choisie pour sa LISIBILITÉ — la
-      // précédente était un groupe en contre-jour au crépuscule, et au format
-      // portrait, donc rognée durement dans un bandeau paysage : on ne
-      // distinguait personne.
-      photo: { src: '/photos/gallery/interclub-1.webp', focus: 'center 40%' },
+      // Le club au complet aux interclubs 2025 : ciel bleu franc, l'effectif
+      // entier agenouillé en maillot, et un athlète qui brandit le drapeau
+      // du club face à lui. C'est la photo qui dit « effectif » le plus
+      // directement de toute la bibliothèque.
+      //
+      // La source est en PORTRAIT (1200×1600), inutilisable telle quelle dans un
+      // bandeau paysage : elle est recadrée en 16/9 sur sa bande centrale avant
+      // conversion (commande exacte dans public/photos/README.md). Le tiers de
+      // ciel vide du haut et le tiers de pelouse vide du bas partent — ce sont
+      // eux qui écrasaient le sujet.
+      //
+      // `50%` et non le `40%` de la photo précédente : le bandeau est plus large
+      // que le 16/9 du fichier sur grand écran, `object-cover` rogne donc encore
+      // en hauteur. À 40 % on gardait une bande de ciel vide en haut et le
+      // premier rang du groupe tombait dans la partie la plus voilée ; à 50 % le
+      // drapeau reste entier en diagonale et le groupe remonte là où le voile
+      // est le plus léger.
+      photo: { src: '/photos/interclub-drapeau-wide.webp', focus: 'center 50%' },
       veil: 'strong',
     },
     homme: {

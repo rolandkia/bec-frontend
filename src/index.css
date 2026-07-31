@@ -527,6 +527,41 @@ body {
       color: #fff;
     }
   }
+  /* Au doigt, même traitement que `.btn` plus haut : 44 px de haut et un retour
+     d'appui. Ce contrôle-là avait été oublié, et c'était le plus pénalisant du
+     site — le seul dont on se sert plusieurs fois de suite (on enchaîne
+     Hommes → Femmes → Tous). Sans survol pour confirmer où est le doigt et sans
+     `:active` pour acquitter l'appui, un tap ne produisait STRICTEMENT rien de
+     perceptible : le seul changement visible arrivait après le re-rendu, le
+     temps que la photo du bandeau se fonde et que la grille se réanime. D'où
+     l'impression de rater sa cible, et le second appui de trop.
+
+     Les règles vivent DEHORS du `@media (hover: hover)` ci-dessus : c'est
+     précisément son périmètre souris-seulement qui était le bug.
+
+     `min-height` et non un `py-3` : le padding vertical centre le libellé et
+     `sm:py-1.5` doit rester intact pour le gabarit souris — une hauteur
+     minimale ne change rien au rendu desktop. */
+  @media (hover: none) {
+    .segmented > button {
+      min-height: 2.75rem;
+    }
+    /* Échelle ET couleur : sur un bouton qui fait le tiers de la largeur, 3 %
+       de réduction passent inaperçus tout seuls. */
+    .segmented > button:active {
+      transform: scale(0.97);
+      background: color-mix(in oklab, var(--color-fg) 8%, transparent);
+      color: var(--color-fg);
+    }
+    /* Le bouton DÉJÀ actif doit s'acquitter aussi : sans ça, réappuyer sur le
+       filtre en cours ne renvoie rien, et c'est le geste le plus fréquent quand
+       on doute d'avoir touché la bonne cible. */
+    .segmented > button[aria-pressed='true']:active,
+    .segmented > button[aria-selected='true']:active {
+      background: var(--color-club-primary-dark);
+      color: #fff;
+    }
+  }
 
   /* Menu déroulant natif réutilisable. */
   .select {
