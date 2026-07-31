@@ -10,9 +10,27 @@ import { Timeline } from '../components/calendar/Timeline'
 import { TodayMarker } from '../components/calendar/TodayMarker'
 import { Loading, ErrorMessage } from '../components/ui/Status'
 import { motion, Reveal } from '../components/ui/motion'
-import { PageHero } from '../components/layout/PageHero'
+import { PageHero, type HeroPhoto } from '../components/layout/PageHero'
 
 const SAISON_EN_COURS = currentSaison()
+
+/**
+ * Le bandeau alterne, et il alterne dans l'ORDRE d'une course : les blocs, la
+ * ligne droite, la lutte au coude à coude, le podium. Le fond raconte donc ce
+ * que le calendrier en dessous ne fait que dater.
+ */
+const HERO_PHOTOS: HeroPhoto[] = [
+  // Les blocs. La source porte un filigrane « LES INSIDERS » en bas de cadre ;
+  // le .webp a été régénéré en coupant la source au-dessus (cf. README des
+  // photos), parce que s'en remettre au recadrage ne tenait qu'en desktop : en
+  // mobile `object-cover` cale sur la hauteur, montre toute l'image, et le
+  // filigrane restait devinable sous le voile.
+  { src: '/photos/gallery/start-5.webp', focus: 'center 45%' },
+  { src: '/photos/race-wide.webp', focus: 'center 40%' },
+  { src: '/photos/gallery/race-3.webp', focus: 'center 15%' },
+  // Le podium, pancarte « Championne Gironde 2026 » : la fin de l'histoire.
+  { src: '/photos/gallery/podium-4.webp', focus: 'center 12%' },
+]
 
 export function CalendarPage() {
   const [showPast, setShowPast] = useState(false)
@@ -34,8 +52,7 @@ export function CalendarPage() {
               : `${upcoming.length} épreuve${upcoming.length > 1 ? 's' : ''} à venir cette saison.`
             : undefined
         }
-        image="/photos/race-wide.webp"
-        focus="center 40%"
+        photos={HERO_PHOTOS}
       />
 
       {eventsQuery.isLoading && <Loading />}

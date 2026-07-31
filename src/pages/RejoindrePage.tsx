@@ -24,8 +24,11 @@ export function RejoindrePage() {
         eyebrow="De l'initiation à la haute performance"
         title={['Nous', 'rejoindre']}
         subtitle="Deux groupes, une piste, et un club qui court depuis 1897. Que tu débutes ou que tu vises le podium, il y a une place pour toi."
-        image="/photos/hero-studio-team.webp"
-        focus="center 10%"
+        // Photo UNIQUE, volontairement : c'est LE visuel de recrutement (studio,
+        // fond orange, les athlètes pointent le lecteur), et il est le seul à
+        // tenir le voile uniforme `flat`. Un jeu qui alterne partagerait ce
+        // voile, or aucune autre photo de la biblio n'en a besoin.
+        photos={[{ src: '/photos/hero-studio-team.webp', focus: 'center 10%' }]}
         veil="flat"
       />
 

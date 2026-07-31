@@ -1,5 +1,8 @@
-import type { ReactNode } from 'react'
-import { Chapter, SplitLines, motion, useReducedMotion, EASE } from '../ui/motion'
+import { useEffect, type ReactNode } from 'react'
+import { Chapter, SplitLines, motion, useReducedMotion, useSlideshow, EASE } from '../ui/motion'
+
+/** Une photo de bandeau et son cadrage (`object-position`). */
+export type HeroPhoto = { src: string; focus?: string }
 
 /**
  * Bandeau de titre de page — CHAPITRE NOIR d'ouverture.
@@ -17,8 +20,7 @@ export function PageHero({
   eyebrow,
   title,
   subtitle,
-  image,
-  focus = 'center 30%',
+  photos,
   /** l'or plutôt que le rouge en sur-titre (pages palmarès / records) */
   tone = 'red',
   veil = 'strong',
@@ -28,15 +30,38 @@ export function PageHero({
   /** une entrée par ligne : le titre entre ligne par ligne (cf. SplitLines) */
   title: string[]
   subtitle?: string
-  image: string
-  focus?: string
+  /**
+   * Jeu de photos de fond. UNE seule entrée = fond fixe, aucun minuteur : c'est
+   * le cas des bandeaux dont la photo est choisie par autre chose que le temps
+   * (l'onglet et le filtre sur /athletes) et de celui de /rejoindre. Plusieurs
+   * entrées = elles alternent, avec le fondu enchaîné de <Chapter>.
+   */
+  photos: HeroPhoto[]
   tone?: 'red' | 'gold'
-  /** `flat` pour une photo claire de bout en bout (cf. <Chapter>). */
+  /**
+   * `flat` pour une photo claire de bout en bout (cf. <Chapter>).
+   *
+   * Le voile est une prop de la PAGE et non de chaque photo : c'est un `<div>`
+   * frère qui n'est pas animé, donc le faire changer en même temps que la photo
+   * ferait sauter l'aplat au milieu du fondu. Un jeu qui alterne partage donc un
+   * seul voile — en pratique `strong`, le `flat` restant aux clichés studio, qui
+   * n'ont jamais qu'une photo.
+   */
   veil?: 'strong' | 'flat'
   /** contenu additionnel sous l'accroche (compteur, onglets, boutons…) */
   children?: ReactNode
 }) {
   const reduce = useReducedMotion()
+  const index = useSlideshow(photos.length)
+  const photo = photos[index]
+
+  // Préchargement EN ROULEMENT : seulement la photo suivante, jamais le jeu
+  // entier. Au plus une image en vol, et la première demande part après le
+  // montage — donc après le LCP, qui est la photo déjà affichée.
+  useEffect(() => {
+    if (photos.length < 2) return
+    new Image().src = photos[(index + 1) % photos.length].src
+  }, [index, photos])
 
   // Un hero dont le texte CHANGE (onglet, filtre) doit rejouer son entrée,
   // sinon la photo se fond et le texte, lui, se téléporte. Les blocs sont keyés
@@ -55,8 +80,8 @@ export function PageHero({
     // tombait sur du ciel en pleine lumière.
     <Chapter
       tone="dark"
-      image={image}
-      focus={focus}
+      image={photo.src}
+      focus={photo.focus ?? 'center 30%'}
       veil={veil}
       grain
       className="mb-10 flex min-h-[52svh] items-end sm:mb-16 sm:min-h-[60svh]"

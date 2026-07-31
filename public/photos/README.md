@@ -108,3 +108,17 @@ doublon binaire de `interclub_2026.png`, il n'y a que 3 fichiers pour 4 sources.
 athlète médaillé.
 
 Régénérer : `cwebp -q 72 -resize 1500 0 <source> -o public/photos/gallery/<theme>-<n>.webp`.
+
+**Exception — `start-5.webp` est RECADRÉE** (1500×793 au lieu de 845). Sa source
+`roland-400.png` porte un filigrane « LES INSIDERS » en bas de cadre, occupant
+les lignes 1358→1405 de ses 1438 px. Devenue fond de bandeau sur `/competitions`,
+elle ne pouvait plus s'en remettre au recadrage du hero : en desktop le filigrane
+tombe hors cadre, mais en mobile `object-cover` cale sur la hauteur, montre toute
+l'image, et le filigrane restait devinable sous le voile. La source est coupée
+8 px au-dessus :
+
+```bash
+cwebp -q 72 -crop 0 0 2554 1350 -resize 1500 0 \
+  ../../../bec-pictures/photo_starting_block/roland-400.png \
+  -o public/photos/gallery/start-5.webp
+```

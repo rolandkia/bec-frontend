@@ -28,22 +28,24 @@ const SCENES = {
   effectif: {
     tous: {
       eyebrow: "L'effectif",
-      image: '/photos/gallery/interclub-3.webp',
-      focus: 'center 45%',
+      // Le club au complet aux interclubs : fumigènes, ciel bleu franc, tout le
+      // monde en maillot, l'écusson brandi. Choisie pour sa LISIBILITÉ — la
+      // précédente était un groupe en contre-jour au crépuscule, et au format
+      // portrait, donc rognée durement dans un bandeau paysage : on ne
+      // distinguait personne.
+      photo: { src: '/photos/gallery/interclub-1.webp', focus: 'center 40%' },
       veil: 'strong',
     },
     homme: {
       eyebrow: 'Les hommes du club',
-      image: '/photos/gallery/group-4.webp',
-      focus: 'center 35%',
+      photo: { src: '/photos/gallery/group-4.webp', focus: 'center 35%' },
       veil: 'strong',
     },
     femme: {
       eyebrow: 'Les femmes du club',
-      image: '/photos/gallery/group-7.webp',
       // Haut de l'image : les six visages sont tous dans le tiers supérieur, et
       // c'est le seul cadrage qui n'en rogne aucun sur un hero en paysage.
-      focus: 'center 10%',
+      photo: { src: '/photos/gallery/group-7.webp', focus: 'center 10%' },
       // Studio clair de bout en bout : aucun dégradé ne sauve le texte, il faut
       // le voile uniforme (cf. <Chapter>, même cas que le studio de /rejoindre).
       veil: 'flat',
@@ -51,8 +53,7 @@ const SCENES = {
   },
   records: {
     eyebrow: 'Les meilleures performances du club',
-    image: '/photos/gallery/start-2.webp',
-    focus: 'center 40%',
+    photo: { src: '/photos/gallery/start-2.webp', focus: 'center 40%' },
     veil: 'strong',
   },
 } as const
@@ -81,11 +82,15 @@ export function AthletesPage() {
   // Les photos des vues non affichées sont préchargées APRÈS le premier rendu :
   // sans ça le tout premier fondu partirait sur une image encore en vol, et
   // l'enchaînement se verrait. ~160 ko au total, après le LCP.
+  //
+  // Ici c'est un préchargement GROUPÉ, contrairement au roulement de <PageHero> :
+  // la vue suivante n'est pas prévisible (c'est un clic sur un onglet ou un
+  // filtre, pas un minuteur), donc il faut les trois d'avance.
   useEffect(() => {
-    for (const src of [
-      SCENES.effectif.homme.image,
-      SCENES.effectif.femme.image,
-      SCENES.records.image,
+    for (const { src } of [
+      SCENES.effectif.homme.photo,
+      SCENES.effectif.femme.photo,
+      SCENES.records.photo,
     ]) {
       new Image().src = src
     }
@@ -115,8 +120,9 @@ export function AthletesPage() {
             ? 'Le meilleur chrono jamais réalisé sous les couleurs du club, discipline par discipline.'
             : effectifSubtitle
         }
-        image={scene.image}
-        focus={scene.focus}
+        // Un seul élément : sur cette page la photo est choisie par l'onglet et
+        // le filtre, pas par un minuteur. Aucune rotation ici.
+        photos={[scene.photo]}
         veil={scene.veil}
         tone={isRecords ? 'gold' : 'red'}
       />

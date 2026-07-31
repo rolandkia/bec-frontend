@@ -8,7 +8,7 @@ import { listCoachs } from '../api/coachs'
 import type { CoachOut } from '../api/types'
 import { Chapter, MaskReveal, Reveal, RevealGroup, motion, staggerItem } from '../components/ui/motion'
 import { AnchorNav, type Anchor } from '../components/layout/AnchorNav'
-import { PageHero } from '../components/layout/PageHero'
+import { PageHero, type HeroPhoto } from '../components/layout/PageHero'
 import { SectionHead } from '../components/ui/SectionHead'
 import { Avatar } from '../components/ui/Avatar'
 import { FigureCard } from '../components/club/FigureCard'
@@ -23,6 +23,23 @@ const ANCHORS: Anchor[] = [
   { id: 'palmares', label: 'Palmarès' },
   { id: 'equipe', label: "L'équipe" },
   { id: 'partenaires', label: 'Partenaires' },
+]
+
+/**
+ * Le bandeau alterne : « Depuis 1897 » et « un collectif qui s'entraîne toujours
+ * sur la même piste », ça ne se raconte pas avec une seule photo. Les trois
+ * changent d'échelle plutôt que de sujet — le club entier, puis une poignée
+ * d'athlètes, puis un seul visage.
+ */
+const HERO_PHOTOS: HeroPhoto[] = [
+  // Le club au complet à la soirée annuelle : une trentaine de personnes, tous
+  // les âges, chaque visage net. C'est ce que les photos de piste ne disent pas.
+  { src: '/photos/gallery/group-8.webp', focus: 'center 35%' },
+  // Quatre athlètes en rouge, indoor, bras ouverts. Cadrage haut : leurs têtes
+  // sont à 3,5 % du bord supérieur, au-delà de 6 % on les rogne.
+  { src: '/photos/gallery/group-2.webp', focus: 'center 5%' },
+  // Un seul athlète, mur bleu-vert, lumière rasante — la respiration du jeu.
+  { src: '/photos/gallery/concentration-4.webp', focus: 'center 20%' },
 ]
 
 function MembreCard({ m }: { m: CoachOut }) {
@@ -83,8 +100,7 @@ export function ClubPage() {
         eyebrow="Depuis 1897"
         title={['Le doyen', 'des clubs', 'universitaires']}
         subtitle="Une championne olympique, des champions d'Europe, un finaliste olympique en 2024. Et un collectif qui s'entraîne toujours sur la même piste."
-        image="/photos/gallery/interclub-1.webp"
-        focus="center 55%"
+        photos={HERO_PHOTOS}
       />
 
       <AnchorNav anchors={ANCHORS} />

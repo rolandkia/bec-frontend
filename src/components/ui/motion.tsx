@@ -156,6 +156,47 @@ export function RevealGroup({
 export const staggerItem = fadeUp()
 
 /* ───────────────────────────────────────────────────────────────────────────
+   useSlideshow — fait tourner un index sur un jeu d'éléments. Le seul minuteur
+   du site : tout le reste du mouvement est piloté par le scroll ou par un
+   événement d'entrée. Sert aux bandeaux de page dont la photo alterne.
+
+   Le fondu, lui, n'est PAS ici : `Chapter` enchaîne déjà ses photos dès que sa
+   prop `image` change. Ce hook ne fait que dire quand changer.
+
+   ACCESSIBILITÉ (WCAG 2.2.2 « Pause, Stop, Hide ») : un fond qui se met à jour
+   tout seul entre dans le champ du critère. La mitigation tient à trois choses —
+   la photo est purement décorative (`aria-hidden`, aucune information portée),
+   le texte posé dessus ne bouge jamais, et `prefers-reduced-motion` arrête
+   complètement la rotation (voir plus bas). À ne pas détourner vers du contenu
+   qui, lui, porterait de l'information : il faudrait alors une commande de pause.
+   ─────────────────────────────────────────────────────────────────────────── */
+export function useSlideshow(count: number, intervalMs = 7000) {
+  const reduce = useReducedMotion()
+  const [index, setIndex] = useState(0)
+
+  useEffect(() => {
+    // Sous reduced-motion on GÈLE le diaporama, on ne se contente pas de couper
+    // le fondu : dans ce mode `Chapter` rend un `<img>` nu, donc la rotation
+    // deviendrait une coupe sèche toutes les 7 s — précisément ce que la
+    // préférence demande d'éviter.
+    if (reduce || count < 2) return
+
+    const id = setInterval(() => {
+      // Onglet en arrière-plan : on ne décode pas des photos que personne ne
+      // regarde. Le navigateur bride déjà les minuteurs des onglets cachés,
+      // mais pas assez pour qu'on lui laisse enchaîner des images dans le vide.
+      if (!document.hidden) setIndex((prev) => (prev + 1) % count)
+    }, intervalMs)
+
+    return () => clearInterval(id)
+  }, [reduce, count, intervalMs])
+
+  // Le jeu peut rétrécir entre deux rendus (jamais aujourd'hui, mais l'index
+  // survivrait au changement et pointerait dans le vide).
+  return index < count ? index : 0
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
    CountUp — anime un nombre de 0 → cible quand il entre dans le viewport.
    Accepte une chaîne (« 120+ », « 20+ », « 6 ») : le préfixe/suffixe non
    numérique est conservé, seule la partie chiffrée est animée. `prefers-
