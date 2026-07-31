@@ -60,7 +60,10 @@ export function SectionTabs({
     // n'existent, la règle n'en donnait que 40 et aucun feedback au doigt.
     // `sm:w-fit` : le `w-auto` de `.segmented` étirait la pilule sur toute la
     // largeur dès qu'elle n'était pas elle-même un enfant de flex (cas ici).
-    <div className="segmented mb-8 sm:w-fit" role="tablist">
+    // `mb-6` sur téléphone (cf. PageHero) : l'espace vertical y est le budget le
+    // plus rare, et c'est lui qui décidait si le contenu piloté par les onglets
+    // était visible ou non sans défiler.
+    <div className="segmented mb-6 sm:mb-8 sm:w-fit" role="tablist">
       {tabs.map((t) => (
         <button
           key={t.key}

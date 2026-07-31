@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { listBlogs } from '../api/blogs'
-import { coverImageStyle } from '../api/types'
+import { coverThumbStyle } from '../api/types'
 import type { BlogPostOut } from '../api/types'
 import { BlogCard } from '../components/blog/BlogCard'
 import { Loading, ErrorMessage } from '../components/ui/Status'
@@ -41,7 +41,7 @@ function FeaturedCard({ post }: { post: BlogPostOut }) {
             loading="lazy"
             decoding="async"
             className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.05]"
-            style={coverImageStyle(post.cover_position)}
+            style={coverThumbStyle(post.cover_position)}
           />
         ) : (
           <div className="flex h-full min-h-56 w-full items-center justify-center bg-gradient-to-br from-club-primary/20 to-[color:var(--color-surface-2)]">

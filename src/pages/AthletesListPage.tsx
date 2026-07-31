@@ -43,7 +43,7 @@ export function AthletesListPage({
     // photo d'en-tête et l'animation d'entrée.
     <div className={embedded ? '' : 'animate-rise'}>
       {/* Filtres */}
-      <div className="mb-8 flex flex-wrap gap-3">
+      <div className="mb-6 flex flex-wrap gap-3 sm:mb-8">
         <input
           type="text"
           value={search}

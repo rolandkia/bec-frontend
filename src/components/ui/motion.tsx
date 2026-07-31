@@ -19,6 +19,7 @@ import {
   type Variants,
   type Transition,
 } from 'framer-motion'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import {
   useEffect,
   useRef,
@@ -124,6 +125,33 @@ export function RevealGroup({
   // 12 cartes ne peut pas franchir 15 % d'elle-même).
   const inView = useInView(ref, { once, amount: 'some', margin: '0px 0px -15% 0px' })
 
+  /**
+   * FILET DE SÉCURITÉ : un groupe qui commence dans le PREMIER ÉCRAN (à une
+   * marge près) est révélé sans attendre de défilement.
+   *
+   * Le seuil d'entrée ci-dessus demande que le haut du groupe franchisse 85 %
+   * de la hauteur de fenêtre. Sous un bandeau de page haut, sur un téléphone,
+   * la grille commence quelques pixels SOUS la ligne de flottaison (mesuré sur
+   * /athletes en iPhone : haut de grille à 673 px pour 664 px d'écran) : elle
+   * ne franchit donc jamais ce seuil tant qu'on ne défile pas. Le contenu
+   * existait, était cliquable, et restait à opacité 0 — et surtout, changer le
+   * filtre Hommes/Femmes ne produisait AUCUN changement visible à l'écran,
+   * puisque la seule chose qui bouge est hors champ.
+   *
+   * Mesuré en coordonnées DOCUMENT (donc indépendant de la position de scroll
+   * restaurée par le navigateur), une fois après la peinture : ce qui est
+   * au-dessus du groupe a une hauteur déjà fixée à cet instant (le bandeau a une
+   * hauteur minimale, pas une hauteur d'image). Les 10 % de marge absorbent le
+   * reflow des polices web.
+   */
+  const [firstScreen, setFirstScreen] = useState(false)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const top = el.getBoundingClientRect().top + window.scrollY
+    if (top < window.innerHeight * 1.1) setFirstScreen(true)
+  }, [])
+
   if (reduce) {
     return <div {...(rest as ComponentPropsWithoutRef<'div'>)}>{children}</div>
   }
@@ -143,7 +171,7 @@ export function RevealGroup({
       // tout en étant cliquables. `animate` est le seul type actif par défaut :
       // un enfant monté plus tard résout la variante héritée et s'anime
       // lui-même, cascade comprise.
-      animate={inView ? 'show' : 'hidden'}
+      animate={inView || firstScreen ? 'show' : 'hidden'}
       variants={staggerContainer(stagger)}
       {...rest}
     >
@@ -355,43 +383,226 @@ export function ParallaxImage({
 }
 
 /* ───────────────────────────────────────────────────────────────────────────
-   Marquee — défilement horizontal continu (transform seul, GPU) via une
-   keyframe CSS (`.animate-marquee`, cf. index.css) : la pause au survol se fait
-   en pur CSS. Le contenu est dupliqué pour une boucle sans couture.
+   PhotoRail — bande d'images en défilement continu, mais VRAIMENT scrollable :
+   on incrémente `scrollLeft` en rAF au lieu de translater la piste entière.
 
-   SOUS 640 px : pas d'animation, mais un rail glissable. Sans survol, la piste
-   ne peut pas être mise en pause — on demanderait à l'utilisateur de taper une
-   cible mouvante. Le clone, qui ne sert qu'à la boucle sans couture, n'est donc
-   pas monté (ni téléchargé) sur mobile.
-   Sous reduced-motion → simple rangée scrollable (pas d'animation).
+   Pourquoi pas une keyframe `transform` (l'implémentation précédente) : avec
+   quarante photos dupliquées, la piste faisait ~32 000 px et devenait une couche
+   composite hors budget de texture. Le compositeur la re-rastérisait en cours
+   d'animation, d'où des à-coups et l'impression de « revenir en arrière ». En
+   défilement natif, seules les tuiles visibles sont peintes — et on récupère
+   gratuitement le glisser tactile, la molette et la navigation au clavier.
+   L'ancienne keyframe avait au passage une couture fausse de 8 px : la piste
+   mesurait `W + gap + W` mais ne translatait que de 50 % (`W + gap/2`). Ici la
+   gouttière est PORTÉE PAR LES GROUPES (`gap-4 pr-4`), donc la largeur de boucle
+   est exactement `group.offsetWidth` — mesurée, jamais devinée.
+
+   DÉFILEMENT AUTOMATIQUE : pointeur fin uniquement. Au doigt, on ne peut pas
+   survoler pour mettre en pause : ce serait demander de taper une cible
+   mouvante. Le tactile garde donc un rail qu'on pousse soi-même, et le clone
+   (qui ne sert qu'à la boucle) n'est ni monté ni téléchargé.
+
+   L'utilisateur reprend la main à tout moment : survol, focus clavier, glisser,
+   molette et flèches suspendent la boucle, qui ne repart qu'après un délai
+   d'inactivité. Onglet en arrière-plan ou bande hors écran : rien ne tourne.
+   Sous reduced-motion → simple rangée scrollable.
    ─────────────────────────────────────────────────────────────────────────── */
-export function Marquee({
+
+/** Délai d'inactivité avant reprise, après une action « ponctuelle » (molette,
+ *  flèche, fin de glisser) qui n'a pas d'événement de sortie propre. */
+const RAIL_RESUME_DELAY = 2500
+/** Au-delà de ce déplacement, un appui souris est un glisser : le clic qui suit
+ *  est annulé, sinon on ouvre la visionneuse en croyant pousser la bande. */
+const RAIL_DRAG_THRESHOLD = 6
+
+export function PhotoRail({
   children,
-  duration = 40,
+  speed = 45,
   className = '',
 }: {
   children: ReactNode
-  /** durée d'un cycle complet (s) */
-  duration?: number
+  /** vitesse de défilement (px/s) */
+  speed?: number
   className?: string
 }) {
   const reduce = useReducedMotion()
+  const [fine, setFine] = useState(false)
+  const scroller = useRef<HTMLDivElement>(null)
+  const group = useRef<HTMLDivElement>(null)
+  /** Suspension durable : survol, focus, glisser en cours. */
+  const hold = useRef(false)
+  /** Suspension à échéance (`performance.now()`), cf. RAIL_RESUME_DELAY. */
+  const pausedUntil = useRef(0)
+  const dragging = useRef(false)
+  const dragged = useRef(false)
+  /** Distance cumulée du glisser en cours (px), cf. RAIL_DRAG_THRESHOLD. */
+  const travel = useRef(0)
+  const lastX = useRef(0)
 
-  if (reduce) {
-    return <div className={`rail flex gap-4 overflow-x-auto ${className}`}>{children}</div>
+  // `matchMedia` et non un point de rupture Tailwind : c'est la PRÉSENCE d'un
+  // survol qui décide, pas la largeur (une tablette large reste tactile).
+  useEffect(() => {
+    const mq = window.matchMedia('(hover: hover) and (pointer: fine)')
+    const apply = () => setFine(mq.matches)
+    apply()
+    mq.addEventListener('change', apply)
+    return () => mq.removeEventListener('change', apply)
+  }, [])
+
+  const playing = fine && !reduce
+
+  useEffect(() => {
+    if (!playing) return
+    const el = scroller.current
+    const track = group.current
+    if (!el || !track) return
+
+    let onscreen = true
+    const io = new IntersectionObserver(([entry]) => (onscreen = entry.isIntersecting), {
+      threshold: 0,
+    })
+    io.observe(el)
+
+    let frame = 0
+    let last = 0
+    // Position tenue en JS, et NON lue dans `scrollLeft` d'une frame sur l'autre :
+    // le getter arrondit à l'entier, si bien qu'un `scrollLeft += 0.75` répété
+    // repart chaque fois du même entier et la bande ne bouge jamais d'un pixel.
+    let pos = el.scrollLeft
+    const tick = (now: number) => {
+      frame = requestAnimationFrame(tick)
+      // Borné : au retour d'un onglet en arrière-plan, rAF a cessé de battre et
+      // un `dt` de plusieurs secondes ferait sauter la bande d'un bloc.
+      const dt = last ? Math.min(now - last, 100) : 0
+      last = now
+      if (!onscreen || document.hidden || hold.current || now < pausedUntil.current) return
+      const loop = track.offsetWidth
+      if (loop <= 0) return
+      // L'utilisateur est prioritaire : s'il a déplacé la bande (glisser, molette,
+      // flèche), on se recale sur elle. Seuil de 2 px, l'arrondi du getter valant
+      // déjà 1 px à lui seul.
+      if (Math.abs(el.scrollLeft - pos) > 2) pos = el.scrollLeft
+      pos += (speed * dt) / 1000
+      // Raccord exact sur le clone : aucun saut perceptible.
+      if (pos >= loop) pos -= loop
+      el.scrollLeft = pos
+    }
+    frame = requestAnimationFrame(tick)
+
+    return () => {
+      cancelAnimationFrame(frame)
+      io.disconnect()
+    }
+  }, [playing, speed])
+
+  const suspend = () => {
+    pausedUntil.current = performance.now() + RAIL_RESUME_DELAY
   }
 
-  return (
-    <div className={`rail overflow-x-auto sm:overflow-hidden ${className}`}>
-      <div
-        className="flex w-max gap-4 sm:animate-marquee"
-        style={{ '--marquee-duration': `${duration}s` } as CSSProperties}
-      >
-        <div className="flex shrink-0 gap-4">{children}</div>
-        <div className="hidden shrink-0 gap-4 sm:flex" aria-hidden>
+  /** Déplacement d'une vignette (gouttière comprise), mesuré sur la première. */
+  const step = () => {
+    const tile = group.current?.firstElementChild as HTMLElement | null
+    return (tile?.offsetWidth ?? 320) + 16
+  }
+
+  const nudge = (dir: -1 | 1) => {
+    suspend()
+    scroller.current?.scrollBy({ left: dir * step(), behavior: 'smooth' })
+  }
+
+  const rail = (
+    <div
+      ref={scroller}
+      className="rail rail-free overflow-x-auto"
+      // Souris seulement : au doigt, `pointerleave` n'arrive pas toujours après
+      // un tap, et la suspension resterait armée pour de bon.
+      onPointerEnter={(e) => {
+        if (e.pointerType === 'mouse') hold.current = true
+      }}
+      onPointerLeave={() => {
+        hold.current = false
+        dragging.current = false
+      }}
+      // Le focus clavier sur une vignette provoque un `scrollIntoView` : sans
+      // pause, il se battrait avec la boucle. (`onFocus`/`onBlur` de React
+      // remontent, ce qui donne l'équivalent de `:focus-within`.)
+      onFocus={() => (hold.current = true)}
+      onBlur={() => (hold.current = false)}
+      onWheel={suspend}
+      onKeyDown={suspend}
+      // Volontairement SANS `setPointerCapture` : la capture détourne aussi les
+      // événements souris de compatibilité, donc le `click` partait sur le rail
+      // et non sur la vignette — plus aucune photo ne s'ouvrait. Sortir du rail
+      // en cours de glisser met simplement fin au glisser (`onPointerLeave`).
+      onPointerDown={(e) => {
+        if (e.pointerType !== 'mouse') return // le tactile scrolle déjà mieux tout seul
+        dragging.current = true
+        dragged.current = false
+        travel.current = 0
+        lastX.current = e.clientX
+      }}
+      onPointerMove={(e) => {
+        if (!dragging.current) return
+        // Écart de `clientX` et non `movementX` : ce dernier n'est renseigné que
+        // par les vrais déplacements du curseur (il reste à 0 pour un événement
+        // synthétique, donc en test automatisé).
+        const dx = e.clientX - lastX.current
+        lastX.current = e.clientX
+        e.currentTarget.scrollLeft -= dx
+        // Cumul, et non déplacement d'un seul événement : dix petits pas de 2 px
+        // sont un glisser, pas un clic.
+        travel.current += Math.abs(dx)
+        if (travel.current >= RAIL_DRAG_THRESHOLD) dragged.current = true
+      }}
+      onPointerUp={() => {
+        dragging.current = false
+        suspend()
+      }}
+      // Sans ça, tirer sur une vignette lance le glisser-déposer natif de
+      // l'image : le pointeur nous échappe en pleine course.
+      onDragStart={(e) => e.preventDefault()}
+      onClickCapture={(e) => {
+        if (!dragged.current) return
+        dragged.current = false
+        e.preventDefault()
+        e.stopPropagation()
+      }}
+    >
+      <div className="flex w-max">
+        {/* La gouttière appartient au groupe (`gap-4 pr-4`) : sa largeur EST la
+            longueur de boucle. */}
+        <div ref={group} className="flex shrink-0 gap-4 pr-4">
           {children}
         </div>
+        {playing && (
+          <div className="flex shrink-0 gap-4 pr-4" aria-hidden>
+            {children}
+          </div>
+        )}
       </div>
+    </div>
+  )
+
+  // Flèches réservées au pointeur fin : au doigt on pousse la bande, et deux
+  // boutons de plus ne feraient que masquer des photos.
+  if (!fine) return <div className={className}>{rail}</div>
+
+  return (
+    <div className={`relative ${className}`}>
+      {rail}
+      {(['prev', 'next'] as const).map((dir) => (
+        <button
+          key={dir}
+          type="button"
+          aria-label={dir === 'prev' ? 'Photos précédentes' : 'Photos suivantes'}
+          onClick={() => nudge(dir === 'prev' ? -1 : 1)}
+          className={`tap absolute top-1/2 z-10 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-[color:var(--color-line)] bg-[color:var(--color-surface)]/90 text-[color:var(--color-fg)] shadow-sm backdrop-blur transition hover:bg-[color:var(--color-surface)] ${
+            dir === 'prev' ? 'left-3' : 'right-3'
+          }`}
+        >
+          {dir === 'prev' ? <ChevronLeft className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
+        </button>
+      ))}
     </div>
   )
 }

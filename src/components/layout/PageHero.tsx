@@ -88,9 +88,17 @@ export function PageHero({
       // zoom pour le dire. Sur une photo unique, il n'y a rien à annoncer.
       drift={photos.length > 1}
       grain
-      className="mb-10 flex min-h-[52svh] items-end sm:mb-16 sm:min-h-[60svh]"
+      // SUR TÉLÉPHONE le bandeau est plus court, et les gouttières plus
+      // serrées : à 52svh + pt-32, il ne restait RIEN du contenu de la page
+      // au-dessus de la ligne de flottaison (sur /athletes, la grille commençait
+      // 9 px sous le bord bas de l'écran). La page ressemblait à un cul-de-sac,
+      // et surtout les filtres Hommes/Femmes, derniers éléments visibles,
+      // semblaient ne rien piloter. Le gabarit `sm:` est inchangé : sur un grand
+      // écran l'ouverture pleine hauteur tient son rôle éditorial, et la suite
+      // de la page est de toute façon déjà visible.
+      className="mb-8 flex min-h-[42svh] items-end sm:mb-16 sm:min-h-[60svh]"
     >
-      <div className="w-full pb-14 pt-32 sm:pb-20 sm:pt-44">
+      <div className="w-full pb-10 pt-20 sm:pb-20 sm:pt-44">
         {/* `.eyebrow-photo` : blanc + repère coloré. Cf. index.css — un sur-titre
             en texte coloré ne tient pas son contraste sur une photo claire. */}
         <motion.p

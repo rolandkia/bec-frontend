@@ -31,7 +31,7 @@ import {
   staggerContainer,
   fadeUp,
   staggerItem,
-  Marquee,
+  PhotoRail,
 } from '../components/ui/motion'
 
 // Disciplines mises en avant sur l'accueil, dans l'ordre d'affichage.
@@ -472,20 +472,23 @@ export function HomePage() {
           ))}
         </RevealGroup>
 
-        {/* Bande d'images en défilement continu. Chaque vignette ouvre la
-            visionneuse (et ne renvoie PAS vers la galerie : le visiteur veut
-            voir la photo, pas changer de page). */}
+        {/* Bande d'images en défilement continu, qu'on peut aussi pousser soi-
+            même (glisser, molette, flèches — cf. <PhotoRail>). Chaque vignette
+            ouvre la visionneuse et ne renvoie PAS vers la galerie : le visiteur
+            veut voir la photo, pas changer de page. */}
         <div className="mt-16">
           <SectionHead eyebrow="En images" title="Le club en mouvement" to="/mag?tab=galerie" more="Toute la galerie" />
           <Reveal className="-mx-4 sm:mx-0">
-            <Marquee duration={55}>
+            <PhotoRail speed={45}>
               {clubPhotos.map((p, i) => (
                 <button
                   key={p.src}
                   type="button"
                   onClick={() => setGalleryIndex(i)}
                   aria-label={`Agrandir : ${p.legende}`}
-                  className="group tap rail-item relative block h-44 w-64 shrink-0 cursor-pointer overflow-hidden rounded-md sm:h-64 sm:w-96"
+                  // Pas de `rail-item` ici : l'accrochage se bat avec le
+                  // défilement piloté (cf. `.rail-free`).
+                  className="group tap relative block h-44 w-64 shrink-0 cursor-pointer overflow-hidden rounded-md sm:h-64 sm:w-96"
                 >
                   <img
                     src={p.src}
@@ -503,7 +506,7 @@ export function HomePage() {
                   </span>
                 </button>
               ))}
-            </Marquee>
+            </PhotoRail>
           </Reveal>
         </div>
       </section>

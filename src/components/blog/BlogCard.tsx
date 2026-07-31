@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { coverImageStyle, type BlogPostOut } from '../../api/types'
+import { coverThumbStyle, type BlogPostOut } from '../../api/types'
 import { cldImage, cldSrcSet } from '../../lib/cloudinary'
 
 function formatDate(iso: string | null) {
@@ -21,6 +21,11 @@ function formatDate(iso: string | null) {
  *
  * `layout='card'` force la carte verticale à toutes les tailles : sert à
  * ponctuer une longue liste mobile (cf. BlogListPage).
+ *
+ * La vignette verticale est en 4/3 et non en 16/10 : sur une photo paysage,
+ * plus le conteneur est large plus `object-cover` rogne la HAUTEUR, et le sujet
+ * cadré pour la couverture d'article (bandeau 16/7) se retrouvait réduit à un
+ * gros plan de visage. Cf. `coverThumbStyle`, qui laisse aussi tomber le zoom.
  */
 export function BlogCard({
   post,
@@ -38,7 +43,7 @@ export function BlogCard({
     >
       <div
         className={`relative overflow-hidden bg-[color:var(--color-surface-2)] ${
-          row ? 'aspect-square w-24 shrink-0 sm:aspect-[16/10] sm:w-full' : 'aspect-[16/10] w-full'
+          row ? 'aspect-square w-24 shrink-0 sm:aspect-[4/3] sm:w-full' : 'aspect-[4/3] w-full'
         }`}
       >
         {post.cover_image_url ? (
@@ -54,7 +59,7 @@ export function BlogCard({
             loading="lazy"
             decoding="async"
             className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06]"
-            style={coverImageStyle(post.cover_position)}
+            style={coverThumbStyle(post.cover_position)}
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-club-primary/20 to-[color:var(--color-surface-2)]">

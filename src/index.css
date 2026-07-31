@@ -500,30 +500,43 @@ body {
   /* Groupe « segmenté » (pilule) : le contrôle le plus répété du site
      (Hommes/Femmes, all-time/saison, onglets). Pleine largeur sur mobile — il ne
      peut donc plus déborder —, largeur naturelle dès sm. L'état actif est porté
-     par `aria-pressed`/`aria-selected` : annoncé aux lecteurs d'écran, et plus de
-     ternaire de classes recopié à chaque appel. */
+     par `aria-pressed`/`aria-selected`/`aria-current` : annoncé aux lecteurs
+     d'écran, et plus de ternaire de classes recopié à chaque appel.
+
+     Les <a> sont admis à côté des <button> : la sous-nav à ancres de /club est
+     faite de liens (`aria-current`), et elle a besoin EXACTEMENT de l'habillage
+     de ce contrôle — piste, contour, pilule active, cibles de 44 px. */
   .segmented {
     @apply flex w-full rounded-full border p-0.5 sm:w-auto;
     border-color: var(--color-line);
     background: var(--color-surface-2);
   }
-  .segmented > button {
+  .segmented > button,
+  .segmented > a {
     @apply min-w-0 flex-1 truncate rounded-full px-4 py-2.5 text-sm font-semibold transition sm:flex-none sm:py-1.5;
     color: var(--color-muted);
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
   }
+  /* Un <a> ne centre pas son contenu comme un <button> : il faut le dire, sinon
+     le libellé colle en haut dès que `min-height` dépasse la hauteur du texte. */
+  .segmented > a {
+    @apply flex items-center justify-center overflow-hidden text-center;
+  }
   .segmented > button[aria-pressed='true'],
-  .segmented > button[aria-selected='true'] {
+  .segmented > button[aria-selected='true'],
+  .segmented > a[aria-current='true'] {
     background: var(--color-club-primary);
     color: #fff;
   }
   @media (hover: hover) and (pointer: fine) {
-    .segmented > button:hover {
+    .segmented > button:hover,
+    .segmented > a:hover {
       color: var(--color-fg);
     }
     .segmented > button[aria-pressed='true']:hover,
-    .segmented > button[aria-selected='true']:hover {
+    .segmented > button[aria-selected='true']:hover,
+    .segmented > a[aria-current='true']:hover {
       color: #fff;
     }
   }
@@ -543,12 +556,14 @@ body {
      `sm:py-1.5` doit rester intact pour le gabarit souris — une hauteur
      minimale ne change rien au rendu desktop. */
   @media (hover: none) {
-    .segmented > button {
+    .segmented > button,
+    .segmented > a {
       min-height: 2.75rem;
     }
     /* Échelle ET couleur : sur un bouton qui fait le tiers de la largeur, 3 %
        de réduction passent inaperçus tout seuls. */
-    .segmented > button:active {
+    .segmented > button:active,
+    .segmented > a:active {
       transform: scale(0.97);
       background: color-mix(in oklab, var(--color-fg) 8%, transparent);
       color: var(--color-fg);
@@ -557,7 +572,8 @@ body {
        filtre en cours ne renvoie rien, et c'est le geste le plus fréquent quand
        on doute d'avoir touché la bonne cible. */
     .segmented > button[aria-pressed='true']:active,
-    .segmented > button[aria-selected='true']:active {
+    .segmented > button[aria-selected='true']:active,
+    .segmented > a[aria-current='true']:active {
       background: var(--color-club-primary-dark);
       color: #fff;
     }
@@ -604,6 +620,13 @@ body {
   .rail-item {
     scroll-snap-align: start;
   }
+  /* Rail dont le défilement est PILOTÉ (cf. <PhotoRail>) : l'accrochage se bat
+     avec une écriture continue de `scrollLeft` — il ré-accroche en pleine
+     animation, ce qui produit exactement les à-coups qu'on cherche à supprimer.
+     On garde tout le reste du rail (ascenseur masqué, inertie iOS). */
+  .rail-free {
+    scroll-snap-type: none;
+  }
 
   /* ─── BADGES ────────────────────────────────────────────────────────────── */
   .badge,
@@ -640,7 +663,9 @@ body {
 
 /* ─── UTILITAIRES ────────────────────────────────────────────────────────────
    `@utility` (et non `@layer utilities`) : c'est ce qui rend la classe
-   VARIANTABLE en Tailwind v4 — indispensable pour `sm:animate-marquee`. */
+   VARIANTABLE en Tailwind v4 — indispensable dès qu'une classe maison doit
+   s'écrire sous un préfixe de point de rupture (`sm:animate-rise`, `sm:px-safe`).
+   Une règle posée dans `@layer utilities` n'accepterait aucune variante. */
 
 /* Animation d'entrée douce (pages sans orchestration Framer Motion). */
 @keyframes rise {
@@ -664,28 +689,6 @@ body {
 }
 @utility pb-safe {
   padding-bottom: max(1rem, env(safe-area-inset-bottom));
-}
-
-/* Défilement horizontal continu du composant <Marquee>. Boucle sans couture :
-   le contenu est dupliqué, la piste translate de 0 → -50 %. Pause au survol.
-   N'est appliqué qu'à partir de sm (`sm:animate-marquee`) : sans survol, on ne
-   peut pas mettre la piste en pause, et taper une cible mouvante est hostile. */
-@keyframes marquee-x {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-@utility animate-marquee {
-  animation: marquee-x var(--marquee-duration, 40s) linear infinite;
-  will-change: transform;
-}
-@media (hover: hover) and (pointer: fine) {
-  .animate-marquee:hover {
-    animation-play-state: paused;
-  }
 }
 
 /* ---------------------------------------------------------------------------

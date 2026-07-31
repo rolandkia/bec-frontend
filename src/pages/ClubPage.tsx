@@ -18,10 +18,12 @@ import { Loading, ErrorMessage } from '../components/ui/Status'
 import { cldPortrait } from '../lib/cloudinary'
 import { getInitials } from '../utils/initials'
 
+// `short` : version affichée sous `sm`, où les quatre items se partagent la
+// largeur d'écran (cf. AnchorNav).
 const ANCHORS: Anchor[] = [
-  { id: 'histoire', label: 'Notre histoire' },
+  { id: 'histoire', label: 'Notre histoire', short: 'Histoire' },
   { id: 'palmares', label: 'Palmarès' },
-  { id: 'equipe', label: "L'équipe" },
+  { id: 'equipe', label: "L'équipe", short: 'Équipe' },
   { id: 'partenaires', label: 'Partenaires' },
 ]
 

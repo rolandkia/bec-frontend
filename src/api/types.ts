@@ -154,6 +154,21 @@ export function coverImageStyle(position?: CoverPosition | null): {
   }
 }
 
+/** Cadrage d'une VIGNETTE : point focal seul, SANS le zoom.
+ *
+ *  Le zoom est réglé dans l'aperçu 5/2 du picker, donc pour la couverture large
+ *  de l'article. Réappliqué dans une carte (4/3, voire 96 px de côté), il se
+ *  cumule au recadrage d'`object-cover` et ne laisse plus que le visage. La
+ *  position, elle, reste pertinente : c'est le sujet à garder au centre.
+ *
+ *  Effet de bord voulu : sans `transform` inline, le léger zoom au survol des
+ *  cartes (`group-hover:scale-…`) redevient visible — l'inline le neutralisait. */
+export function coverThumbStyle(position?: CoverPosition | null): {
+  objectPosition: string
+} {
+  return { objectPosition: coverObjectPosition(position) }
+}
+
 export interface BlogPostOut {
   id: number
   slug: string
