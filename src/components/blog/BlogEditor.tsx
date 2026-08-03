@@ -14,6 +14,7 @@ import { collectGaps, nearestGap } from './extensions/dropTarget'
 import { insertMediaNodes, uploadFileAt, type UploadCallbacks } from './extensions/uploadToEditor'
 import { partitionMediaFiles, unsupportedFileMessage } from '../../lib/mediaKind'
 import { listAthletes } from '../../api/athletes'
+import { STATIC_DATA } from '../../api/staleTime'
 import type { MentionItem } from './MentionPopup'
 
 /** Poignée impérative exposée au parent (formulaire) pour donner le focus à
@@ -35,7 +36,11 @@ export const BlogEditor = forwardRef<
 
   // Liste des athlètes pour les mentions « @ ». Lue via une ref pour que
   // l'extension y accède sans recréer l'éditeur quand la requête se résout.
-  const { data: athletes } = useQuery({ queryKey: ['athletes'], queryFn: listAthletes })
+  const { data: athletes } = useQuery({
+    queryKey: ['athletes'],
+    queryFn: listAthletes,
+    staleTime: STATIC_DATA,
+  })
   const athletesRef = useRef<MentionItem[]>([])
   athletesRef.current = athletes ?? []
   const athleteMention = useMemo(

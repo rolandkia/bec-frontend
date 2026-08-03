@@ -14,12 +14,18 @@
 /** `$1` = base jusqu'à `/upload`, `$2` = image|video, `$3` = le reste. */
 const CLOUDINARY_URL = /^(https?:\/\/res\.cloudinary\.com\/[^/]+\/(image|video)\/upload)\/(.+)$/
 
+/** Nos deux dossiers de public_id : `bec_media` pour les médias envoyés par le
+ *  back (galerie, blog, portraits), `bec_site` pour les photos ÉDITORIALES du
+ *  site (cf. `sitePhoto`). Un seul endroit, parce que la liste sert à trois
+ *  expressions différentes ci-dessous. */
+const ASSET_FOLDER = String.raw`bec_(?:media|site)`
+
 /** Une queue NON transformée commence par le dossier (précédé au plus d'une
- *  version). Tous nos public_id vivent dans `bec_media/`, ce qui donne un test
- *  exact — et évite le piège d'une heuristique générique du type `/^[a-z]{1,3}_/`
- *  sur le premier segment, qui reconnaîtrait `bec_media` comme une
- *  transformation (`bec` + `_media`) et rendrait tout l'helper inerte. */
-const UNTRANSFORMED_TAIL = /^(?:v\d+\/)?bec_media\//
+ *  version), ce qui donne un test exact, et évite le piège d'une heuristique
+ *  générique du type `/^[a-z]{1,3}_/` sur le premier segment, qui reconnaîtrait
+ *  `bec_media` comme une transformation (`bec` + `_media`) et rendrait tout
+ *  l'helper inerte. */
+const UNTRANSFORMED_TAIL = new RegExp(String.raw`^(?:v\d+\/)?${ASSET_FOLDER}\/`)
 
 export interface CldOptions {
   /** `w_` — largeur maximale (ou exacte avec `crop: 'fill'`). */
@@ -99,7 +105,9 @@ export function stripCldTransforms(url: string | null | undefined): string {
   if (!parsed) return url ?? ''
   if (UNTRANSFORMED_TAIL.test(parsed.tail)) return url ?? ''
   // Ne garde que la version (si présente) et le public_id.
-  const folderAt = parsed.tail.search(/(?:^|\/)(v\d+\/)?bec_media\//)
+  const folderAt = parsed.tail.search(
+    new RegExp(String.raw`(?:^|\/)(v\d+\/)?${ASSET_FOLDER}\/`),
+  )
   if (folderAt === -1) return url ?? ''
   const kept = parsed.tail.slice(folderAt).replace(/^\//, '')
   return `${parsed.base}/${kept}`
@@ -169,3 +177,83 @@ export const cldImage = (url: string | null | undefined, w = 1200): string =>
 /** Portrait : recadrage centré sur le visage. */
 export const cldPortrait = (url: string | null | undefined, w = 400): string =>
   cldUrl(url, { crop: 'fill', gravity: 'face', quality: 'auto', format: 'auto', w })
+
+// --- Photos éditoriales du site ---------------------------------------------
+/**
+ * Les photos éditoriales (bandeaux, chapitres, portraits de l'organigramme,
+ * logos) vivent dans `public/photos` et sont référencées par chemin absolu
+ * (`/photos/gallery/race-1.webp`) partout dans le code et les fichiers de
+ * `src/data`. Servies telles quelles, elles le sont depuis la VM américaine, en
+ * une seule largeur fixe (jusqu'à 339 ko pour un fichier), sans négociation de
+ * format et sans CDN. C'est la part « les images mettent du temps à charger »
+ * du problème.
+ *
+ * `sitePhoto` traduit ce chemin en URL de livraison Cloudinary quand le compte
+ * est configuré à la compilation (`VITE_CLOUDINARY_CLOUD_NAME`), et RENVOIE LE
+ * CHEMIN LOCAL sinon. Ce repli est le cœur du dispositif : le site fonctionne à
+ * l'identique tant que les photos ne sont pas envoyées, la bascule se fait par
+ * une variable d'environnement, et le retour arrière aussi. Les chemins locaux
+ * restent donc l'identité canonique d'une photo : il n'y a pas de manifeste
+ * d'URL à maintenir en parallèle des fichiers.
+ *
+ * Envoi des fichiers : `task upload:site-photos` côté backend.
+ */
+const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME as string | undefined
+
+/** Dossier des public_id, à garder aligné avec le script d'envoi. */
+const SITE_FOLDER = 'bec_site'
+
+/**
+ * Chemin local (`/photos/x.webp`) → URL Cloudinary CANONIQUE (sans
+ * transformation), ou le chemin tel quel si le compte n'est pas configuré.
+ *
+ * Exporté pour les surfaces qui appliquent DÉJÀ leur propre transformation à
+ * partir d'une URL brute : la visionneuse, par exemple, qui ne sait pas d'où
+ * vient l'image et appelle `cldImage` elle-même. Leur passer une URL déjà
+ * transformée marcherait (`cldUrl` est alors inerte), mais au prix d'une
+ * largeur choisie par le mauvais composant.
+ */
+export function sitePhotoUrl(path: string): string {
+  if (!CLOUD_NAME || !path.startsWith('/')) return path
+  return `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/${SITE_FOLDER}${path}`
+}
+
+/** Photo éditoriale bornée en largeur, format et qualité négociés. */
+export function sitePhoto(path: string, w = 1600): string {
+  const url = sitePhotoUrl(path)
+  return url === path ? path : cldImage(url, w)
+}
+
+/**
+ * `srcset` d'une photo éditoriale, ou `undefined` si elle est encore servie en
+ * local (l'attribut doit alors être OMIS, pas rempli d'une valeur inutile).
+ *
+ * Trois largeurs, comme `cldSrcSet` : les crédits du plan gratuit comptent les
+ * transformations, et chaque largeur est un dérivé de plus.
+ */
+export function sitePhotoSrcSet(
+  path: string,
+  widths: readonly number[] = [640, 1280, 1920],
+): string | undefined {
+  const url = sitePhotoUrl(path)
+  if (url === path) return undefined
+  return cldSrcSet(url, widths, { crop: 'limit', quality: 'auto', format: 'auto' })
+}
+
+/**
+ * Trio `src` / `srcSet` / `sizes` d'une photo éditoriale, prêt à étaler sur une
+ * balise `<img>`. Existe pour que `sizes` ne soit JAMAIS posé sans `srcSet` :
+ * seul, il ne sert à rien et brouille la lecture du rendu.
+ *
+ * `sizes` par défaut à `100vw`, la largeur des bandeaux et chapitres pleine
+ * page, qui sont la majorité des cas. Une surface plus étroite (portrait de
+ * l'organigramme, logo de partenaire, vignette de bande) passe le sien avec les
+ * largeurs correspondantes.
+ */
+export function sitePhotoProps(
+  path: string,
+  { sizes = '100vw', widths, w }: { sizes?: string; widths?: readonly number[]; w?: number } = {},
+): { src: string; srcSet?: string; sizes?: string } {
+  const srcSet = sitePhotoSrcSet(path, widths)
+  return { src: sitePhoto(path, w), srcSet, sizes: srcSet ? sizes : undefined }
+}

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Mail, Phone } from 'lucide-react'
 import { club } from '../../data/club'
+import { sitePhoto } from '../../lib/cloudinary'
 import { SocialLinks } from '../ui/SocialLinks'
 import { Reveal, RevealGroup, motion, staggerItem } from '../ui/motion'
 
@@ -65,11 +66,13 @@ export function Footer() {
           <Reveal>
             <div className="flex items-center gap-3">
               <img
-                src="/photos/logo.webp"
+                src={sitePhoto('/photos/logo.webp', 120)}
                 alt=""
                 aria-hidden
                 width={44}
                 height={44}
+                loading="lazy"
+                decoding="async"
                 className="h-11 w-11 object-contain"
               />
               <span className="font-display text-2xl font-bold uppercase tracking-[0.14em]">

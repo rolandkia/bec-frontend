@@ -1,5 +1,6 @@
 import { apiClient } from './client'
 import type {
+  AthleteListItem,
   AthleteOut,
   BilanOut,
   ClassementParDiscipline,
@@ -9,8 +10,9 @@ import type {
   Sexe,
 } from './types'
 
-export async function listAthletes(): Promise<AthleteOut[]> {
-  const { data } = await apiClient.get<AthleteOut[]>('/athletes/')
+/** Effectif du club, sans historique de résultats (cf. `AthleteListItem`). */
+export async function listAthletes(): Promise<AthleteListItem[]> {
+  const { data } = await apiClient.get<AthleteListItem[]>('/athletes/')
   return data
 }
 

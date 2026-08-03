@@ -1,14 +1,15 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import type { AthleteOut } from '../../api/types'
+import type { AthleteListItem } from '../../api/types'
 import { cldPortrait } from '../../lib/cloudinary'
 import { getInitials } from '../../utils/initials'
-import { computeNiveauSaison } from '../../utils/niveau'
-import { currentSaison } from '../../utils/saison'
 import { LevelBadge } from './LevelBadge'
 
-export function AthleteCard({ athlete }: { athlete: AthleteOut }) {
-  const niveau = computeNiveauSaison(athlete.resultats, currentSaison())
+export function AthleteCard({ athlete }: { athlete: AthleteListItem }) {
+  // `niveau` vient du serveur (cf. AthleteListItem) : la carte le recalculait à
+  // partir de tout l'historique de l'athlète, ce qui obligeait la liste à
+  // transporter 1450 résultats.
+  const niveau = athlete.niveau
   const initials = getInitials(athlete.prenom, athlete.nom)
   // Une URL Cloudinary morte affichait le glyphe « image cassée » ici, alors que
   // le composant Avatar partagé dégrade proprement : on reprend son repli.
@@ -26,6 +27,7 @@ export function AthleteCard({ athlete }: { athlete: AthleteOut }) {
             src={cldPortrait(athlete.photo_url, 400)}
             alt={`${athlete.prenom} ${athlete.nom}`}
             loading="lazy"
+            decoding="async"
             onError={() => setPhotoFailed(true)}
             className="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
           />

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { listAthletes } from '../../api/athletes'
+import { STATIC_DATA } from '../../api/staleTime'
 
 const inputClass =
   'w-full rounded-lg border border-[color:var(--color-line)] bg-[color:var(--color-surface)] px-3 py-2 text-sm text-[color:var(--color-fg)] focus:border-club-primary focus:outline-none'
@@ -16,7 +17,11 @@ export function AthletePicker({
   onChange: (ids: number[]) => void
 }) {
   const [search, setSearch] = useState('')
-  const { data: athletes } = useQuery({ queryKey: ['athletes'], queryFn: listAthletes })
+  const { data: athletes } = useQuery({
+    queryKey: ['athletes'],
+    queryFn: listAthletes,
+    staleTime: STATIC_DATA,
+  })
 
   const filtered = useMemo(() => {
     if (!athletes) return []

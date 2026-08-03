@@ -15,7 +15,7 @@ import { FigureCard } from '../components/club/FigureCard'
 import { PalmaresTimeline } from '../components/club/PalmaresTimeline'
 import { PartenaireCard } from '../components/club/PartenaireCard'
 import { Loading, ErrorMessage } from '../components/ui/Status'
-import { cldPortrait } from '../lib/cloudinary'
+import { cldPortrait, sitePhotoProps } from '../lib/cloudinary'
 import { getInitials } from '../utils/initials'
 
 // `short` : version affichée sous `sm`, où les quatre items se partagent la
@@ -132,11 +132,14 @@ export function ClubPage() {
                   (paysage) pour un fichier portrait, donc la boîte réservée
                   contre le CLS était fausse. */}
               <img
-                src="/photos/concentration-01.webp"
+                {...sitePhotoProps('/photos/concentration-01.webp', {
+                  sizes: '(min-width: 1024px) 50vw, 100vw',
+                })}
                 alt="Athlète du club à l'entraînement, mains sur les hanches"
                 width={1100}
                 height={1350}
                 loading="lazy"
+                decoding="async"
                 className="aspect-[4/3] w-full object-cover object-[center_4%]"
               />
             </MaskReveal>

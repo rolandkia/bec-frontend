@@ -98,7 +98,13 @@ export function AlbumForm({
         {isUploading && <p className="mt-1 text-sm text-[color:var(--color-muted)]">Envoi en cours…</p>}
         {coverUrl && (
           <div className="mt-2 flex items-center gap-3">
-            <img src={cldThumb(coverUrl, 200)} alt="" className="h-16 w-16 rounded-lg object-cover" />
+            <img
+              src={cldThumb(coverUrl, 200)}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              className="h-16 w-16 rounded-lg object-cover"
+            />
             <button
               type="button"
               className="text-sm text-red-600 hover:underline dark:text-red-400"

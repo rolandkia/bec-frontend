@@ -1,5 +1,6 @@
 import { ExternalLink } from 'lucide-react'
 import type { Partenaire } from '../../data/partenaires'
+import { sitePhoto } from '../../lib/cloudinary'
 
 /**
  * Encart partenaire de /club : plaque logo + nom + description.
@@ -27,7 +28,14 @@ export function PartenaireCard({ partenaire }: { partenaire: Partenaire }) {
               : 'bg-white/95'
           }`}
         >
-          <img src={logo} alt={nom} loading="lazy" className="max-h-24 w-full object-contain" />
+          {/* Logo dans une plaque de 96 px : une largeur unique suffit. */}
+          <img
+            src={sitePhoto(logo, 400)}
+            alt={nom}
+            loading="lazy"
+            decoding="async"
+            className="max-h-24 w-full object-contain"
+          />
         </div>
         <div className="p-6 sm:p-8">
           <h3 className="font-display text-xl font-bold uppercase">{nom}</h3>

@@ -15,8 +15,18 @@
       name="description"
       content="Bordeaux Étudiants Club Athlétisme : actualités, calendrier des compétitions, records et athlètes du club."
     />
+    <!-- Polices servies par Google et NON auto-hébergées, volontairement : le
+         serveur du site est aux États-Unis (cf. DEPLOYMENT.md) alors que Google
+         les livre depuis un point de présence français. Les rapatrier dans
+         `dist/` les rendrait plus lentes pour le public du club, pas plus
+         rapides. À revoir si la VM passe un jour en Europe. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Photos d'athlètes, galerie et couvertures d'articles viennent toutes de
+         Cloudinary. Sans cette ligne, la poignée de main DNS + TCP + TLS n'est
+         engagée qu'une fois la première <img> découverte dans le DOM, soit un
+         aller-retour de retard sur chaque page illustrée. -->
+    <link rel="preconnect" href="https://res.cloudinary.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"

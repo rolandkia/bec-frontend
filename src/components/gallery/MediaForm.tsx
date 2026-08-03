@@ -161,7 +161,12 @@ export function MediaForm({
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <img src={previews[i]} alt={file.name} className="h-full w-full object-cover" />
+                      <img
+                        src={previews[i]}
+                        alt={file.name}
+                        decoding="async"
+                        className="h-full w-full object-cover"
+                      />
                     )}
                     {!isSaving && (
                       <button

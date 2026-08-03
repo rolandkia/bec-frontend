@@ -7,6 +7,7 @@ import { AlbumCard } from '../components/gallery/AlbumCard'
 import { AlbumStories } from '../components/gallery/AlbumStories'
 import { MediaFeed } from '../components/gallery/MediaFeed'
 import { Lightbox } from '../components/ui/Lightbox'
+import { sitePhotoProps, sitePhotoUrl } from '../lib/cloudinary'
 import { Loading, ErrorMessage } from '../components/ui/Status'
 import { Reveal } from '../components/ui/motion'
 
@@ -58,9 +59,15 @@ export function GalleryPage({ embedded = false }: { embedded?: boolean }) {
               className={`group tap relative cursor-pointer overflow-hidden rounded-2xl ${tileSpan(i)}`}
             >
               <img
-                src={p.src}
+                {...sitePhotoProps(p.src, {
+                  // Grille bento : de la demi-largeur au tiers selon la tuile.
+                  sizes: '(min-width: 1024px) 33vw, 50vw',
+                  widths: [400, 800, 1200],
+                  w: 1200,
+                })}
                 alt={p.alt}
                 loading="lazy"
+                decoding="async"
                 className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
               {/* Légende visible d'emblée au doigt : `group-hover:*` n'est jamais
@@ -134,7 +141,7 @@ export function GalleryPage({ embedded = false }: { embedded?: boolean }) {
 
       {lightbox !== null && (
         <Lightbox
-          items={clubPhotos.map((p) => ({ url: p.src, type: 'image' as const }))}
+          items={clubPhotos.map((p) => ({ url: sitePhotoUrl(p.src), type: 'image' as const }))}
           index={lightbox}
           onIndexChange={setLightbox}
           onClose={() => setLightbox(null)}

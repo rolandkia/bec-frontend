@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getClassements } from '../api/athletes'
+import { STATIC_DATA } from '../api/staleTime'
 import type { Sexe } from '../api/types'
 import { currentSaison } from '../utils/saison'
 import { RecordsTable } from '../components/athletes/RecordsTable'
@@ -8,8 +9,24 @@ import { Loading, ErrorMessage } from '../components/ui/Status'
 
 const SAISON_EN_COURS = currentSaison()
 
-export function RecordsPage({ embedded = false }: { embedded?: boolean }) {
-  const [sexe, setSexe] = useState<Sexe>('homme')
+/**
+ * Onglet « Records » du hub <AthletesPage>.
+ *
+ * `sexe` est piloté par le hub et vit dans l'URL, comme pour l'effectif : un
+ * `useState` local ici rendait `/athletes?tab=records` non partageable (il
+ * repartait toujours sur « Hommes ») et faisait diverger les deux onglets sur un
+ * filtre qui porte le même nom à l'écran. Un classement est toujours par sexe,
+ * donc il n'y a pas de « Tous » : le hub retombe sur « Hommes ».
+ */
+export function RecordsPage({
+  embedded = false,
+  sexe,
+  onSexeChange,
+}: {
+  embedded?: boolean
+  sexe: Sexe
+  onSexeChange: (sexe: Sexe) => void
+}) {
   const [periode, setPeriode] = useState<'absolu' | 'saison'>('absolu')
   const [discipline, setDiscipline] = useState('')
 
@@ -21,6 +38,7 @@ export function RecordsPage({ embedded = false }: { embedded?: boolean }) {
         homologue: true,
         saison: periode === 'saison' ? SAISON_EN_COURS : undefined,
       }),
+    staleTime: STATIC_DATA,
   })
 
   // Options du filtre : toutes les disciplines ayant au moins un résultat, triées.
@@ -55,7 +73,12 @@ export function RecordsPage({ embedded = false }: { embedded?: boolean }) {
       <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
         <div className="segmented">
           {(['homme', 'femme'] as const).map((s) => (
-            <button key={s} type="button" aria-pressed={sexe === s} onClick={() => setSexe(s)}>
+            <button
+              key={s}
+              type="button"
+              aria-pressed={sexe === s}
+              onClick={() => onSexeChange(s)}
+            >
               {s === 'homme' ? 'Hommes' : 'Femmes'}
             </button>
           ))}

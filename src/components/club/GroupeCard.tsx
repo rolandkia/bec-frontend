@@ -1,5 +1,6 @@
 import { CalendarClock, MapPin } from 'lucide-react'
 import type { GroupeEntrainement } from '../../data/infosPratiques'
+import { sitePhotoProps } from '../../lib/cloudinary'
 
 /**
  * Encart d'un groupe d'entraînement (/infos-pratiques) : photo pleine hauteur
@@ -42,7 +43,9 @@ export function GroupeCard({
             `alt` décrivant le cliché — cf. `photoAlt` dans `data/infosPratiques`. */}
         <div className={`relative min-h-[260px] sm:min-h-full ${photoADroite ? 'sm:order-2' : ''}`}>
           <img
-            src={groupe.photo}
+            {...sitePhotoProps(groupe.photo, {
+              sizes: '(min-width: 640px) 45vw, 100vw',
+            })}
             alt={groupe.photoAlt}
             loading="lazy"
             decoding="async"

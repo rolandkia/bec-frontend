@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { listAthletes } from '../api/athletes'
+import { STATIC_DATA } from '../api/staleTime'
 import { AthleteCard } from '../components/athletes/AthleteCard'
 import { Loading, ErrorMessage } from '../components/ui/Status'
 import { RevealGroup, motion, staggerItem } from '../components/ui/motion'
@@ -25,6 +26,7 @@ export function AthletesListPage({
   const { data: athletes, isLoading, isError } = useQuery({
     queryKey: ['athletes'],
     queryFn: listAthletes,
+    staleTime: STATIC_DATA,
   })
 
   const filtered = useMemo(() => {

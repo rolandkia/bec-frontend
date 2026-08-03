@@ -34,6 +34,27 @@ export interface AthleteOut {
   resultats: ResultatOut[]
 }
 
+/**
+ * Athlète tel qu'il arrive dans une LISTE (`GET /athletes/`).
+ *
+ * Distinct d'`AthleteOut` : la liste n'embarque PAS `resultats`. Elle les
+ * embarquait, soit ~1450 lignes pour 56 athlètes, uniquement pour que la carte
+ * puisse recalculer le badge de niveau côté client : 384 Ko de JSON à parser sur
+ * le thread principal, sur un téléphone, pour afficher 56 vignettes. Le niveau
+ * de la saison en cours est désormais calculé par le serveur (`niveau`), et
+ * l'historique complet ne vient plus qu'avec la fiche (`GET /athletes/{id}`).
+ */
+export interface AthleteListItem {
+  id: number
+  nom: string
+  prenom: string
+  ffa_id: string
+  sexe: string
+  photo_url: string | null
+  /** Niveau FFA de la saison en cours (min. 2 perfs au même niveau), ou null. */
+  niveau: string | null
+}
+
 export interface RPOut {
   discipline: string
   epreuve: string

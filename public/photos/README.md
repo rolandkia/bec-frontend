@@ -1,11 +1,32 @@
 # Photos optimisées — BEC Athlétisme
 
 Sélection curée depuis `../../../bec-pictures/`, optimisée en `.webp`
-(`cwebp`, redimensionnée) pour la refonte design. Servies statiquement depuis
+(`cwebp`, redimensionnée) pour la refonte design. Référencées dans le code par
 `/photos/<nom>.webp`.
 
 > **Règle absolue** : aucun chemin vers `bec-pictures/` ne doit apparaître dans
 > le code du front. Toute image passe d'abord par une conversion `.webp` ici.
+
+## Où ces fichiers sont-ils servis ?
+
+Les chemins `/photos/...` restent l'**identité canonique** d'une photo dans tout
+le code, mais ils ne disent pas d'où elle est servie. C'est
+`sitePhoto()` / `sitePhotoProps()` ([`src/lib/cloudinary.ts`](../../src/lib/cloudinary.ts))
+qui tranchent, au rendu :
+
+* **sans `VITE_CLOUDINARY_CLOUD_NAME`** : ces fichiers, servis par Caddy depuis
+  la VM (donc depuis `us-east1`), en une largeur unique ;
+* **avec la variable** : les mêmes photos depuis Cloudinary, sous le public_id
+  `bec_site/photos/<nom>`, en AVIF/WebP et à trois largeurs (`srcset`).
+
+L'envoi est fait par `task upload:site-photos` côté `bec-backend`
+([`src/scripts/upload_site_photos.py`](../../../bec-backend/src/scripts/upload_site_photos.py)),
+qui dérive le public_id du chemin de fichier. **Une photo ajoutée ou remplacée ici
+doit donc être renvoyée** (`task upload:site-photos -- --force` pour un
+remplacement à nom identique), sinon le CDN continue de servir l'ancienne.
+
+Ces fichiers restent dans le dépôt même après la bascule : ce sont eux la source
+de l'envoi, et le repli si la variable est retirée.
 
 ## Photos porteuses du récit (refonte « hybride éditorial »)
 

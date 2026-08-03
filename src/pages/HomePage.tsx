@@ -6,10 +6,12 @@ import { club } from '../data/club'
 import { jalonsAccueil } from '../data/palmares'
 import { besoinsCourts, partenaires, partenairesAccroche } from '../data/partenaires'
 import { clubPhotos } from '../data/clubPhotos'
+import { sitePhoto, sitePhotoProps, sitePhotoUrl } from '../lib/cloudinary'
 import { parseLocalDate, splitEvents } from '../utils/events'
 import { Lightbox } from '../components/ui/Lightbox'
 import { EventRow } from '../components/calendar/EventRow'
 import { getClassements, listAthletes } from '../api/athletes'
+import { EDITED_DATA, STATIC_DATA } from '../api/staleTime'
 import { listEvents } from '../api/events'
 import type { ClassementParDiscipline, Sexe } from '../api/types'
 import { currentSaison } from '../utils/saison'
@@ -58,21 +60,37 @@ export function HomePage() {
   const [galleryIndex, setGalleryIndex] = useState<number | null>(null)
   const reduce = useReducedMotion()
 
-  const { data: posts, isLoading, isError } = useQuery({ queryKey: ['blogs'], queryFn: listBlogs })
+  const { data: posts, isLoading, isError } = useQuery({
+    queryKey: ['blogs'],
+    queryFn: listBlogs,
+    staleTime: EDITED_DATA,
+  })
 
   const classementsQuery = useQuery({
-    queryKey: ['classements', 'home', sexe, periode],
+    // MÊME clé que <RecordsPage> (pas de segment 'home') : les deux vues
+    // demandent le même payload aux mêmes paramètres. Avec une clé distincte,
+    // visiter l'accueil puis l'onglet Records le retéléchargeait entièrement.
+    queryKey: ['classements', sexe, periode],
     queryFn: () =>
       getClassements({
         sexe,
         homologue: true,
         saison: periode === 'saison' ? currentSaison() : undefined,
       }),
+    staleTime: STATIC_DATA,
   })
 
-  const eventsQuery = useQuery({ queryKey: ['events'], queryFn: listEvents })
+  const eventsQuery = useQuery({
+    queryKey: ['events'],
+    queryFn: listEvents,
+    staleTime: EDITED_DATA,
+  })
   // Même clé de requête que <AthletesListPage> : le compte est gratuit (cache).
-  const athletesQuery = useQuery({ queryKey: ['athletes'], queryFn: listAthletes })
+  const athletesQuery = useQuery({
+    queryKey: ['athletes'],
+    queryFn: listAthletes,
+    staleTime: STATIC_DATA,
+  })
 
   const { upcoming } = splitEvents(eventsQuery.data ?? [])
   const featuredEvent = upcoming[0]
@@ -429,21 +447,27 @@ export function HomePage() {
         <div className="grid gap-4 lg:grid-cols-[1.3fr_0.7fr]">
           <MaskReveal duration={1} className="overflow-hidden rounded-md">
             <img
-              src="/photos/club-famille.webp"
+              {...sitePhotoProps('/photos/club-famille.webp', {
+                sizes: '(min-width: 1024px) 62vw, 100vw',
+              })}
               alt="Le club réuni lors de sa soirée annuelle"
               width={1800}
               height={1003}
               loading="lazy"
+              decoding="async"
               className="aspect-[16/10] w-full object-cover"
             />
           </MaskReveal>
           <MaskReveal duration={1} className="overflow-hidden rounded-md">
             <img
-              src="/photos/interclub-drapeau.webp"
+              {...sitePhotoProps('/photos/interclub-drapeau.webp', {
+                sizes: '(min-width: 1024px) 33vw, 100vw',
+              })}
               alt="Un athlète du club brandissant le drapeau du BEC devant le groupe"
               width={1200}
               height={1600}
               loading="lazy"
+              decoding="async"
               className="h-full min-h-[240px] w-full object-cover object-[center_30%]"
             />
           </MaskReveal>
@@ -491,9 +515,17 @@ export function HomePage() {
                   className="group tap relative block h-44 w-64 shrink-0 cursor-pointer overflow-hidden rounded-md sm:h-64 sm:w-96"
                 >
                   <img
-                    src={p.src}
+                    {...sitePhotoProps(p.src, {
+                      // Vignette de bande : 256 px sous sm, 384 px au-delà. Les
+                      // largeurs du bandeau plein cadre seraient dix fois trop
+                      // grandes pour cette surface.
+                      sizes: '(min-width: 640px) 384px, 256px',
+                      widths: [384, 768],
+                      w: 768,
+                    })}
                     alt={p.alt}
                     loading="lazy"
+                    decoding="async"
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                   {/* Légende visible d'emblée au doigt (cf. MediaTile). */}
@@ -514,7 +546,7 @@ export function HomePage() {
       {/* Visionneuse partagée pour la bande « Le club en mouvement ». */}
       {galleryIndex !== null && (
         <Lightbox
-          items={clubPhotos.map((p) => ({ url: p.src, type: 'image' as const }))}
+          items={clubPhotos.map((p) => ({ url: sitePhotoUrl(p.src), type: 'image' as const }))}
           index={galleryIndex}
           onIndexChange={setGalleryIndex}
           onClose={() => setGalleryIndex(null)}
@@ -616,9 +648,12 @@ export function HomePage() {
                       }`}
                     >
                       <img
-                        src={p.logo}
+                        // Logo posé sur une plaque de 96 px de haut : une seule
+                        // largeur suffit, un `srcset` n'y apporterait rien.
+                        src={sitePhoto(p.logo, 400)}
                         alt={p.nom}
                         loading="lazy"
+                        decoding="async"
                         className="max-h-16 w-auto object-contain"
                       />
                     </div>

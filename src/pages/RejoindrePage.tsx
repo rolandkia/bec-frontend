@@ -2,6 +2,7 @@ import { Mail, MapPin, Phone, UserPlus } from 'lucide-react'
 import { club } from '../data/club'
 import { groupesEntrainement } from '../data/infosPratiques'
 import { GroupeCard } from '../components/club/GroupeCard'
+import { sitePhotoProps } from '../lib/cloudinary'
 import { PageHero } from '../components/layout/PageHero'
 import { SectionHead } from '../components/ui/SectionHead'
 import { Reveal, MaskReveal } from '../components/ui/motion'
@@ -55,11 +56,14 @@ export function RejoindrePage() {
         <section className="grid items-center gap-8 lg:grid-cols-2">
           <MaskReveal from="left" className="overflow-hidden rounded-md">
             <img
-              src="/photos/jeune-medaille.webp"
+              {...sitePhotoProps('/photos/jeune-medaille.webp', {
+                sizes: '(min-width: 1024px) 50vw, 100vw',
+              })}
               alt="Jeune athlète du club, sa médaille entre les dents"
               width={1400}
               height={888}
               loading="lazy"
+              decoding="async"
               className="h-full w-full object-cover"
             />
           </MaskReveal>

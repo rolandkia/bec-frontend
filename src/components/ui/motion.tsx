@@ -20,7 +20,9 @@ import {
   type Transition,
 } from 'framer-motion'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { sitePhotoProps } from '../../lib/cloudinary'
 import {
+  Children,
   useEffect,
   useRef,
   useState,
@@ -49,6 +51,24 @@ export const staggerContainer = (stagger = 0.1, delayChildren = 0): Variants => 
   hidden: {},
   show: { transition: { staggerChildren: stagger, delayChildren } },
 })
+
+/**
+ * Durée TOTALE que la cascade d'un groupe ne doit pas dépasser (s).
+ *
+ * `staggerChildren` est un délai PAR ENFANT, pas une durée de cascade : à 100 ms
+ * et 56 cartes (l'effectif du club sur /athletes), la dernière carte démarrait
+ * son entrée à t+5,6 s. Pendant ces 5,6 secondes, Framer Motion animait 56 nœuds
+ * en continu. Sur un téléphone, le compositeur était saturé et les appuis sur
+ * les filtres Hommes/Femmes ou l'onglet Records ne produisaient rien. Le budget
+ * ci-dessous plafonne la cascade quel que soit le nombre d'enfants ; en dessous
+ * de 6 enfants, le pas nominal du brief est conservé tel quel.
+ */
+const CASCADE_MAX = 0.6
+
+/** Pas de cascade tenant dans `CASCADE_MAX`, sans jamais l'allonger. */
+export function cascadeStep(nominal: number, count: number): number {
+  return Math.min(nominal, CASCADE_MAX / Math.max(count, 1))
+}
 
 type RevealProps = ComponentPropsWithoutRef<typeof motion.div> & {
   children: ReactNode
@@ -172,7 +192,11 @@ export function RevealGroup({
       // un enfant monté plus tard résout la variante héritée et s'anime
       // lui-même, cascade comprise.
       animate={inView || firstScreen ? 'show' : 'hidden'}
-      variants={staggerContainer(stagger)}
+      // Pas dérivé du nombre d'enfants, pas du seul réglage nominal : cf.
+      // `cascadeStep`. Le correctif est ici et non chez l'appelant, parce que
+      // TOUS les groupes du site (effectif, galerie, mag, calendrier) grandissent
+      // avec les données et portaient donc le même défaut latent.
+      variants={staggerContainer(cascadeStep(stagger, Children.count(children)))}
       {...rest}
     >
       {children}
@@ -353,10 +377,14 @@ export function ParallaxImage({
   })
   const y = useTransform(scrollYProgress, [0, 1], [-strength, strength])
 
+  // Photo plein cadre : livrée par le CDN à la largeur de l'écran quand les
+  // photos éditoriales y sont hébergées (cf. sitePhotoProps).
+  const photo = sitePhotoProps(src)
+
   if (reduce) {
     return (
       <img
-        src={src}
+        {...photo}
         alt={alt}
         aria-hidden={alt === '' || undefined}
         className={className}
@@ -370,7 +398,7 @@ export function ParallaxImage({
   return (
     <div ref={ref} className="absolute inset-0 overflow-hidden">
       <motion.img
-        src={src}
+        {...photo}
         alt={alt}
         aria-hidden={alt === '' || undefined}
         loading={loading}
@@ -716,7 +744,7 @@ export function Chapter({
 
   // Attributs communs aux deux rendus de la photo de fond (statique / fondu).
   const imgProps = {
-    src: image,
+    ...sitePhotoProps(image ?? ''),
     alt: imageAlt,
     'aria-hidden': imageAlt === '' || undefined,
     loading: (priority ? 'eager' : 'lazy') as 'eager' | 'lazy',
@@ -896,10 +924,14 @@ export function ScrubImage({
   const scale = useTransform(scrollYProgress, [0, 1], [1.25, 1])
   const y = useTransform(scrollYProgress, [0, 1], ['-6%', '6%'])
 
+  // La photo est resserrée depuis 1,25× : elle est rendue plus large que le
+  // viewport, d'où `125vw` et non `100vw`.
+  const photo = sitePhotoProps(src, { sizes: '125vw' })
+
   if (reduce) {
     return (
       <img
-        src={src}
+        {...photo}
         alt={alt}
         aria-hidden={alt === '' || undefined}
         className={`absolute inset-0 h-full w-full object-cover ${className}`}
@@ -911,7 +943,7 @@ export function ScrubImage({
   return (
     <div ref={ref} className="absolute inset-0 overflow-hidden">
       <motion.img
-        src={src}
+        {...photo}
         alt={alt}
         aria-hidden={alt === '' || undefined}
         className={`h-full w-full object-cover ${className}`}

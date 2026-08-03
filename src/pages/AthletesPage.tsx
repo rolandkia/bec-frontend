@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { listAthletes } from '../api/athletes'
+import { STATIC_DATA } from '../api/staleTime'
 import { AthletesListPage } from './AthletesListPage'
 import { RecordsPage } from './RecordsPage'
 import { PageHero } from '../components/layout/PageHero'
@@ -89,7 +90,11 @@ export function AthletesPage() {
   const sexe: Sexe = SEXES.includes(rawSexe as Sexe) ? (rawSexe as Sexe) : 'tous'
 
   // Même clé de requête que <AthletesListPage> : le compte est gratuit (cache).
-  const { data: athletes } = useQuery({ queryKey: ['athletes'], queryFn: listAthletes })
+  const { data: athletes } = useQuery({
+    queryKey: ['athletes'],
+    queryFn: listAthletes,
+    staleTime: STATIC_DATA,
+  })
 
   // Les photos des vues non affichées sont préchargées APRÈS le premier rendu :
   // sans ça le tout premier fondu partirait sur une image encore en vol, et
@@ -142,7 +147,10 @@ export function AthletesPage() {
       <SectionTabs tabs={TABS} active={tab} onChange={setTab} />
 
       {isRecords ? (
-        <RecordsPage embedded />
+        // Un classement est toujours par sexe : « Tous » n'y a pas de sens, on
+        // retombe sur « Hommes » sans réécrire l'URL (le filtre reste celui du
+        // hub, donc revenir à l'effectif conserve le choix du visiteur).
+        <RecordsPage embedded sexe={sexe === 'tous' ? 'homme' : sexe} onSexeChange={setSexe} />
       ) : (
         <AthletesListPage embedded sexe={sexe} onSexeChange={setSexe} />
       )}

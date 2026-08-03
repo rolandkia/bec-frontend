@@ -96,13 +96,21 @@ export function niveauTier(niveau: string): NiveauTier {
   // D'où le parti : un jeton opaque en encre CONSTANTE (`--color-ink`, qui ne
   // suit pas le chapitre) + texte blanc. Lisible sur n'importe quel fond, sans
   // que le composant ait à savoir où il est monté.
+  //
+  // VRAIMENT opaques, et sans `backdrop-blur` : ces trois paliers combinaient une
+  // encre à 70–85 % et un flou de fond, alors que l'intention ci-dessus est un
+  // jeton opaque, et le flou ne servait donc qu'à rattraper la transparence qu'on
+  // ne voulait pas. Or la grille de l'effectif affiche un badge par carte, soit
+  // ~56 filtres de fond posés sur une photo et un dégradé, à réévaluer à chaque
+  // frame pendant l'animation d'entrée. C'était l'autre moitié du gel de
+  // /athletes sur mobile (cf. `cascadeStep` dans motion.tsx).
   if (score >= 200) {
     return {
       tier: 2,
       chevrons: 2,
       star: false,
       className:
-        'bg-[color:var(--color-ink)]/85 text-white ring-1 ring-club-primary/70 shadow-sm backdrop-blur-sm',
+        'bg-[color:var(--color-ink)] text-white ring-1 ring-club-primary/70 shadow-sm',
     }
   }
   if (score >= 100) {
@@ -110,7 +118,7 @@ export function niveauTier(niveau: string): NiveauTier {
       tier: 1,
       chevrons: 1,
       star: false,
-      className: 'bg-[color:var(--color-ink)]/80 text-white ring-1 ring-white/25 backdrop-blur-sm',
+      className: 'bg-[color:var(--color-ink)] text-white ring-1 ring-white/25',
     }
   }
   // Départemental (1-7) et niveau inconnu (0)
@@ -118,6 +126,6 @@ export function niveauTier(niveau: string): NiveauTier {
     tier: 0,
     chevrons: 0,
     star: false,
-    className: 'bg-[color:var(--color-ink)]/70 text-white/85 ring-1 ring-white/20 backdrop-blur-sm',
+    className: 'bg-[color:var(--color-ink)] text-white/85 ring-1 ring-white/20',
   }
 }

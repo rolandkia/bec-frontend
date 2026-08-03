@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { sitePhoto } from '../../lib/cloudinary'
 
 /**
  * Avatar photo avec repli monogramme. Si `src` est absent OU si l'image échoue
@@ -26,8 +27,15 @@ export function Avatar({
   if (src && !failed) {
     return (
       <img
-        src={src}
+        // `sitePhoto` est INERTE sur une URL Cloudinary, que l'appelant a déjà
+        // transformée (photos de coachs, cf. ClubPage) : il n'agit que sur un
+        // chemin local, pour le cas où cet avatar recevrait un fichier de
+        // `public/photos/profil`. La plus grande taille d'affichage du site fait
+        // 128 px, `400` couvre donc les écrans à forte densité.
+        src={sitePhoto(src, 400)}
         alt={alt}
+        loading="lazy"
+        decoding="async"
         onError={() => setFailed(true)}
         className={`${size} shrink-0 ${rounded} object-cover object-top shadow-sm`}
       />

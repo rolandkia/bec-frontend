@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { AnimatePresence, motion, useReducedMotion, useScroll, useMotionValueEvent } from 'framer-motion'
 import { club } from '../../data/club'
+import { sitePhoto } from '../../lib/cloudinary'
 import { SocialLinks } from '../ui/SocialLinks'
 
 /**
@@ -68,7 +69,9 @@ export function Navbar() {
       >
         <NavLink to="/" className="group flex items-center gap-3" aria-label="Accueil">
           <img
-            src="/photos/logo.webp"
+            // Affiché à 32-40 px : `120` couvre le triple de densité, contre les
+            // 22 ko du fichier source, servi à chaque page.
+            src={sitePhoto('/photos/logo.webp', 120)}
             alt=""
             aria-hidden
             width={40}

@@ -1,5 +1,9 @@
 import DOMPurify from 'dompurify'
-import jsPDF from 'jspdf'
+// jsPDF n'est chargé qu'AU CLIC (cf. `exportBlogPdf`) : ~150 ko qui ne
+// concernent qu'un bouton d'une page d'administration, et qui pesaient sinon sur
+// tout module important ce fichier. Le type reste importé statiquement, ce qui
+// n'émet aucun code.
+import type jsPDF from 'jspdf'
 import type { BlogPostOut } from '../api/types'
 
 const ALLOWED_TAGS = [
@@ -118,8 +122,10 @@ class PdfWriter {
   pageHeight: number
   contentWidth: number
 
-  constructor() {
-    this.doc = new jsPDF({ unit: 'pt', format: 'a4' })
+  /** Le constructeur reçoit la CLASSE jsPDF, chargée dynamiquement par
+   *  `exportBlogPdf` : c'est ce qui garde la bibliothèque hors du bundle. */
+  constructor(JsPdf: typeof jsPDF) {
+    this.doc = new JsPdf({ unit: 'pt', format: 'a4' })
     this.pageWidth = this.doc.internal.pageSize.getWidth()
     this.pageHeight = this.doc.internal.pageSize.getHeight()
     this.contentWidth = this.pageWidth - 2 * MARGIN
@@ -380,6 +386,8 @@ async function renderBlock(w: PdfWriter, el: Element, indent = 0): Promise<void>
 /** Exporte un article en vrai PDF texte (sélectionnable), avec couverture,
  * titre, résumé et contenu mis en forme. */
 export async function exportBlogPdf(post: BlogPostOut): Promise<void> {
+  const { default: JsPdf } = await import('jspdf')
+
   const clean = DOMPurify.sanitize(post.content_html, {
     ALLOWED_TAGS,
     ALLOWED_ATTR,
@@ -387,7 +395,7 @@ export async function exportBlogPdf(post: BlogPostOut): Promise<void> {
   })
   const body = new DOMParser().parseFromString(clean, 'text/html').body
 
-  const w = new PdfWriter()
+  const w = new PdfWriter(JsPdf)
 
   // Image de couverture
   if (post.cover_image_url) {

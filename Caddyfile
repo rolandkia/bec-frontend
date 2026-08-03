@@ -1,5 +1,8 @@
 :80 {
-	encode gzip
+	# zstd d'abord : mieux que gzip à coût CPU comparable, et négocié par tous les
+	# navigateurs à jour. gzip reste en repli. (Brotli demanderait un plugin Caddy,
+	# donc une image sur mesure : pas pour le gain qui reste.)
+	encode zstd gzip
 
 	handle_path /api/* {
 		# Plafond de corps de requête. Sans lui, un POST non borné est entièrement
@@ -22,6 +25,39 @@
 
 	handle {
 		root * /srv
+
+		# ─── Cache navigateur ────────────────────────────────────────────────────
+		# Le serveur est en us-east1 et le public à Bordeaux, soit ~110 ms
+		# d'aller-retour, en HTTP/1.1 (pas de domaine, donc pas de TLS, donc pas de
+		# HTTP/2) et sans CDN. Aucune directive de cache n'était émise : le
+		# `file_server` de Caddy envoie bien un `Etag`, mais un Etag ne fait
+		# qu'autoriser une réponse 304 : le navigateur traverse quand même
+		# l'Atlantique pour la demander, à chaque asset et à chaque navigation.
+
+		# Noms de fichiers HACHÉS par Vite (`index-DKa30CwO.js`) : un contenu
+		# différent porte un nom différent, donc `immutable` est sûr et supprime
+		# toute revalidation. C'est ce qui rend une visite répétée quasi instantanée.
+		@immuable path /assets/*
+		header @immuable Cache-Control "public, max-age=31536000, immutable"
+
+		# Images éditoriales : noms STABLES et non hachés, donc pas `immutable`,
+		# car remplacer une photo doit finir par se propager. Trente jours.
+		@photos path /photos/* /infos/* /partenaires/* /favicon.svg
+		header @photos Cache-Control "public, max-age=2592000"
+
+		# Tout le reste, c'est-à-dire `index.html` : jamais mis en cache sans
+		# revalidation. C'est lui qui porte les noms hachés des assets ; s'il est
+		# gardé, un déploiement n'atteint jamais le navigateur, qui continue de
+		# réclamer des fichiers supprimés. `no-cache` autorise le stockage mais
+		# impose la revalidation, soit un 304 de ~1 ko et non un rechargement.
+		#
+		# Défini par EXCLUSION et non par `path / /index.html` : `try_files`
+		# ci-dessous réécrit `/athletes` en `/index.html` en interne, mais les
+		# matchers, eux, voient l'URL demandée. Une liste positive laisserait donc
+		# toutes les routes du SPA (/athletes, /mag, /club…) sans en-tête de cache.
+		@html not path /assets/* /photos/* /infos/* /partenaires/* /favicon.svg
+		header @html Cache-Control "no-cache"
+
 		file_server
 		try_files {path} /index.html
 	}
