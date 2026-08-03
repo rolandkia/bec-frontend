@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { Layout } from './components/layout/Layout'
 import { HomePage } from './pages/HomePage'
 import { NotFound } from './components/ui/Status'
+import * as chunk from './lib/routeChunks'
 
 /* ─── Chargement à la demande ──────────────────────────────────────────────────
    Les 18 pages étaient importées statiquement ici, donc réunies dans un unique
@@ -15,32 +16,28 @@ import { NotFound } from './components/ui/Status'
    `HomePage` reste en import STATIQUE : c'est la page d'entrée du site, la
    différer ajouterait un aller-retour vers les États-Unis avant le premier
    pixel. Tout le reste part en morceaux séparés, chargés au clic. La frontière
-   d'attente (`<Suspense>`) est dans `Layout`. */
-const ClubPage = lazy(() => import('./pages/ClubPage').then((m) => ({ default: m.ClubPage })))
-const RejoindrePage = lazy(() =>
-  import('./pages/RejoindrePage').then((m) => ({ default: m.RejoindrePage })),
-)
-const MagPage = lazy(() => import('./pages/MagPage').then((m) => ({ default: m.MagPage })))
-const CalendarPage = lazy(() =>
-  import('./pages/CalendarPage').then((m) => ({ default: m.CalendarPage })),
-)
-const AthletesPage = lazy(() =>
-  import('./pages/AthletesPage').then((m) => ({ default: m.AthletesPage })),
-)
+   d'attente (`<Suspense>`) est dans `Layout`.
+
+   Les `import()` eux-mêmes vivent dans `lib/routeChunks.ts` et non ici : ils
+   sont partagés avec le PRÉCHARGEMENT (`lib/prefetch.ts`), qui les déclenche au
+   survol ou au premier contact du doigt. Sans ce partage, le morceau ne serait
+   demandé qu'au clic, soit un aller-retour transatlantique pendant lequel la
+   page ne bouge pas. */
+const ClubPage = lazy(() => chunk.clubPage().then((m) => ({ default: m.ClubPage })))
+const RejoindrePage = lazy(() => chunk.rejoindrePage().then((m) => ({ default: m.RejoindrePage })))
+const MagPage = lazy(() => chunk.magPage().then((m) => ({ default: m.MagPage })))
+const CalendarPage = lazy(() => chunk.calendarPage().then((m) => ({ default: m.CalendarPage })))
+const AthletesPage = lazy(() => chunk.athletesPage().then((m) => ({ default: m.AthletesPage })))
 const AthleteDetailPage = lazy(() =>
-  import('./pages/AthleteDetailPage').then((m) => ({ default: m.AthleteDetailPage })),
+  chunk.athleteDetailPage().then((m) => ({ default: m.AthleteDetailPage })),
 )
-const BlogListPage = lazy(() =>
-  import('./pages/BlogListPage').then((m) => ({ default: m.BlogListPage })),
-)
+const BlogListPage = lazy(() => chunk.blogListPage().then((m) => ({ default: m.BlogListPage })))
 const BlogDetailPage = lazy(() =>
-  import('./pages/BlogDetailPage').then((m) => ({ default: m.BlogDetailPage })),
+  chunk.blogDetailPage().then((m) => ({ default: m.BlogDetailPage })),
 )
-const GalleryPage = lazy(() =>
-  import('./pages/GalleryPage').then((m) => ({ default: m.GalleryPage })),
-)
+const GalleryPage = lazy(() => chunk.galleryPage().then((m) => ({ default: m.GalleryPage })))
 const AlbumDetailPage = lazy(() =>
-  import('./pages/AlbumDetailPage').then((m) => ({ default: m.AlbumDetailPage })),
+  chunk.albumDetailPage().then((m) => ({ default: m.AlbumDetailPage })),
 )
 // Pages d'ADMINISTRATION : elles tirent l'éditeur Tiptap, jsPDF et les
 // formulaires d'upload, et ne sont liées depuis aucune navigation. Un visiteur

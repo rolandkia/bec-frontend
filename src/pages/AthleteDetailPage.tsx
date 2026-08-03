@@ -1,11 +1,10 @@
-import { useMemo, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, ExternalLink } from 'lucide-react'
-import { getAthlete, getNiveau, getResultats, getRP } from '../api/athletes'
-import type { RPOut } from '../api/types'
+import { getAthlete, getNiveau, getRP } from '../api/athletes'
+import type { AthleteListItem, AthleteOut, RPOut } from '../api/types'
 import { PerformanceTable } from '../components/athletes/PerformanceTable'
-import { PerformanceChart } from '../components/athletes/PerformanceChart'
 import { LevelBadge } from '../components/athletes/LevelBadge'
 import { Loading, ErrorMessage, NotFound } from '../components/ui/Status'
 import { computeNiveauSaison } from '../utils/niveau'
@@ -13,7 +12,20 @@ import { currentSaison } from '../utils/saison'
 import { ffaProfileUrl } from '../utils/ffa'
 import { getInitials } from '../utils/initials'
 import { cldPortrait } from '../lib/cloudinary'
+import { prefetchChunk } from '../lib/prefetch'
+import { performanceChart } from '../lib/routeChunks'
 import { Reveal } from '../components/ui/motion'
+
+/* Le GRAPHIQUE part dans son propre morceau : Recharts pèse à lui seul plus que
+   tout le reste de cette page (elle passait de ~30 ko à 390 ko), pour un bloc
+   qui est presque toujours sous la ligne de flottaison. Tant qu'il n'est pas
+   arrivé, sa place est tenue par un cadre de même hauteur — donc aucun saut de
+   mise en page quand il se substitue. Le morceau est demandé dès que la fiche
+   est montée (cf. `useEffect` plus bas), pas au moment où le bloc devient
+   visible : le lecteur qui défile ne doit pas attendre à son tour. */
+const PerformanceChart = lazy(() =>
+  performanceChart().then((m) => ({ default: m.PerformanceChart })),
+)
 
 interface RPCard {
   discipline: string
@@ -30,12 +42,59 @@ export function AthleteDetailPage() {
   const [saison, setSaison] = useState<string>(TOUTES_SAISONS)
   // Repli si l'URL Cloudinary est morte (le glyphe « image cassée » sinon).
   const [photoFailed, setPhotoFailed] = useState(false)
+  const queryClient = useQueryClient()
+
+  useEffect(() => prefetchChunk(performanceChart), [])
+
+  /* ─── L'identité s'affiche AVANT le premier aller-retour ────────────────────
+     Le visiteur arrive presque toujours de l'effectif ou d'un classement, où la
+     liste `['athletes']` est déjà en cache : nom, prénom, sexe, portrait et
+     niveau de la saison y sont DÉJÀ, exactement ce que porte l'en-tête de cette
+     fiche. La page les attendait quand même du serveur, et rendait un écran vide
+     avec « Chargement… » pendant ce temps — c'est l'écran blanc constaté au clic
+     sur un athlète, d'autant plus long que la requête part depuis un téléphone
+     vers une VM américaine.
+
+     `placeholderData` sert donc l'en-tête immédiatement à partir du cache de la
+     liste, et la requête réelle continue en arrière-plan pour apporter ce qui
+     manque (l'historique des résultats). `resultats: []` n'est pas une valeur
+     inventée : c'est « pas encore connu », et les blocs qui en dépendent le
+     lisent via `isPlaceholderData` pour afficher leur propre attente au lieu
+     d'un « aucun résultat » faux.
+
+     Renvoyer `undefined` (accès direct à l'URL, rechargement, lien partagé)
+     laisse le comportement d'origine : squelette puis contenu. */
+  const listItem = queryClient
+    .getQueryData<AthleteListItem[]>(['athletes'])
+    ?.find((a) => a.id === athleteId)
+
+  // Mémoïsé : `placeholderData` reçu comme VALEUR devient le `data` de la
+  // requête tant que la vraie réponse manque. Un objet recréé à chaque rendu
+  // ferait donc changer l'identité de `data` à chaque rendu, et tout `useMemo`
+  // qui en dépend (l'historique, les disciplines, les saisons) se recalculerait
+  // en boucle.
+  const placeholder = useMemo<AthleteOut | undefined>(
+    () =>
+      listItem
+        ? {
+            id: listItem.id,
+            nom: listItem.nom,
+            prenom: listItem.prenom,
+            ffa_id: listItem.ffa_id,
+            sexe: listItem.sexe,
+            photo_url: listItem.photo_url,
+            resultats: [],
+          }
+        : undefined,
+    [listItem],
+  )
 
   const athleteQuery = useQuery({
     queryKey: ['athlete', athleteId],
     queryFn: () => getAthlete(athleteId),
     enabled: Number.isFinite(athleteId),
     retry: false,
+    placeholderData: placeholder,
   })
 
   const rpOfficielQuery = useQuery({
@@ -68,19 +127,30 @@ export function AthleteDetailPage() {
       })
   }, [rpOfficielQuery.data, rpToutesQuery.data])
 
-  const resultatsQuery = useQuery({
-    queryKey: ['athlete-resultats', athleteId],
-    queryFn: () => getResultats(athleteId),
-    enabled: Number.isFinite(athleteId),
-  })
-
   const niveauQuery = useQuery({
     queryKey: ['athlete-niveau', athleteId],
     queryFn: () => getNiveau(athleteId),
     enabled: Number.isFinite(athleteId),
   })
 
-  const allResultats = useMemo(() => resultatsQuery.data?.items ?? [], [resultatsQuery.data])
+  /* L'historique vient de `GET /athletes/{id}`, qui le PORTE DÉJÀ (le calcul du
+     niveau de la saison en dépend). Il était en plus demandé à
+     `GET /athletes/{id}/resultats` : les deux réponses contiennent les mêmes
+     lignes, aux mêmes valeurs, dans un ordre différent — soit un aller-retour
+     transatlantique et un second JSON de ~21 ko à analyser sur le thread
+     principal, pour rien.
+     Le tri par date décroissante était celui du point de terminaison supprimé
+     (`order_by(Resultat.date.desc())`) : il est refait ici pour que le tableau
+     garde exactement l'ordre d'avant. Les dates manquantes vont en fin de liste,
+     comme les met SQLite avec `DESC`. */
+  const allResultats = useMemo(() => {
+    const items = athleteQuery.data?.resultats ?? []
+    return [...items].sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''))
+  }, [athleteQuery.data])
+
+  // Vrai tant que la fiche n'affiche que l'identité tirée du cache de la liste :
+  // l'historique n'est pas « vide », il n'est pas encore arrivé.
+  const historiqueEnAttente = athleteQuery.isPlaceholderData
 
   const disciplines = useMemo(() => {
     const set = new Set(allResultats.map((r) => r.epreuve))
@@ -106,7 +176,7 @@ export function AthleteDetailPage() {
     })
   }, [allResultats, selectedDiscipline, saison])
 
-  if (athleteQuery.isLoading) return <Loading />
+  if (athleteQuery.isLoading) return <AthleteSkeleton />
 
   if (athleteQuery.isError) {
     const status = (athleteQuery.error as { response?: { status?: number } })?.response?.status
@@ -119,7 +189,13 @@ export function AthleteDetailPage() {
   const athlete = athleteQuery.data
   if (!athlete) return null
 
-  const currentNiveau = computeNiveauSaison(athlete.resultats, currentSaison())
+  // Sur l'identité provisoire (`resultats: []`) le calcul local ne peut rien
+  // dire : on reprend alors le niveau que le serveur a déjà calculé pour la
+  // liste, qui est la MÊME grandeur obtenue par le même algorithme (cf.
+  // AthleteListItem.niveau). La pastille ne clignote donc pas à l'arrivée des
+  // résultats.
+  const currentNiveau =
+    computeNiveauSaison(athlete.resultats, currentSaison()) ?? listItem?.niveau ?? null
   const initials = getInitials(athlete.prenom, athlete.nom)
   const showPhoto = Boolean(athlete.photo_url) && !photoFailed
 
@@ -327,18 +403,59 @@ export function AthleteDetailPage() {
           </div>
         </div>
 
-        {resultatsQuery.isLoading && <Loading />}
-        {resultatsQuery.isError && <ErrorMessage message="Impossible de charger l'historique." />}
+        {historiqueEnAttente && <Loading />}
 
-        {resultatsQuery.data && (
+        {!historiqueEnAttente && (
           <>
             <div className="mb-6">
-              <PerformanceChart resultats={filteredResultats} />
+              {/* Le cadre d'attente reprend la STRUCTURE du graphique — même
+                  carte, même ligne de légende, même `h-64 sm:h-72` — et non une
+                  hauteur approchée : c'est ce qui garantit que le tableau en
+                  dessous ne bouge pas d'un pixel quand Recharts se substitue. */}
+              <Suspense
+                fallback={
+                  <div className="card p-4" aria-hidden>
+                    <div className="mb-3 h-4 w-48 rounded bg-[color:var(--color-surface-2)]" />
+                    <div className="h-64 w-full rounded bg-[color:var(--color-surface-2)]/60 sm:h-72" />
+                  </div>
+                }
+              >
+                <PerformanceChart resultats={filteredResultats} />
+              </Suspense>
             </div>
             <PerformanceTable resultats={filteredResultats} />
           </>
         )}
       </section>
+    </div>
+  )
+}
+
+/**
+ * Attente de la fiche quand elle n'a AUCUNE identité à afficher (URL ouverte
+ * directement, rechargement, lien partagé — donc pas de cache de l'effectif).
+ *
+ * Un simple « Chargement… » centré laissait un écran vide de la hauteur du pied
+ * de page, ce qui se lit comme une page cassée plutôt que comme une attente. Le
+ * squelette reprend la géométrie exacte de l'en-tête réel : le contenu se
+ * substitue sans que rien ne se déplace.
+ */
+function AthleteSkeleton() {
+  return (
+    <div className="animate-rise" aria-busy="true" aria-label="Chargement de la fiche">
+      <div className="mb-6 h-5 w-36 rounded bg-[color:var(--color-surface-2)]" />
+      <div className="band mb-8 border border-[color:var(--color-line)] bg-[color:var(--color-surface)] sm:mb-10">
+        <div className="relative grid md:grid-cols-[minmax(0,300px)_1fr]">
+          <div className="aspect-[4/5] animate-pulse bg-[color:var(--color-surface-2)] md:aspect-auto md:min-h-[320px]" />
+          <div className="flex flex-col gap-3 p-5 md:justify-center md:p-10">
+            <div className="h-3 w-28 rounded bg-[color:var(--color-surface-2)]" />
+            <div className="h-6 w-40 rounded bg-[color:var(--color-surface-2)]" />
+            <div className="h-9 w-56 rounded bg-[color:var(--color-surface-2)]" />
+            <div className="h-8 w-32 rounded-full bg-[color:var(--color-surface-2)]" />
+          </div>
+        </div>
+      </div>
+      <div className="h-5 w-48 rounded bg-[color:var(--color-surface-2)]" />
     </div>
   )
 }

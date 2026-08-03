@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom'
 import { AnimatePresence, motion, useReducedMotion, useScroll, useMotionValueEvent } from 'framer-motion'
 import { club } from '../../data/club'
 import { sitePhoto } from '../../lib/cloudinary'
+import { intentProps, prefetchPath } from '../../lib/prefetch'
 import { SocialLinks } from '../ui/SocialLinks'
 
 /**
@@ -92,6 +93,9 @@ export function Navbar() {
             <NavLink
               key={link.to}
               to={link.to}
+              // Le morceau de code de la page part au SURVOL, pas au clic (cf.
+              // lib/prefetch.ts).
+              {...intentProps(link.to)}
               className={({ isActive }) =>
                 `group relative whitespace-nowrap py-1 text-xs font-semibold uppercase tracking-[0.14em] transition-colors ${
                   isActive
@@ -126,6 +130,7 @@ export function Navbar() {
               écran). */}
           <NavLink
             to="/rejoindre"
+            {...intentProps('/rejoindre')}
             className="btn-primary !px-5 !py-2.5 !text-[0.7rem] !tracking-[0.14em]"
           >
             Nous rejoindre
@@ -135,7 +140,16 @@ export function Navbar() {
         <button
           type="button"
           className="tap inline-flex h-11 w-11 items-center justify-center rounded-full border border-[color:var(--color-line)] text-[color:var(--color-fg)] transition hover:border-club-primary md:hidden"
-          onClick={() => setOpen((o) => !o)}
+          onClick={() => {
+            // Ouvrir le tiroir est le signal le PLUS précoce dont on dispose sur
+            // mobile : le visiteur ne l'ouvre que pour changer de page, et il lui
+            // faut ensuite ~1 s pour lire les cinq entrées et viser. Précharger
+            // les cinq ici (~15 ko compressés en tout) leur laisse le temps
+            // d'arriver avant le doigt, là où un `touchstart` sur l'entrée
+            // elle-même n'offre que ~100 ms d'avance.
+            if (!open) for (const l of [...links, { to: '/rejoindre' }]) prefetchPath(l.to)
+            setOpen((o) => !o)
+          }}
           aria-label={open ? 'Fermer le menu' : 'Ouvrir le menu'}
           aria-expanded={open}
           aria-controls="nav-mobile"
@@ -174,6 +188,7 @@ export function Navbar() {
                 >
                   <NavLink
                     to={link.to}
+                    {...intentProps(link.to)}
                     onClick={() => setOpen(false)}
                     className={({ isActive }) =>
                       // py-3.5 → 48 px de cible tactile.

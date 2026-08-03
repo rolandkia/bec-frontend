@@ -1,6 +1,6 @@
 import { ExternalLink, Trophy } from 'lucide-react'
 import type { FigurePortrait } from '../../data/palmares'
-import { sitePhotoProps } from '../../lib/cloudinary'
+import { PHONE_PHOTO_CAP, sitePhotoProps } from '../../lib/cloudinary'
 import { ffaProfileUrl } from '../../utils/ffa'
 
 /**
@@ -46,7 +46,7 @@ export function FigureCard({
         >
           <img
             {...sitePhotoProps(figure.photo, {
-              sizes: '(min-width: 640px) 45vw, 100vw',
+              sizes: `${PHONE_PHOTO_CAP}, (min-width: 640px) 45vw, 100vw`,
             })}
             alt={figure.photoAlt}
             loading="lazy"

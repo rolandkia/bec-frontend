@@ -11,6 +11,8 @@
  *  sauvegarde. Si une URL transformée risque de repartir dans l'éditeur (copier /
  *  glisser depuis un article rendu), la normaliser avec `stripCldTransforms`. */
 
+import { PHOTO_VARIANTS } from '../data/photoVariants'
+
 /** `$1` = base jusqu'à `/upload`, `$2` = image|video, `$3` = le reste. */
 const CLOUDINARY_URL = /^(https?:\/\/res\.cloudinary\.com\/[^/]+\/(image|video)\/upload)\/(.+)$/
 
@@ -203,6 +205,27 @@ const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME as string | undefi
 /** Dossier des public_id, à garder aligné avec le script d'envoi. */
 const SITE_FOLDER = 'bec_site'
 
+/** `/photos/gallery/x.webp` + 640 → `/photos/w640/gallery/x.webp`. Un simple
+ *  préfixe : c'est tout l'intérêt d'un dossier par largeur (cf. le script). */
+function variantPath(path: string, w: number): string {
+  return path.replace('/photos/', `/photos/w${w}/`)
+}
+
+/**
+ * Variante locale la plus proche PAR EXCÈS d'une largeur d'affichage, ou le
+ * chemin d'origine s'il n'y a rien de plus petit qui convienne.
+ *
+ * Sert les surfaces qui n'ont qu'un `src`, sans `srcset` : le logo de 40 px de la
+ * navbar tirait les 22 ko du fichier 512×512 sur chaque page, et un logo de
+ * partenaire ou un portrait d'organigramme la pleine résolution du bandeau.
+ */
+function localVariant(path: string, w: number): string {
+  const local = PHOTO_VARIANTS[path]
+  if (!local) return path
+  const fit = local.variants.find((v) => v >= w)
+  return fit === undefined ? path : variantPath(path, fit)
+}
+
 /**
  * Chemin local (`/photos/x.webp`) → URL Cloudinary CANONIQUE (sans
  * transformation), ou le chemin tel quel si le compte n'est pas configuré.
@@ -218,41 +241,104 @@ export function sitePhotoUrl(path: string): string {
   return `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/${SITE_FOLDER}${path}`
 }
 
-/** Photo éditoriale bornée en largeur, format et qualité négociés. */
+/** Photo éditoriale bornée en largeur, format et qualité négociés — ou, hors
+ *  Cloudinary, la variante locale la plus proche par excès (cf. `localVariant`).
+ *  Le paramètre `w` était jusqu'ici IGNORÉ dans ce second cas : tous les
+ *  appelants demandaient déjà la bonne largeur, seule la livraison manquait. */
 export function sitePhoto(path: string, w = 1600): string {
   const url = sitePhotoUrl(path)
-  return url === path ? path : cldImage(url, w)
+  return url === path ? localVariant(path, w) : cldImage(url, w)
 }
 
 /**
- * `srcset` d'une photo éditoriale, ou `undefined` si elle est encore servie en
- * local (l'attribut doit alors être OMIS, pas rempli d'une valeur inutile).
+ * `srcset` d'une photo éditoriale — par Cloudinary si le compte est configuré,
+ * sinon par les VARIANTES LOCALES pré-générées (`public/photos/w<largeur>/…`,
+ * cf. scripts/photo-variants.mjs). `undefined` seulement si la photo n'a ni
+ * l'un ni l'autre : l'attribut doit alors être omis, pas rempli d'une valeur
+ * inutile.
  *
- * Trois largeurs, comme `cldSrcSet` : les crédits du plan gratuit comptent les
- * transformations, et chaque largeur est un dérivé de plus.
+ * Le repli local existe parce que la seule largeur servie était celle du plus
+ * grand écran possible : 171 ko de hero pour un téléphone qui n'en affiche que
+ * 1 080 px, sur un lien où les images pèsent 90 % de la page. Il ne dépend
+ * d'aucun compte ni d'aucune variable d'environnement, donc il agit tout de
+ * suite — et devient inerte le jour où Cloudinary est activé, sans rien à
+ * défaire ici.
+ *
+ * `widths` filtre l'échelle disponible au lieu de la remplacer : un appelant
+ * demande les largeurs de SA surface (384/768 pour une vignette de bande), et
+ * seules les variantes qui existent réellement peuvent être proposées. Le
+ * fichier original ferme toujours la liste, à sa largeur intrinsèque.
  */
 export function sitePhotoSrcSet(
   path: string,
   widths: readonly number[] = [640, 1280, 1920],
 ): string | undefined {
   const url = sitePhotoUrl(path)
-  if (url === path) return undefined
-  return cldSrcSet(url, widths, { crop: 'limit', quality: 'auto', format: 'auto' })
+  if (url !== path) {
+    // Trois largeurs comme `cldSrcSet` : les crédits du plan gratuit comptent
+    // les transformations, et chaque largeur est un dérivé de plus.
+    return cldSrcSet(url, widths, { crop: 'limit', quality: 'auto', format: 'auto' })
+  }
+
+  const local = PHOTO_VARIANTS[path]
+  if (!local) return undefined
+  const max = Math.max(...widths)
+  // On garde les variantes utiles à la surface demandée, plus la première qui la
+  // dépasse : c'est elle que choisira un écran à forte densité de pixels.
+  const useful = local.variants.filter((w) => w <= max)
+  const next = local.variants.find((w) => w > max)
+  if (next !== undefined) useful.push(next)
+  const entries = useful.map((w) => `${variantPath(path, w)} ${w}w`)
+  // L'original en dernière marche, sauf s'il est déjà couvert : une variante à
+  // la largeur intrinsèque n'existe pas (cf. MIN_GAIN du script).
+  if (useful[useful.length - 1] !== local.w) entries.push(`${path} ${local.w}w`)
+  return entries.length > 1 ? entries.join(', ') : undefined
 }
+
+/**
+ * Première condition de `sizes` pour une PHOTOGRAPHIE pleine largeur sur
+ * téléphone. À poser avant les autres conditions, qui sont évaluées dans
+ * l'ordre.
+ *
+ * ATTENTION, `70vw` n'est PAS la largeur d'affichage : ces photos occupent bien
+ * toute la largeur de l'écran. C'est un PLAFOND DE DENSITÉ, et c'est le seul
+ * levier statique qui existe pour en poser un — le navigateur multiplie la
+ * valeur de `sizes` par la densité réelle de l'écran, sans qu'aucun attribut ne
+ * permette de borner ce facteur.
+ *
+ * Ce qu'il évite : un téléphone à 2,6× (Pixel 7, iPhone Pro…) réclame 1 080 px
+ * pour 412 px d'écran. Comme presque toutes nos sources font 1 200 px de large,
+ * AUCUNE variante n'est assez grande et le navigateur retombe sur l'original —
+ * 319 ko pour une tuile de 380 px, alors que la variante 768 en fait 127. En
+ * annonçant 70vw, la demande tombe à ~760 px, donc sur la marche 768, soit
+ * 1,86× de densité réelle.
+ *
+ * Pourquoi c'est un bon échange ici : 1,86× sur une PHOTOGRAPHIE (aucun texte,
+ * aucun trait fin, et le plus souvent sous un voile) est indiscernable de 2,6× à
+ * distance de bras, alors que la différence de poids est du simple au triple sur
+ * un lien mobile qui traverse déjà l'Atlantique. Le plafond ne s'applique QU'AUX
+ * téléphones (`max-width: 639px`) : au-delà, la densité est de 1 à 2 et la
+ * largeur annoncée redevient la vraie.
+ */
+export const PHONE_PHOTO_CAP = '(max-width: 639px) 70vw'
 
 /**
  * Trio `src` / `srcSet` / `sizes` d'une photo éditoriale, prêt à étaler sur une
  * balise `<img>`. Existe pour que `sizes` ne soit JAMAIS posé sans `srcSet` :
  * seul, il ne sert à rien et brouille la lecture du rendu.
  *
- * `sizes` par défaut à `100vw`, la largeur des bandeaux et chapitres pleine
- * page, qui sont la majorité des cas. Une surface plus étroite (portrait de
- * l'organigramme, logo de partenaire, vignette de bande) passe le sien avec les
- * largeurs correspondantes.
+ * `sizes` par défaut aux bandeaux et chapitres PLEINE PAGE, qui sont la majorité
+ * des cas, plafond de densité téléphone compris (cf. `PHONE_PHOTO_CAP`). Une
+ * surface plus étroite (portrait de l'organigramme, logo de partenaire, vignette
+ * de bande) passe le sien avec les largeurs correspondantes.
  */
 export function sitePhotoProps(
   path: string,
-  { sizes = '100vw', widths, w }: { sizes?: string; widths?: readonly number[]; w?: number } = {},
+  {
+    sizes = `${PHONE_PHOTO_CAP}, 100vw`,
+    widths,
+    w,
+  }: { sizes?: string; widths?: readonly number[]; w?: number } = {},
 ): { src: string; srcSet?: string; sizes?: string } {
   const srcSet = sitePhotoSrcSet(path, widths)
   return { src: sitePhoto(path, w), srcSet, sizes: srcSet ? sizes : undefined }

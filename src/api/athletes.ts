@@ -21,6 +21,16 @@ export async function getAthlete(athleteId: number): Promise<AthleteOut> {
   return data
 }
 
+/**
+ * Historique paginé d'un athlète.
+ *
+ * PLUS APPELÉ PAR LA FICHE ATHLÈTE, volontairement : `GET /athletes/{id}` porte
+ * déjà l'historique complet (le niveau de la saison en dépend), donc l'appeler
+ * ici en plus revenait à traverser l'Atlantique une seconde fois pour les mêmes
+ * lignes et à analyser ~21 ko de JSON en double. Conservé — comme `getBilan` —
+ * parce que ce client reflète l'API du backend, et que la pagination reste le
+ * bon outil si un écran doit un jour n'en afficher qu'une tranche.
+ */
 export async function getResultats(
   athleteId: number,
   params?: { start_date?: string; end_date?: string; limit?: number; offset?: number },

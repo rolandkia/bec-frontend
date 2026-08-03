@@ -31,6 +31,66 @@
       href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
+    <!-- Photo du hero de l'accueil, demandée DÈS L'ANALYSE DU HTML.
+         Sans cela, elle n'est découverte qu'une fois ~190 ko de JavaScript
+         téléchargés PUIS exécutés, puisque c'est React qui écrit la balise
+         <img> : sur un téléphone en 4G, une à deux secondes après le début du
+         chargement, alors qu'elle est le plus grand élément du premier écran.
+
+         Pourquoi un script et non une balise <link> écrite ici : ce fichier est
+         servi pour TOUTES les adresses du site (`try_files … /index.html`), donc
+         un préchargement en dur ferait aussi télécharger le hero de l'accueil à
+         qui ouvre /athletes ou /mag. La condition sur le chemin est le seul
+         moyen de le réserver à l'accueil. Le script est synchrone et sans
+         dépendance : il s'exécute pendant l'analyse de l'en-tête, soit avant
+         tout ce que la page charge par ailleurs.
+
+         `imagesrcset`/`imagesizes` reprennent EXACTEMENT ce que rend <Chapter>
+         (cf. sitePhotoSrcSet et les variantes de scripts/photo-variants.mjs) :
+         s'ils divergeaient, le navigateur téléchargerait deux fichiers au lieu
+         d'un. -->
+    <!-- Photo du hero de l'accueil, demandée DÈS L'ANALYSE DU HTML.
+         Sans cela, elle n'est découverte qu'une fois ~130 ko de JavaScript
+         téléchargés PUIS exécutés, puisque c'est React qui écrit la balise
+         <img> : sur un téléphone en 4G, plus d'une seconde après le début du
+         chargement, alors qu'elle est le plus grand élément du premier écran.
+
+         Pourquoi un script et non une balise <link> écrite en dur :
+           1. ce fichier est servi pour TOUTES les adresses du site (`try_files …
+              /index.html`), donc un préchargement inconditionnel ferait aussi
+              télécharger le hero de l'accueil à qui ouvre /athletes ou /mag ;
+           2. surtout, `imagesizes` ne fonctionne PAS ici. Ses conditions de média
+              sont évaluées à l'insertion du lien, avant que la largeur de mise en
+              page du téléphone ne soit établie : `(max-width: 639px)` n'y était
+              jamais vraie, le navigateur préchargeait la variante 1280 puis
+              <Chapter> demandait la 768 — DEUX fichiers, et un LCP DÉGRADÉ de
+              ~120 ms par rapport à l'absence de préchargement (mesuré). La
+              largeur est donc choisie ici en JavaScript, où `innerWidth` et
+              `devicePixelRatio` sont déjà justes.
+
+         La règle ci-dessous reproduit exactement celle du rendu : l'échelle de
+         largeurs de scripts/photo-variants.mjs, et le plafond de densité
+         `PHONE_PHOTO_CAP` de src/lib/cloudinary.ts (70vw sous 640 px). Les trois
+         doivent bouger ensemble — sinon le navigateur télécharge deux fichiers au
+         lieu d'un, ce que révèle un doublon `hero-interclub` dans l'onglet
+         réseau. -->
+    <script>
+      if (location.pathname === '/') {
+        var cap = innerWidth <= 639 ? 0.7 : 1
+        var need = innerWidth * cap * (devicePixelRatio || 1)
+        var step = [384, 640, 768, 1024, 1280, 1920].find(function (w) {
+          return w >= need
+        })
+        var l = document.createElement('link')
+        l.rel = 'preload'
+        l.as = 'image'
+        l.fetchPriority = 'high'
+        l.href = step
+          ? '/photos/w' + step + '/hero-interclub.webp'
+          : '/photos/hero-interclub.webp'
+        document.head.appendChild(l)
+      }
+    </script>
     <title>BEC Athlétisme</title>
   </head>
   <body>

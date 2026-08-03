@@ -39,12 +39,30 @@ En développement, Vite relaie ces requêtes vers le backend
 ([`Caddyfile`](Caddyfile)). Les requêtes restent donc same-origin : aucun problème de CORS ni
 d'ambiguïté `localhost` / `127.0.0.1` / IPv6.
 
+### Photos éditoriales — variantes de largeur
+
+Les 58 photos de `public/photos` sont servies **en plusieurs largeurs** (`srcset`), à partir de
+variantes pré-générées et commitées dans `public/photos/w<largeur>/` :
+
+```bash
+node scripts/photo-variants.mjs          # après tout ajout / remplacement de photo
+node scripts/photo-variants.mjs --check  # vérifie que variantes et manifeste sont à jour
+```
+
+Sans elles, chaque photo partait dans la largeur du plus grand écran possible : un accueil parcouru
+sur un Pixel 7 en 4G téléchargeait 1 737 ko d'images pour 193 ko de JavaScript, la moitié des octets
+étant jetés au redimensionnement. Il en télécharge 761 ko, et le LCP de l'accueil passe de ~2,2 s à
+~1,7 s (mêmes conditions, VM simulée à 110 ms d'aller-retour). Détails et compromis (échelle des
+largeurs, plafond de densité sur téléphone) : en tête de
+[`scripts/photo-variants.mjs`](scripts/photo-variants.mjs) et
+[`public/photos/README.md`](public/photos/README.md).
+
 ### Photos éditoriales sur CDN
 
-Les ~60 photos de `public/` (bandeaux, chapitres, logos, 4,9 Mo) sont servies par la VM, qui est
-en `us-east1` alors que le public du club est à Bordeaux : sans CDN, en une largeur fixe unique et
-sans négociation de format. Elles peuvent être servies par Cloudinary, où le compte est déjà en
-place pour les médias du back.
+La VM est en `us-east1` alors que le public du club est à Bordeaux, et elle sert sans CDN ni
+négociation de format. Les photos peuvent être servies par Cloudinary, où le compte est déjà en
+place pour les médias du back — ce qui remplace alors les variantes locales et supprime en plus
+l'aller-retour transatlantique sur 90 % du poids des pages.
 
 ```bash
 # 1. envoi (côté bec-backend, idempotent, --dry-run pour voir sans envoyer)
@@ -58,7 +76,8 @@ renvoie le chemin local. C'est ce repli qui rend la bascule et le retour arrièr
 chemins `/photos/...` restent l'identité canonique d'une photo, dans le code comme dans
 `src/data`, et il n'y a aucun manifeste d'URL à maintenir à côté des fichiers. Avec la variable,
 les mêmes chemins sont livrés en AVIF/WebP, à trois largeurs (`srcset`), depuis un point de
-présence proche.
+présence proche — et `sitePhotoSrcSet` cesse d'elle-même d'utiliser les variantes locales, sans
+rien à défaire.
 
 ## Structure
 

@@ -354,6 +354,7 @@ type ParallaxImageProps = {
   className?: string
   loading?: 'lazy' | 'eager'
   fetchPriority?: 'high' | 'low' | 'auto'
+  decoding?: 'sync' | 'async' | 'auto'
   /** amplitude de translation (px) — bornée discrète par le brief */
   strength?: number
   /** styles additionnels (typiquement `objectPosition` — cf. <Chapter>) */
@@ -364,8 +365,9 @@ export function ParallaxImage({
   src,
   alt = '',
   className,
-  loading,
+  loading = 'lazy',
   fetchPriority,
+  decoding = 'async',
   strength = 40,
   style,
 }: ParallaxImageProps) {
@@ -390,6 +392,7 @@ export function ParallaxImage({
         className={className}
         loading={loading}
         fetchPriority={fetchPriority}
+        decoding={decoding}
         style={style}
       />
     )
@@ -403,6 +406,7 @@ export function ParallaxImage({
         aria-hidden={alt === '' || undefined}
         loading={loading}
         fetchPriority={fetchPriority}
+        decoding={decoding}
         className={className}
         style={{ ...style, y, scale: 1.14 }}
       />
@@ -764,6 +768,17 @@ export function Chapter({
           <ParallaxImage
             src={image}
             alt={imageAlt}
+            // MÊME politique de chargement que la branche statique ci-dessous.
+            // Sans ces trois attributs, un chapitre en parallaxe rendait un
+            // `<img>` sans `loading`, donc EAGER : les trois chapitres à
+            // parallaxe de l'accueil (« Le départ », « Le podium », « Nous
+            // rejoindre ») téléchargeaient leur photo pleine taille avec le
+            // premier écran, alors qu'ils vivent 1 000 à 6 000 px plus bas.
+            // C'était ~280 ko pris sur le budget du hero, sur un lien mobile où
+            // le navigateur ne tient que six connexions de front.
+            loading={imgProps.loading}
+            fetchPriority={imgProps.fetchPriority}
+            decoding={imgProps.decoding}
             className="absolute inset-0 h-full w-full object-cover"
             style={{ objectPosition: focus }}
           />
@@ -925,13 +940,22 @@ export function ScrubImage({
   const y = useTransform(scrollYProgress, [0, 1], ['-6%', '6%'])
 
   // La photo est resserrée depuis 1,25× : elle est rendue plus large que le
-  // viewport, d'où `125vw` et non `100vw`.
-  const photo = sitePhotoProps(src, { sizes: '125vw' })
+  // viewport, d'où `125vw` et non `100vw`. `88vw` sur téléphone est le même
+  // plafond de densité que `PHONE_PHOTO_CAP` (~1,9×), rapporté à cette surface
+  // de 125vw — et non une largeur d'affichage : voir son commentaire.
+  const photo = sitePhotoProps(src, { sizes: '(max-width: 639px) 88vw, 125vw' })
+
+  // La seule section épinglée du site ouvre le troisième mouvement de l'accueil,
+  // à ~1 100 px sous le premier écran : sa photo est donc DIFFÉRÉE, comme celle
+  // de tout chapitre non prioritaire. Sans `loading`, un `<img>` est eager et
+  // celle-ci partait avec le premier écran, en concurrence du hero.
+  const deferred = { loading: 'lazy', decoding: 'async' } as const
 
   if (reduce) {
     return (
       <img
         {...photo}
+        {...deferred}
         alt={alt}
         aria-hidden={alt === '' || undefined}
         className={`absolute inset-0 h-full w-full object-cover ${className}`}
@@ -944,6 +968,7 @@ export function ScrubImage({
     <div ref={ref} className="absolute inset-0 overflow-hidden">
       <motion.img
         {...photo}
+        {...deferred}
         alt={alt}
         aria-hidden={alt === '' || undefined}
         className={`h-full w-full object-cover ${className}`}

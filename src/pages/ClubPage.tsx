@@ -15,7 +15,7 @@ import { FigureCard } from '../components/club/FigureCard'
 import { PalmaresTimeline } from '../components/club/PalmaresTimeline'
 import { PartenaireCard } from '../components/club/PartenaireCard'
 import { Loading, ErrorMessage } from '../components/ui/Status'
-import { cldPortrait, sitePhotoProps } from '../lib/cloudinary'
+import { PHONE_PHOTO_CAP, cldPortrait, sitePhotoProps } from '../lib/cloudinary'
 import { getInitials } from '../utils/initials'
 
 // `short` : version affichée sous `sm`, où les quatre items se partagent la
@@ -133,7 +133,7 @@ export function ClubPage() {
                   contre le CLS était fausse. */}
               <img
                 {...sitePhotoProps('/photos/concentration-01.webp', {
-                  sizes: '(min-width: 1024px) 50vw, 100vw',
+                  sizes: `${PHONE_PHOTO_CAP}, (min-width: 1024px) 50vw, 100vw`,
                 })}
                 alt="Athlète du club à l'entraînement, mains sur les hanches"
                 width={1100}

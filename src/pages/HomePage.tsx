@@ -6,7 +6,7 @@ import { club } from '../data/club'
 import { jalonsAccueil } from '../data/palmares'
 import { besoinsCourts, partenaires, partenairesAccroche } from '../data/partenaires'
 import { clubPhotos } from '../data/clubPhotos'
-import { sitePhoto, sitePhotoProps, sitePhotoUrl } from '../lib/cloudinary'
+import { PHONE_PHOTO_CAP, sitePhoto, sitePhotoProps, sitePhotoUrl } from '../lib/cloudinary'
 import { parseLocalDate, splitEvents } from '../utils/events'
 import { Lightbox } from '../components/ui/Lightbox'
 import { EventRow } from '../components/calendar/EventRow'
@@ -448,7 +448,7 @@ export function HomePage() {
           <MaskReveal duration={1} className="overflow-hidden rounded-md">
             <img
               {...sitePhotoProps('/photos/club-famille.webp', {
-                sizes: '(min-width: 1024px) 62vw, 100vw',
+                sizes: `${PHONE_PHOTO_CAP}, (min-width: 1024px) 62vw, 100vw`,
               })}
               alt="Le club réuni lors de sa soirée annuelle"
               width={1800}
@@ -461,7 +461,7 @@ export function HomePage() {
           <MaskReveal duration={1} className="overflow-hidden rounded-md">
             <img
               {...sitePhotoProps('/photos/interclub-drapeau.webp', {
-                sizes: '(min-width: 1024px) 33vw, 100vw',
+                sizes: `${PHONE_PHOTO_CAP}, (min-width: 1024px) 33vw, 100vw`,
               })}
               alt="Un athlète du club brandissant le drapeau du BEC devant le groupe"
               width={1200}

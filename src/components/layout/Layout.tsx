@@ -1,11 +1,18 @@
-import { Suspense } from 'react'
+import { Suspense, useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
 import { Navbar } from './Navbar'
 import { Footer } from './Footer'
 import { ScrollToTop } from './ScrollToTop'
 import { Loading } from '../ui/Status'
+import { warmNavRoutes } from '../../lib/prefetch'
 
 export function Layout() {
+  // Les cinq sections de la navbar sont préchargées pendant le premier temps
+  // mort qui suit le chargement complet de la page (cf. lib/prefetch.ts) : elles
+  // pèsent ~15 ko compressés à elles cinq, et c'est ce qui rend le premier clic
+  // sur un onglet immédiat au lieu d'un aller-retour vers la VM américaine.
+  useEffect(warmNavRoutes, [])
+
   return (
     <div className="flex min-h-dvh flex-col">
       <ScrollToTop />

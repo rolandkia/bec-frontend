@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { AthleteListItem } from '../../api/types'
 import { cldPortrait } from '../../lib/cloudinary'
+import { prefetchChunk } from '../../lib/prefetch'
+import { athleteDetailPage } from '../../lib/routeChunks'
 import { getInitials } from '../../utils/initials'
 import { LevelBadge } from './LevelBadge'
 
@@ -16,9 +18,19 @@ export function AthleteCard({ athlete }: { athlete: AthleteListItem }) {
   const [photoFailed, setPhotoFailed] = useState(false)
   const showPhoto = Boolean(athlete.photo_url) && !photoFailed
 
+  // Toutes les cartes mènent au MÊME morceau de code : la première intention
+  // suffit à le charger, les 55 autres cartes n'ont plus rien à demander. C'est
+  // le morceau le plus lourd du site public (graphique de progression compris),
+  // donc celui qui rend le plus à ne pas attendre le clic — mais il n'est jamais
+  // préchargé à l'aveugle, seulement sur intention.
+  const onIntent = () => prefetchChunk(athleteDetailPage)
+
   return (
     <Link
       to={`/athletes/${athlete.id}`}
+      onPointerEnter={onIntent}
+      onTouchStart={onIntent}
+      onFocus={onIntent}
       className="group card card-hover tap block overflow-hidden p-0"
     >
       <div className="relative aspect-[4/5] overflow-hidden">

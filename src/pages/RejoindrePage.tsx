@@ -2,7 +2,7 @@ import { Mail, MapPin, Phone, UserPlus } from 'lucide-react'
 import { club } from '../data/club'
 import { groupesEntrainement } from '../data/infosPratiques'
 import { GroupeCard } from '../components/club/GroupeCard'
-import { sitePhotoProps } from '../lib/cloudinary'
+import { PHONE_PHOTO_CAP, sitePhotoProps } from '../lib/cloudinary'
 import { PageHero } from '../components/layout/PageHero'
 import { SectionHead } from '../components/ui/SectionHead'
 import { Reveal, MaskReveal } from '../components/ui/motion'
@@ -57,7 +57,7 @@ export function RejoindrePage() {
           <MaskReveal from="left" className="overflow-hidden rounded-md">
             <img
               {...sitePhotoProps('/photos/jeune-medaille.webp', {
-                sizes: '(min-width: 1024px) 50vw, 100vw',
+                sizes: `${PHONE_PHOTO_CAP}, (min-width: 1024px) 50vw, 100vw`,
               })}
               alt="Jeune athlète du club, sa médaille entre les dents"
               width={1400}

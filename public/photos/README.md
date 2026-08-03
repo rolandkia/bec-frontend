@@ -82,6 +82,37 @@ for img in $(ls public/photos/*.webp | xargs -n1 basename); do
 done
 ```
 
+## Variantes de largeur — `w384/` `w640/` `w768/` `w1024/` `w1280/` `w1920/`
+
+**Ces dossiers sont GÉNÉRÉS**, en miroir de l'arborescence ci-dessus
+(`w768/gallery/race-1.webp` est la version 768 px de `gallery/race-1.webp`), et
+ils sont commités. Ils existent parce que chaque photo n'était servie qu'en UNE
+largeur, celle du plus grand écran possible : sur l'accueil, mesuré sur un
+Pixel 7 en 4G, 1 737 ko d'images pour 193 ko de JavaScript, dont la moitié des
+octets jetés par le navigateur au redimensionnement. Le même parcours en télécharge
+maintenant 761 ko.
+
+```bash
+node scripts/photo-variants.mjs           # génère ce qui manque + le manifeste
+node scripts/photo-variants.mjs --force   # tout réencoder
+node scripts/photo-variants.mjs --check   # vérifier (code 1 si à régénérer)
+```
+
+À LANCER après tout ajout, remplacement ou suppression d'une photo de ce dossier.
+Le script écrit aussi `src/data/photoVariants.ts`, le manifeste que consulte
+`sitePhotoSrcSet` — sans lui, aucun `srcset` n'est émis et le site retombe
+simplement sur les originaux, sans rien casser.
+
+L'invariant « aucun orphelin » ci-dessus n'a pas à en tenir compte : son `ls
+public/photos/*.webp` ne descend pas dans les sous-dossiers, et les variantes ne
+sont référencées par aucun nom dans `src/` — elles sont calculées à partir du
+chemin de l'original. Le ménage complet est un `rm -rf public/photos/w*` suivi
+d'une régénération.
+
+Détails d'implémentation (échelle des largeurs, qualité, plafond de densité sur
+téléphone) : en tête de `scripts/photo-variants.mjs` et sur `PHONE_PHOTO_CAP`
+dans `src/lib/cloudinary.ts`.
+
 Trois autres archives de Colette Besson dorment dans
 `bec-pictures/photo_historique/` sans être converties : le portrait N&B de 1968
 (667×1000, le plus net, mais maillot France), le podium de Mexico (1024×580) et
