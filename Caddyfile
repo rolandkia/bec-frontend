@@ -1,7 +1,8 @@
 :80 {
-	# zstd d'abord : mieux que gzip à coût CPU comparable, et négocié par tous les
-	# navigateurs à jour. gzip reste en repli. (Brotli demanderait un plugin Caddy,
-	# donc une image sur mesure : pas pour le gain qui reste.)
+	# Compression À LA VOLÉE. Elle ne concerne plus que les réponses de l'API
+	# (proxy ci-dessous) : les fichiers statiques, eux, sont désormais compressés
+	# au build et servis tels quels (voir `precompressed` plus bas). zstd d'abord,
+	# gzip en repli.
 	encode zstd gzip
 
 	handle_path /api/* {
@@ -58,7 +59,24 @@
 		@html not path /assets/* /photos/* /infos/* /partenaires/* /favicon.svg
 		header @html Cache-Control "no-cache"
 
-		file_server
+		# ─── Fichiers pré-compressés ─────────────────────────────────────────────
+		# `scripts/precompress.mjs` écrit un `.br`, un `.zst` et un `.gz` à côté de
+		# chaque fichier texte de `dist/`, au niveau MAXIMAL. Caddy se contente ici
+		# de servir la variante que le visiteur accepte, sans rien compresser.
+		#
+		# Deux gains distincts :
+		#   1. le poids. Compresser à la volée oblige à un niveau rapide ; brotli 11
+		#      calculé une fois au build descend le premier rendu de 200 691 o à
+		#      163 177 o, soit -18,7 % sur un lien transatlantique sans CDN.
+		#   2. le processeur. L'e2-micro n'a qu'un vCPU partagé, que Caddy disputait
+		#      à gunicorn à CHAQUE requête pour recompresser les mêmes fichiers.
+		#
+		# brotli sans greffon : `encode br` demanderait une image Caddy sur mesure,
+		# mais SERVIR un `.br` déjà sur le disque ne demande aucun encodeur. L'ordre
+		# ci-dessous est l'ordre de préférence, du plus efficace au plus compatible.
+		file_server {
+			precompressed br zstd gzip
+		}
 		try_files {path} /index.html
 	}
 }
