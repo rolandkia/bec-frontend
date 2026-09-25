@@ -331,21 +331,29 @@ export function HomePage() {
           ═══════════════════════════════════════════════════════════════════ */}
       <section className="pb-16 sm:pb-24">
         <SectionHead eyebrow="Les meilleurs chronos" title="Classement du club">
-          {/* Filtres empilés pleine largeur sur mobile (cf. `.segmented`). */}
+          {/* Les DEUX filtres sur UNE SEULE rangée au téléphone. Empilés pleine
+              largeur, ils faisaient deux barres identiques de 44 px l'une sous
+              l'autre : 100 px de chrome pour quatre mots, juste au-dessus de la
+              donnée qu'ils filtrent — sur un écran de 844 px, le classement
+              lui-même commençait sous la ligne de flottaison. Côte à côte, ils
+              se lisent aussi comme ce qu'ils sont : deux axes d'un même réglage,
+              pas deux étapes. */}
           <div className="flex w-full flex-col items-stretch gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
-            <div className="segmented">
-              {(['homme', 'femme'] as const).map((s) => (
-                <button key={s} type="button" aria-pressed={sexe === s} onClick={() => setSexe(s)}>
-                  {s === 'homme' ? 'Hommes' : 'Femmes'}
-                </button>
-              ))}
-            </div>
-            <div className="segmented">
-              {(['absolu', 'saison'] as const).map((p) => (
-                <button key={p} type="button" aria-pressed={periode === p} onClick={() => setPeriode(p)}>
-                  {p === 'absolu' ? 'All-time' : 'Saison'}
-                </button>
-              ))}
+            <div className="flex gap-2 sm:contents">
+              <div className="segmented">
+                {(['homme', 'femme'] as const).map((s) => (
+                  <button key={s} type="button" aria-pressed={sexe === s} onClick={() => setSexe(s)}>
+                    {s === 'homme' ? 'Hommes' : 'Femmes'}
+                  </button>
+                ))}
+              </div>
+              <div className="segmented">
+                {(['absolu', 'saison'] as const).map((p) => (
+                  <button key={p} type="button" aria-pressed={periode === p} onClick={() => setPeriode(p)}>
+                    {p === 'absolu' ? 'All-time' : 'Saison'}
+                  </button>
+                ))}
+              </div>
             </div>
             {/* L'or signale l'excellence : « Records » y a droit, pas les filtres. */}
             <Link

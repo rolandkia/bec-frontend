@@ -372,8 +372,15 @@ body {
   @media (hover: hover) and (pointer: fine) {
     .card-hover:hover {
       transform: translateY(-0.25rem);
-      border-color: color-mix(in oklab, var(--color-club-primary) 55%, var(--color-line));
-      box-shadow: 0 18px 40px -22px color-mix(in oklab, var(--color-club-primary) 45%, transparent);
+      /* Ombre NEUTRE et liséré rouge DISCRET. La version précédente montait à
+         55 % de rouge sur la bordure et posait une lueur rouge sous la carte :
+         lisible sur une carte isolée, intenable sur la grille de /athletes où
+         72 cartes se survolent à la suite — le rouge du club y passait du statut
+         d'accent à celui de couleur de fond. Une élévation neutre dit « cliquable »
+         tout aussi bien, et laisse la couleur aux éléments qui la méritent
+         (badge de niveau, filet de marque). */
+      border-color: color-mix(in oklab, var(--color-club-primary) 30%, var(--color-line));
+      box-shadow: 0 16px 34px -20px color-mix(in oklab, var(--color-ink) 42%, transparent);
     }
   }
 
@@ -513,7 +520,12 @@ body {
   }
   .segmented > button,
   .segmented > a {
-    @apply min-w-0 flex-1 truncate rounded-full px-4 py-2.5 text-sm font-semibold transition sm:flex-none sm:py-1.5;
+    /* `px-3` sous `sm` : pleine largeur, le rembourrage horizontal ne décide
+       plus de la largeur du bouton — mais il décide de la place qui reste au
+       libellé. Deux contrôles côte à côte sur un écran de 390 px (cf. le
+       classement de l'accueil) tronquaient « All-time » à cause de ces 32 px de
+       marge intérieure devenus inutiles. */
+    @apply min-w-0 flex-1 truncate rounded-full px-3 py-2.5 text-sm font-semibold transition sm:flex-none sm:px-4 sm:py-1.5;
     color: var(--color-muted);
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
@@ -680,6 +692,111 @@ body {
 }
 @utility animate-rise {
   animation: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ─── TRANSITION DE PAGE ─────────────────────────────────────────────────────
+   Le passage d'une route à l'autre était une COUPE SÈCHE : la page suivante
+   remplaçait la précédente d'une image sur l'autre. Sur ce site en particulier
+   c'est le pire moment pour ne rien montrer — le serveur est aux États-Unis, la
+   page arrive après ~110 ms d'aller-retour minimum, et rien ne dit entre-temps
+   que le clic a été pris en compte.
+
+   Une entrée courte (260 ms) et de faible amplitude (10 px) suffit : elle ne
+   retarde rien (l'ancienne page a DÉJÀ disparu, on n'anime que l'arrivée) et
+   elle donne au changement de page la même grammaire que le reste du site —
+   même courbe, même sens bas→haut que `Reveal`.
+
+   POURQUOI UNE ANIMATION CSS ET NON `AnimatePresence` :
+     • pas de sortie à jouer ⇒ pas de double montage, pas de risque de garder en
+       vie une page différée le temps de son fondu ;
+     • surtout, `animation-fill-mode` reste à `none`. Une fois l'animation finie,
+       l'élément n'a PLUS AUCUNE transformation, donc il ne devient pas bloc
+       conteneur pour ses descendants `position: fixed`. Un wrapper Framer Motion
+       (qui laisse un `transform: none`… mais surtout un `will-change`) aurait
+       cloué la visionneuse d'images et les menus contextuels de l'éditeur à la
+       page au lieu du viewport. C'est la contrainte qui décide ici. */
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+@utility page-enter {
+  animation: page-in 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-enter {
+    animation: none;
+  }
+}
+
+/* ─── ÉTAT DE CHARGEMENT ─────────────────────────────────────────────────────
+   Les pages sont différées (cf. App.tsx) et le serveur est aux États-Unis : à
+   chaque premier passage sur une rubrique, il s'écoule un aller-retour complet
+   entre le clic et le premier pixel. C'est l'écran le plus vu du site après
+   l'accueil, et c'était une ligne de texte « Chargement… ».
+
+   Deux réponses complémentaires ci-dessous :
+     • `.loading-bar` — une barre indéterminée en haut de fenêtre. Elle répond à
+       « est-ce que mon clic a été pris en compte ? », tout de suite, sans rien
+       savoir de la page qui arrive.
+     • `.skeleton` — des blocs à la silhouette de la page. Ils répondent à « à
+       quoi vais-je arriver ? » et surtout ils RÉSERVENT la place : la page qui
+       se peint ensuite ne fait plus sauter le défilement.
+
+   Le miroitement passe par `background-position` sur un dégradé, et non par une
+   opacité clignotante : une pulsation attire l'oeil sur l'attente elle-même,
+   un balayage lent dit « ça travaille » sans se faire regarder. */
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+@utility skeleton {
+  border-radius: var(--radius-md);
+  background-image: linear-gradient(
+    90deg,
+    var(--color-surface-2) 0%,
+    color-mix(in oklab, var(--color-fg) 4%, var(--color-surface-2)) 50%,
+    var(--color-surface-2) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+
+@keyframes indeterminate {
+  0% {
+    transform: translateX(-100%) scaleX(0.35);
+  }
+  50% {
+    transform: translateX(15%) scaleX(0.6);
+  }
+  100% {
+    transform: translateX(100%) scaleX(0.35);
+  }
+}
+@utility loading-bar {
+  transform-origin: left;
+  animation: indeterminate 1.15s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+/* Sous `prefers-reduced-motion`, on garde les blocs (ils réservent la place,
+   c'est leur vrai travail) mais on arrête le balayage et la barre. */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton,
+  .loading-bar {
+    animation: none;
+  }
+  .loading-bar {
+    transform: scaleX(0.4);
+  }
 }
 
 /* Gouttières respectant les encoches / coins arrondis (viewport-fit=cover). */
