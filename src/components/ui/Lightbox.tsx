@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { cldImage, cldPoster, cldVideo } from '../../lib/cloudinary'
+import { isFrugal } from '../../lib/prefetch'
 
 export interface LightboxItem {
   url: string
@@ -80,20 +81,6 @@ function preloadTarget(item: LightboxItem | undefined): string | null {
  *  lecture de l'onglet réseau quand on vient vérifier le comportement. */
 const warmed = new Set<string>()
 
-type SaveDataConnection = { saveData?: boolean; effectiveType?: string }
-
-/** Le visiteur a demandé qu'on ménage ses données, ou son lien ne le permet pas.
- *  Dans les deux cas on ne télécharge que ce qui est regardé. */
-function frugal(): boolean {
-  const connection = (navigator as Navigator & { connection?: SaveDataConnection }).connection
-  if (!connection) return false
-  return (
-    connection.saveData === true ||
-    connection.effectiveType === 'slow-2g' ||
-    connection.effectiveType === '2g'
-  )
-}
-
 function warm(url: string) {
   if (warmed.has(url)) return
   warmed.add(url)
@@ -165,7 +152,8 @@ export function Lightbox({
        requête n'était donc pas refaite — mais on construisait un `Image()` pour
        rien à chaque aller-retour entre deux photos. */
     if (currentKey) warmed.add(currentKey)
-    if (!neighbourKey || frugal()) return
+    // Économie de données ou lien 2G : on ne télécharge que ce qui est regardé.
+    if (!neighbourKey || isFrugal()) return
     for (const url of neighbourKey.split('\n')) warm(url)
   }, [ready, currentKey, neighbourKey])
 

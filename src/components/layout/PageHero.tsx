@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from 'react'
 import { Chapter, SplitLines, motion, useReducedMotion, useSlideshow, EASE } from '../ui/motion'
+import { afterPageLoad, warmSitePhoto } from '../../lib/prefetch'
 
 /** Une photo de bandeau et son cadrage (`object-position`). */
 export type HeroPhoto = { src: string; focus?: string }
@@ -56,11 +57,14 @@ export function PageHero({
   const photo = photos[index]
 
   // Préchargement EN ROULEMENT : seulement la photo suivante, jamais le jeu
-  // entier. Au plus une image en vol, et la première demande part après le
-  // montage — donc après le LCP, qui est la photo déjà affichée.
+  // entier, et seulement une fois la page chargée. « Après le montage » ne
+  // suffisait pas : le montage est l'instant même où la photo affichée — celle
+  // du LCP — part sur le réseau, et la suivante la concurrençait sur les six
+  // connexions HTTP/1.1. La variante téléchargée est celle que `<Chapter>`
+  // affichera (cf. warmSitePhoto), et non plus l'original.
   useEffect(() => {
     if (photos.length < 2) return
-    new Image().src = photos[(index + 1) % photos.length].src
+    return afterPageLoad(() => warmSitePhoto(photos[(index + 1) % photos.length].src))
   }, [index, photos])
 
   // Un hero dont le texte CHANGE (onglet, filtre) doit rejouer son entrée,
@@ -87,6 +91,9 @@ export function PageHero({
       // qui change tout seul : c'est le seul cas qui a besoin de la dérive de
       // zoom pour le dire. Sur une photo unique, il n'y a rien à annoncer.
       drift={photos.length > 1}
+      // La photo du bandeau EST le plus grand élément du premier écran de
+      // chaque page : jamais `lazy` (cf. `eager` sur <Chapter>).
+      eager
       grain
       // SUR TÉLÉPHONE le bandeau est plus court, et les gouttières plus
       // serrées : à 52svh + pt-32, il ne restait RIEN du contenu de la page

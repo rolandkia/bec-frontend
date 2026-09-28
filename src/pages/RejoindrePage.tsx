@@ -1,6 +1,7 @@
 import { Mail, MapPin, Phone, UserPlus } from 'lucide-react'
 import { club } from '../data/club'
 import { groupesEntrainement } from '../data/infosPratiques'
+import { HERO_REJOINDRE } from '../data/pageHeroes'
 import { GroupeCard } from '../components/club/GroupeCard'
 import { PHONE_PHOTO_CAP, sitePhotoProps } from '../lib/cloudinary'
 import { PageHero } from '../components/layout/PageHero'
@@ -29,7 +30,7 @@ export function RejoindrePage() {
         // fond orange, les athlètes pointent le lecteur), et il est le seul à
         // tenir le voile uniforme `flat`. Un jeu qui alterne partagerait ce
         // voile, or aucune autre photo de la biblio n'en a besoin.
-        photos={[{ src: '/photos/hero-studio-team.webp', focus: 'center 10%' }]}
+        photos={[{ src: HERO_REJOINDRE, focus: 'center 10%' }]}
         veil="flat"
       />
 

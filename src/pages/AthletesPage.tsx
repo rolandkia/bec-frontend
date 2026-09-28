@@ -1,7 +1,14 @@
 import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { listAthletes } from '../api/athletes'
+import {
+  HERO_ATHLETES,
+  HERO_ATHLETES_FEMMES,
+  HERO_ATHLETES_HOMMES,
+  HERO_RECORDS,
+} from '../data/pageHeroes'
 import { STATIC_DATA } from '../api/staleTime'
+import { afterPageLoad, warmSitePhoto } from '../lib/prefetch'
 import { AthletesListPage } from './AthletesListPage'
 import { RecordsPage } from './RecordsPage'
 import { PageHero } from '../components/layout/PageHero'
@@ -46,19 +53,19 @@ const SCENES = {
       // premier rang du groupe tombait dans la partie la plus voilée ; à 50 % le
       // drapeau reste entier en diagonale et le groupe remonte là où le voile
       // est le plus léger.
-      photo: { src: '/photos/interclub-drapeau-wide.webp', focus: 'center 50%' },
+      photo: { src: HERO_ATHLETES, focus: 'center 50%' },
       veil: 'strong',
     },
     homme: {
       eyebrow: 'Les hommes du club',
-      photo: { src: '/photos/gallery/group-4.webp', focus: 'center 35%' },
+      photo: { src: HERO_ATHLETES_HOMMES, focus: 'center 35%' },
       veil: 'strong',
     },
     femme: {
       eyebrow: 'Les femmes du club',
       // Haut de l'image : les six visages sont tous dans le tiers supérieur, et
       // c'est le seul cadrage qui n'en rogne aucun sur un hero en paysage.
-      photo: { src: '/photos/gallery/group-7.webp', focus: 'center 10%' },
+      photo: { src: HERO_ATHLETES_FEMMES, focus: 'center 10%' },
       // Studio clair de bout en bout : aucun dégradé ne sauve le texte, il faut
       // le voile uniforme (cf. <Chapter>, même cas que le studio de /rejoindre).
       veil: 'flat',
@@ -66,7 +73,7 @@ const SCENES = {
   },
   records: {
     eyebrow: 'Les meilleures performances du club',
-    photo: { src: '/photos/gallery/start-2.webp', focus: 'center 40%' },
+    photo: { src: HERO_RECORDS, focus: 'center 40%' },
     veil: 'strong',
   },
 } as const
@@ -96,22 +103,29 @@ export function AthletesPage() {
     staleTime: STATIC_DATA,
   })
 
-  // Les photos des vues non affichées sont préchargées APRÈS le premier rendu :
+  // Les photos des vues non affichées sont préchargées une fois la page chargée :
   // sans ça le tout premier fondu partirait sur une image encore en vol, et
-  // l'enchaînement se verrait. ~160 ko au total, après le LCP.
+  // l'enchaînement se verrait.
   //
   // Ici c'est un préchargement GROUPÉ, contrairement au roulement de <PageHero> :
   // la vue suivante n'est pas prévisible (c'est un clic sur un onglet ou un
-  // filtre, pas un minuteur), donc il faut les trois d'avance.
-  useEffect(() => {
-    for (const { src } of [
-      SCENES.effectif.homme.photo,
-      SCENES.effectif.femme.photo,
-      SCENES.records.photo,
-    ]) {
-      new Image().src = src
-    }
-  }, [])
+  // filtre, pas un minuteur), donc il faut les trois d'avance. Elles partaient
+  // au montage, en ORIGINAL (186 ko), en même temps que la photo du bandeau :
+  // celle-ci arrivait bonne dernière. Cf. warmSitePhoto.
+  useEffect(
+    () =>
+      afterPageLoad(() => {
+        for (const { src } of [
+          SCENES.effectif.tous.photo,
+          SCENES.effectif.homme.photo,
+          SCENES.effectif.femme.photo,
+          SCENES.records.photo,
+        ]) {
+          warmSitePhoto(src)
+        }
+      }),
+    [],
+  )
 
   const scene = isRecords ? SCENES.records : SCENES.effectif[sexe]
 

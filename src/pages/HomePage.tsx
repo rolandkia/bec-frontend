@@ -6,6 +6,7 @@ import { club } from '../data/club'
 import { jalonsAccueil } from '../data/palmares'
 import { besoinsCourts, partenaires, partenairesAccroche } from '../data/partenaires'
 import { clubPhotos } from '../data/clubPhotos'
+import { HERO_ACCUEIL } from '../data/pageHeroes'
 import { PHONE_PHOTO_CAP, sitePhoto, sitePhotoProps, sitePhotoUrl } from '../lib/cloudinary'
 import { parseLocalDate, splitEvents } from '../utils/events'
 import { Lightbox } from '../components/ui/Lightbox'
@@ -118,7 +119,7 @@ export function HomePage() {
           ═══════════════════════════════════════════════════════════════════ */}
       <Chapter
         tone="dark"
-        image="/photos/hero-interclub.webp"
+        image={HERO_ACCUEIL}
         imageAlt=""
         focus="center 55%"
         veil="soft"

@@ -11,7 +11,7 @@
  *  sauvegarde. Si une URL transformée risque de repartir dans l'éditeur (copier /
  *  glisser depuis un article rendu), la normaliser avec `stripCldTransforms`. */
 
-import { PHOTO_VARIANTS } from '../data/photoVariants'
+import { DEFAULT_SRCSET_WIDTHS, localSrcSet, localVariant } from './localPhotos'
 
 /** `$1` = base jusqu'à `/upload`, `$2` = image|video, `$3` = le reste. */
 const CLOUDINARY_URL = /^(https?:\/\/res\.cloudinary\.com\/[^/]+\/(image|video)\/upload)\/(.+)$/
@@ -205,27 +205,6 @@ const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME as string | undefi
 /** Dossier des public_id, à garder aligné avec le script d'envoi. */
 const SITE_FOLDER = 'bec_site'
 
-/** `/photos/gallery/x.webp` + 640 → `/photos/w640/gallery/x.webp`. Un simple
- *  préfixe : c'est tout l'intérêt d'un dossier par largeur (cf. le script). */
-function variantPath(path: string, w: number): string {
-  return path.replace('/photos/', `/photos/w${w}/`)
-}
-
-/**
- * Variante locale la plus proche PAR EXCÈS d'une largeur d'affichage, ou le
- * chemin d'origine s'il n'y a rien de plus petit qui convienne.
- *
- * Sert les surfaces qui n'ont qu'un `src`, sans `srcset` : le logo de 40 px de la
- * navbar tirait les 22 ko du fichier 512×512 sur chaque page, et un logo de
- * partenaire ou un portrait d'organigramme la pleine résolution du bandeau.
- */
-function localVariant(path: string, w: number): string {
-  const local = PHOTO_VARIANTS[path]
-  if (!local) return path
-  const fit = local.variants.find((v) => v >= w)
-  return fit === undefined ? path : variantPath(path, fit)
-}
-
 /**
  * Chemin local (`/photos/x.webp`) → URL Cloudinary CANONIQUE (sans
  * transformation), ou le chemin tel quel si le compte n'est pas configuré.
@@ -271,7 +250,7 @@ export function sitePhoto(path: string, w = 1600): string {
  */
 export function sitePhotoSrcSet(
   path: string,
-  widths: readonly number[] = [640, 1280, 1920],
+  widths: readonly number[] = DEFAULT_SRCSET_WIDTHS,
 ): string | undefined {
   const url = sitePhotoUrl(path)
   if (url !== path) {
@@ -279,20 +258,8 @@ export function sitePhotoSrcSet(
     // les transformations, et chaque largeur est un dérivé de plus.
     return cldSrcSet(url, widths, { crop: 'limit', quality: 'auto', format: 'auto' })
   }
-
-  const local = PHOTO_VARIANTS[path]
-  if (!local) return undefined
-  const max = Math.max(...widths)
-  // On garde les variantes utiles à la surface demandée, plus la première qui la
-  // dépasse : c'est elle que choisira un écran à forte densité de pixels.
-  const useful = local.variants.filter((w) => w <= max)
-  const next = local.variants.find((w) => w > max)
-  if (next !== undefined) useful.push(next)
-  const entries = useful.map((w) => `${variantPath(path, w)} ${w}w`)
-  // L'original en dernière marche, sauf s'il est déjà couvert : une variante à
-  // la largeur intrinsèque n'existe pas (cf. MIN_GAIN du script).
-  if (useful[useful.length - 1] !== local.w) entries.push(`${path} ${local.w}w`)
-  return entries.length > 1 ? entries.join(', ') : undefined
+  // Même fonction que le préchargement écrit dans index.html (cf. localPhotos).
+  return localSrcSet(path, widths)
 }
 
 /**

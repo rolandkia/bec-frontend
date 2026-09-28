@@ -688,6 +688,15 @@ type ChapterProps = {
    * concurrence avec soi-même sur la bande passante.
    */
   priority?: boolean
+  /**
+   * Photo AU-DESSUS DE LA LIGNE DE FLOTTAISON sans être celle de l'accueil : le
+   * bandeau d'ouverture des autres pages (`PageHero`), qui est leur plus grand
+   * élément à l'écran. Même chargement que `priority` (`eager` + priorité haute),
+   * SANS ses restrictions de mouvement : la dérive des bandeaux qui alternent
+   * est conservée. En `lazy`, le navigateur attendait la mise en page pour la
+   * demander, à égalité avec les photos situées plus bas.
+   */
+  eager?: boolean
   className?: string
   id?: string
 }
@@ -730,6 +739,7 @@ export function Chapter({
   drift = false,
   grain = false,
   priority = false,
+  eager = false,
   className = '',
   id,
 }: ChapterProps) {
@@ -751,8 +761,8 @@ export function Chapter({
     ...sitePhotoProps(image ?? ''),
     alt: imageAlt,
     'aria-hidden': imageAlt === '' || undefined,
-    loading: (priority ? 'eager' : 'lazy') as 'eager' | 'lazy',
-    fetchPriority: (priority ? 'high' : undefined) as 'high' | undefined,
+    loading: (priority || eager ? 'eager' : 'lazy') as 'eager' | 'lazy',
+    fetchPriority: (priority || eager ? 'high' : undefined) as 'high' | undefined,
     decoding: (priority ? 'sync' : 'async') as 'sync' | 'async',
     className: 'absolute inset-0 h-full w-full object-cover',
     style: { objectPosition: focus },

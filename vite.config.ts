@@ -1,13 +1,52 @@
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import { LANDING_HEROES } from './src/data/pageHeroes.ts'
+import { localSrcSet } from './src/lib/localPhotos.ts'
 
 // URL du backend en développement. Surchargeable via VITE_API_PROXY_TARGET.
 const API_TARGET = process.env.VITE_API_PROXY_TARGET ?? 'http://127.0.0.1:8000'
 
+/* ─── Préchargement de la photo d'ouverture, par adresse ──────────────────────
+   Remplit la table du script d'index.html (repère `LANDING_HEROES`) : pour
+   chaque adresse d'arrivée, le `srcset` EXACT que rendra la page, calculé par
+   la même fonction qu'au rendu (`localSrcSet`). Voir le commentaire du script
+   dans index.html pour le pourquoi.
+
+   Table VIDE quand les photos éditoriales sont servies par Cloudinary
+   (`VITE_CLOUDINARY_CLOUD_NAME`) : leur `srcset` est alors celui de
+   `sitePhotoSrcSet`, que cette table ne sait pas reproduire, et précharger les
+   variantes locales ferait télécharger chaque photo deux fois. Le site reste
+   juste, il perd seulement l'avance du préchargement. */
+function landingHeroPreload(): Plugin {
+  const MARKER = '/*LANDING_HEROES*/ {}'
+  let cloudinary = false
+  return {
+    name: 'bec-landing-hero-preload',
+    configResolved(config) {
+      cloudinary = Boolean(config.env.VITE_CLOUDINARY_CLOUD_NAME)
+    },
+    transformIndexHtml(html) {
+      if (!html.includes(MARKER)) {
+        throw new Error(`index.html : repère ${MARKER} introuvable (landingHeroPreload)`)
+      }
+      // `[chemin, srcset]`, ou `[chemin]` pour une photo sans variantes.
+      const table = cloudinary
+        ? {}
+        : Object.fromEntries(
+            Object.entries(LANDING_HEROES).map(([page, path]) => {
+              const srcset = localSrcSet(path)
+              return [page, srcset ? [path, srcset] : [path]]
+            }),
+          )
+      return html.replace(MARKER, JSON.stringify(table))
+    },
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), landingHeroPreload()],
 
   /* ─── Découpage des morceaux : optimisé pour HTTP/1.1 ────────────────────────
      Le site est servi sur IP nue, donc SANS TLS, donc sans HTTP/2 : pas de
@@ -60,11 +99,14 @@ export default defineConfig({
             },
             {
               // Modules maison partagés entre l'accueil et les pages différées :
-              // client API, données du club, manifeste des variantes photo. Tous
-              // sont déjà nécessaires au premier écran — les laisser éclatés ne
-              // faisait qu'ajouter des allers-retours.
+              // client API, données du club, manifeste des variantes photo,
+              // préchargements (`prefetch`, que les bandeaux de page appellent
+              // aussi). Tous sont déjà nécessaires au premier écran — les laisser
+              // éclatés ne faisait qu'ajouter des allers-retours : sans
+              // `prefetch` ici, il revenait en morceau à part, soit un sixième
+              // fichier au premier rendu.
               name: 'app-shared',
-              test: /[\\/]src[\\/](api|data)[\\/]|[\\/]src[\\/]lib[\\/]cloudinary|[\\/]lucide-react[\\/]dist[\\/]esm[\\/]createLucideIcon/,
+              test: /[\\/]src[\\/](api|data)[\\/]|[\\/]src[\\/]lib[\\/](cloudinary|localPhotos|prefetch|routeChunks)\.|[\\/]lucide-react[\\/]dist[\\/]esm[\\/]createLucideIcon/,
               priority: 50,
             },
           ],

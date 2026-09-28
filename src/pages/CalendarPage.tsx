@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { AnimatePresence, useReducedMotion } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
 import { listEvents } from '../api/events'
+import { HERO_COMPETITIONS } from '../data/pageHeroes'
 import { splitEvents } from '../utils/events'
 import { currentSaison } from '../utils/saison'
 import { NextEventCard } from '../components/calendar/NextEventCard'
@@ -25,7 +26,7 @@ const HERO_PHOTOS: HeroPhoto[] = [
   // photos), parce que s'en remettre au recadrage ne tenait qu'en desktop : en
   // mobile `object-cover` cale sur la hauteur, montre toute l'image, et le
   // filigrane restait devinable sous le voile.
-  { src: '/photos/gallery/start-5.webp', focus: 'center 45%' },
+  { src: HERO_COMPETITIONS, focus: 'center 45%' },
   { src: '/photos/race-wide.webp', focus: 'center 40%' },
   { src: '/photos/gallery/race-3.webp', focus: 'center 15%' },
   // Le podium, pancarte « Championne Gironde 2026 » : la fin de l'histoire.

@@ -1,3 +1,4 @@
+import { HERO_MAG } from '../data/pageHeroes'
 import { BlogListPage } from './BlogListPage'
 import { GalleryPage } from './GalleryPage'
 import { PageHero, type HeroPhoto } from '../components/layout/PageHero'
@@ -14,7 +15,7 @@ const TABS: TabDef[] = [
  */
 const HERO_PHOTOS: HeroPhoto[] = [
   // Pancartes « VICTOIRE » et « RECORD PERSO » : le récit, en une image.
-  { src: '/photos/podium-02.webp', focus: 'center 6%' },
+  { src: HERO_MAG, focus: 'center 6%' },
   { src: '/photos/gallery/race-2.webp', focus: 'center 10%' },
   // Le groupe sur la pelouse, plein soleil : la page d'album. Même contrainte que
   // group-2 sur /club — têtes à 3 % du bord haut, donc pas plus de 5 %.

@@ -4,6 +4,7 @@ import { ArrowRight, Target } from 'lucide-react'
 import { club } from '../data/club'
 import { besoinsClub, partenaires, partenairesIntro } from '../data/partenaires'
 import { faitsPalmares, figuresActuelles, figureHistorique, histoireIntro } from '../data/palmares'
+import { HERO_CLUB } from '../data/pageHeroes'
 import { listCoachs } from '../api/coachs'
 import type { CoachOut } from '../api/types'
 import { Chapter, MaskReveal, Reveal, RevealGroup, motion, staggerItem } from '../components/ui/motion'
@@ -36,7 +37,7 @@ const ANCHORS: Anchor[] = [
 const HERO_PHOTOS: HeroPhoto[] = [
   // Le club au complet à la soirée annuelle : une trentaine de personnes, tous
   // les âges, chaque visage net. C'est ce que les photos de piste ne disent pas.
-  { src: '/photos/gallery/group-8.webp', focus: 'center 35%' },
+  { src: HERO_CLUB, focus: 'center 35%' },
   // Quatre athlètes en rouge, indoor, bras ouverts. Cadrage haut : leurs têtes
   // sont à 3,5 % du bord supérieur, au-delà de 6 % on les rogne.
   { src: '/photos/gallery/group-2.webp', focus: 'center 5%' },
