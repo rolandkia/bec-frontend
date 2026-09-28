@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { coverThumbStyle, type BlogPostOut } from '../../api/types'
-import { cldImage, cldSrcSet } from '../../lib/cloudinary'
+import { storedImageProps } from '../../lib/cloudinary'
 
 function formatDate(iso: string | null) {
   if (!iso) return null
@@ -48,13 +48,13 @@ export function BlogCard({
       >
         {post.cover_image_url ? (
           <img
-            src={cldImage(post.cover_image_url, 800)}
-            srcSet={cldSrcSet(post.cover_image_url, [400, 800, 1200], {
-              crop: 'limit',
-              quality: 'auto',
-              format: 'auto',
+            {...storedImageProps(post.cover_image_url, {
+              w: 800,
+              widths: [400, 800, 1200],
+              // En rangée, la vignette mobile fait 96 px (`w-24`) : l'annoncer
+              // en 100vw faisait tirer à un téléphone 3× l'image de 1 200 px.
+              sizes: row ? '(max-width: 639px) 96px, 400px' : '(max-width: 639px) 100vw, 400px',
             })}
-            sizes="(max-width: 640px) 100vw, 400px"
             alt=""
             loading="lazy"
             decoding="async"

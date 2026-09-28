@@ -56,7 +56,11 @@ export function AthleteCard({ athlete }: { athlete: AthleteListItem }) {
       onFocus={onIntent}
       className="group card card-hover tap flex h-full flex-col overflow-hidden p-0"
     >
-      <div className="relative aspect-[4/5] overflow-hidden bg-[color:var(--color-surface-2)]">
+      {/* Carré sur téléphone, portrait 4/5 au-delà : l'effectif compte 72
+          cartes, soit 36 rangées sur deux colonnes, et le 4/5 en faisait une
+          page de 11 900 px. Le carré en retire ~1 500 sans rien perdre — un
+          portrait `object-top` garde le visage, et le monogramme est en `cqw`. */}
+      <div className="relative aspect-square overflow-hidden bg-[color:var(--color-surface-2)] sm:aspect-[4/5]">
         {showPhoto ? (
           <img
             src={cldPortrait(athlete.photo_url, 400)}

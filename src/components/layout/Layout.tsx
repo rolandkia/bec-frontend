@@ -37,9 +37,12 @@ export function Layout() {
       {/* Le conteneur du site vit ICI, une seule fois : px-safe = max(1rem,
           encoche), donc `.band` (-mx-4) et `.chapter` (marge négative en vw)
           retrouvent le bord de l'écran sans double gouttière.
-          Plus de padding VERTICAL : un chapitre d'ouverture (`PageHero`) doit
-          toucher la navbar. Chaque page pose son propre rythme vertical. */}
-      <main className="mx-auto w-full max-w-6xl flex-1 px-safe">
+          Pas de padding HAUT : un chapitre d'ouverture (`PageHero`) doit
+          toucher la navbar, et chaque page pose son propre rythme en tête.
+          Le padding BAS, lui, est commun : laissé à chaque page, il manquait
+          sur la moitié d'entre elles (Mag, Compétitions, Rejoindre, fiches
+          athlète et article), dont le dernier bloc collait au pied de page. */}
+      <main className="mx-auto w-full max-w-6xl flex-1 px-safe pb-16 sm:pb-24">
         {/* Les pages sont chargées à la demande (cf. App.tsx) : la frontière
             d'attente est posée ICI et non autour de <Routes>, pour que la navbar
             et le pied de page ne clignotent pas d'une page à l'autre. */}

@@ -54,18 +54,26 @@ export function RejoindrePage() {
         </section>
 
         {/* ─── 2 · LA RELÈVE (photo de contenu, pas un fond) ───────────────── */}
+        {/* Pas la photo de l'enfant à la médaille : la carte « Athlé découverte »,
+            juste au-dessus, montre déjà ce cliché (recadré, /infos/groupe-jeunes).
+            Celle-ci est la seule autre photo de jeune médaillé de la photothèque.
+            Source CARRÉE, montrée entière sur téléphone : en 4/3, le « 3 » du
+            podium disparaissait, et avec lui ce que dit le texte. En 4/3 à côté
+            du texte (lg), `center 40%` garde les visages, les médailles et le
+            haut des marches. */}
         <section className="grid items-center gap-8 lg:grid-cols-2">
           <MaskReveal from="left" className="overflow-hidden rounded-md">
             <img
-              {...sitePhotoProps('/photos/jeune-medaille.webp', {
+              {...sitePhotoProps('/photos/gallery/podium-6.webp', {
                 sizes: `${PHONE_PHOTO_CAP}, (min-width: 1024px) 50vw, 100vw`,
               })}
-              alt="Jeune athlète du club, sa médaille entre les dents"
-              width={1400}
-              height={888}
+              alt="Jeune athlète du BEC sur la troisième marche du podium des championnats de Gironde, médaille au cou"
+              width={1500}
+              height={1497}
               loading="lazy"
               decoding="async"
-              className="h-full w-full object-cover"
+              className="aspect-square h-full w-full object-cover lg:aspect-[4/3]"
+              style={{ objectPosition: 'center 40%' }}
             />
           </MaskReveal>
           <Reveal direction="left">
@@ -73,8 +81,8 @@ export function RejoindrePage() {
             <h2 className="section-title mb-4">On commence tous quelque part</h2>
             <p className="leading-relaxed text-[color:var(--color-muted)]">
               Chez les plus jeunes, on apprend à courir, sauter et lancer avant de se spécialiser.
-              La première médaille compte autant que le premier record, et elle se mord toujours,
-              pour vérifier.
+              Et la première médaille compte autant que le premier record, même sur la troisième
+              marche.
             </p>
             {/* Ni tarif ni modalité ici : le club ne les a pas communiqués, et le
                 formulaire ci-dessous demande déjà l'âge et la discipline pour y

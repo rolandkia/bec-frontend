@@ -74,7 +74,7 @@ export function AthletesListPage({
           révélation du groupe » (filtre, recherche) est désormais traité dans
           `RevealGroup` lui-même — il n'y a plus de carte invisible à opacité 0. */}
       {filtered.length > 0 && (
-        <RevealGroup className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        <RevealGroup className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
           {filtered.map((athlete) => (
             <motion.div key={athlete.id} variants={staggerItem}>
               <AthleteCard athlete={athlete} />

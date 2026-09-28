@@ -136,8 +136,11 @@ export function HomePage() {
           {/* Aplat rouge plein, et non un fond translucide : posé sur un ciel
               bleu clair, `bg-club-primary/15 text-club-primary-light` tombait
               sous le seuil de contraste. Blanc sur rouge = 6,5:1. */}
+          {/* Sur téléphone la pastille passait à la ligne et laissait « 1897 »
+              seul sous le reste. « Club d'athlétisme » y est retiré : le
+              sous-titre, juste en dessous, le dit déjà. */}
           <motion.span variants={fadeUp(16, 0.5)} className="badge bg-club-primary text-white">
-            Club d'athlétisme · Bordeaux · Depuis 1897
+            <span className="hidden sm:inline">Club d'athlétisme · </span>Bordeaux · Depuis 1897
           </motion.span>
 
           <SplitLines
@@ -632,8 +635,9 @@ export function HomePage() {
           Deux colonnes : à gauche QUI nous soutient (la plaque logo seule, la
           description vit sur /club), à droite l'appel à de nouveaux partenaires.
           La colonne de gauche disparaît si `partenaires` est vide ; l'appel, lui,
-          reste — c'est le moment où il sert le plus. */}
-      <section className="py-16 sm:py-24">
+          reste — c'est le moment où il sert le plus. La marge basse est celle
+          de toutes les pages, posée par Layout. */}
+      <section className="pt-16 sm:pt-24">
         <SectionHead eyebrow="Ils nous soutiennent" title="Partenaires" to="/club#partenaires" more="Nos partenaires" />
         <Reveal className={`grid gap-4 ${partenaires.length > 0 ? 'lg:grid-cols-[0.8fr_1.2fr]' : ''}`}>
           {partenaires.length > 0 && (

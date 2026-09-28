@@ -45,6 +45,13 @@ const HERO_PHOTOS: HeroPhoto[] = [
   { src: '/photos/gallery/concentration-4.webp', focus: 'center 20%' },
 ]
 
+/** Une fiche seule sur sa rangée de deux prend toute la largeur (jusqu'à lg,
+ *  où la grille passe à quatre colonnes). L'encadrement ne compte qu'un membre :
+ *  sa fiche tenait dans une demi-largeur de 170 px, bio comprise, à côté d'une
+ *  case vide. */
+const ORPHAN_SPANS =
+  '[&>*:last-child:nth-child(odd)]:col-span-2 lg:[&>*:last-child:nth-child(odd)]:col-span-1'
+
 function MembreCard({ m }: { m: CoachOut }) {
   return (
     <motion.div
@@ -253,8 +260,9 @@ export function ClubPage() {
                     Le bureau
                   </h3>
                   {/* 2 par ligne dès le mobile : la fiche est courte (photo, rôle,
-                      nom), une colonne unique donnait une liste interminable. */}
-                  <RevealGroup className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
+                      nom), une colonne unique donnait une liste interminable.
+                      `ORPHAN_SPANS` : cf. sa définition. */}
+                  <RevealGroup className={`grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4 ${ORPHAN_SPANS}`}>
                     {bureau.map((m) => (
                       <MembreCard key={m.id} m={m} />
                     ))}
@@ -266,7 +274,7 @@ export function ClubPage() {
                   <h3 className="mb-5 font-display text-xl font-bold uppercase tracking-wide">
                     L'encadrement
                   </h3>
-                  <RevealGroup className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
+                  <RevealGroup className={`grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4 ${ORPHAN_SPANS}`}>
                     {encadrement.map((m) => (
                       <MembreCard key={m.id} m={m} />
                     ))}
@@ -278,7 +286,7 @@ export function ClubPage() {
         </section>
 
         {/* ═══ 4 · PARTENAIRES ═════════════════════════════════════════════ */}
-        <section id="partenaires" className="scroll-mt-32 pb-8">
+        <section id="partenaires" className="scroll-mt-32">
           <SectionHead
             eyebrow="Ils nous soutiennent"
             title="Partenaires"

@@ -1,11 +1,14 @@
 # BEC — Frontend
 
-Site public du **Bordeaux Étudiants Club** (athlétisme) : présentation du club, infos pratiques,
-calendrier des compétitions, fiches athlètes et performances FFA, blog et galerie photo/vidéo.
+Site public du **Bordeaux Étudiants Club** (athlétisme) : présentation du club, effectif et records
+FFA, calendrier des compétitions, magazine (articles et galerie photo/vidéo) et inscription.
 Une SPA React qui consomme l'API [`bec-backend`](../bec-backend).
 
-**Stack** : React 19 · TypeScript · Vite · Tailwind CSS 4 · TanStack Query · React Router 7 ·
-Framer Motion · Recharts · Tiptap (éditeur d'articles) · Axios · oxlint.
+**Stack** : React 19 · TypeScript · Vite 8 · Tailwind CSS 4 · TanStack Query · React Router 7 ·
+Framer Motion · Recharts · Tiptap (éditeur d'articles) · DOMPurify · jsPDF · Axios · lucide-react ·
+oxlint. Servi en production par Caddy.
+
+Vue d'ensemble du projet, provenance des contenus et déploiement : [README du dépôt parent](../README.md).
 
 ---
 
@@ -21,7 +24,7 @@ npm run dev     # http://localhost:5173
 | Script | Description |
 | --- | --- |
 | `npm run dev` | Serveur de développement Vite (HMR) + proxy `/api`. |
-| `npm run build` | Vérification TypeScript (`tsc -b`) puis build de production dans `dist/`. |
+| `npm run build` | Vérification TypeScript (`tsc -b`), build de production dans `dist/`, puis pré-compression brotli/zstd/gzip ([`scripts/precompress.mjs`](scripts/precompress.mjs)). |
 | `npm run preview` | Sert le build de production localement. |
 | `npm run lint` | oxlint. |
 
@@ -86,8 +89,8 @@ src/
 ├── api/          # client Axios + un module par ressource (athletes, blogs, gallery…) et types.ts
 ├── pages/        # une page par route (cf. App.tsx)
 ├── components/   # athletes/, blog/, calendar/, gallery/, layout/, ui/
-├── data/         # contenu éditorial statique (club, organigramme, infos pratiques, partenaires, photos)
-├── lib/          # utilitaires transverses (compression d'image, export PDF, scroll infini)
+├── data/         # contenu éditorial statique (club, palmarès, créneaux, partenaires, photos, bandeaux)
+├── lib/          # livraison des images (cloudinary, localPhotos), préchargement, export PDF…
 ├── utils/        # logique métier partagée avec le backend (niveau, saison, URL FFA)
 └── index.css     # design tokens Tailwind (couleurs club, typographie, variantes custom)
 ```
@@ -101,37 +104,62 @@ src/
   `domain/saison.py`) : toute évolution de l'un doit être reportée dans l'autre.
 - **`public/photos/`** — assets statiques en `.webp`, distincts des médias de la galerie qui, eux,
   sont uploadés vers Cloudinary par le backend.
+- **`lib/cloudinary.ts`** — toutes les URL d'image passent par ici : transformations Cloudinary à
+  la livraison (`cldImage`, `cldSrcSet`…), photos du site (`sitePhotoProps`) et images stockées en
+  base qui peuvent être l'un ou l'autre (`storedImageProps`, cf. « Images des articles »).
+- **`lib/prefetch.ts`** / **`lib/routeChunks.ts`** — préchargement des pages au survol et après le
+  chargement ; les `import()` sont partagés avec `App.tsx`.
 
 ## Routes
 
+La navigation compte cinq sections ; les onglets et filtres vivent dans l'URL (`?tab=`, `?sexe=`),
+pour qu'un lien partagé ouvre la même vue.
+
 | Route | Page |
 | --- | --- |
-| `/` | Accueil |
-| `/club`, `/infos-pratiques`, `/competitions`, `/actualite`, `/contact` | Sections principales (hubs) |
-| `/palmares` | Histoire & palmarès du club (contenu statique, `data/palmares.ts`) |
-| `/blog`, `/blog/:slug` | Liste et détail des articles |
-| `/blog/admin`, `/blog/nouveau`, `/blog/:slug/modifier` | Administration éditoriale |
-| `/athletes`, `/athletes/:id` | Liste des athlètes et fiche détaillée (RP, résultats, niveau) |
-| `/galerie`, `/galerie/albums/:id` | Galerie et albums |
+| `/` | Accueil (seule page du premier chargement, cf. [`App.tsx`](src/App.tsx)) |
+| `/club` | Histoire, palmarès, équipe (bureau et encadrement), partenaires |
+| `/athletes` | Effectif (`?sexe=homme\|femme`) et records du club (`?tab=records`) |
+| `/athletes/:id` | Fiche athlète : records personnels, progression, historique des résultats |
+| `/competitions` | Calendrier de la saison, prochaine épreuve, épreuves passées |
+| `/mag` | Articles (`?tab=articles`) et galerie (`?tab=galerie`) |
+| `/rejoindre` | Groupes d'entraînement, créneaux, formulaire de contact (`#contact`) |
+| `/blog/:slug` | Article |
+| `/blog`, `/galerie`, `/galerie/albums/:id` | Pages internes (liste seule, album) |
+| `/blog/admin`, `/blog/nouveau`, `/blog/:slug/modifier` | Administration des articles |
 | `/galerie/admin`, `/galerie/nouveau`, `/galerie/media/:id/modifier` | Administration des médias |
 
-Anciennes URL conservées en redirection : `/calendrier` → `/competitions`, `/records` →
-`/athletes?tab=records` (les records sont un onglet du hub Athlètes).
+Anciennes URL conservées en redirection : `/palmares` → `/club#palmares`, `/infos-pratiques` →
+`/rejoindre`, `/contact` → `/rejoindre#contact`, `/actualite` → `/mag`, `/calendrier` →
+`/competitions`, `/records` → `/athletes?tab=records`.
 
-Les pages d'administration ne sont pas protégées par authentification : elles ne sont
-volontairement pas liées depuis la navigation.
+⚠️ Les pages d'administration ne sont **pas protégées** (l'API non plus) : elles ne sont pas dans
+la navigation, mais les boutons « Gérer les articles » et « Gérer la galerie » du Mag y mènent.
 
 ## Design system
 
-Le site est **sombre uniquement** : la variante Tailwind `dark:` est forcée en permanence via
-`@custom-variant dark (&)`. Les tokens sont définis dans [`src/index.css`](src/index.css) :
+Le site est **clair par défaut** (papier chaud `#f7f6f4`) et passe en **sombre selon le réglage
+du système** (`prefers-color-scheme`). Les moments forts du récit sont des **chapitres noirs**
+(`.chapter-dark`) dans les deux thèmes. Tout repose sur des tokens sémantiques, définis dans
+[`src/index.css`](src/index.css), qu'un chapitre noir redéfinit sur son sous-arbre : un composant
+écrit `bg-[color:var(--color-surface)]` ou `text-[color:var(--color-fg)]` et reste juste partout,
+sans connaître son contexte.
 
 - **Rouge club** (`--color-club-primary` `#b5121b`) — énergie et performance : CTA, accents.
 - **Or club** (`--color-club-accent` `#d4af37`) — excellence : podiums, records, niveau
   international. À utiliser avec parcimonie.
-- **Surfaces** — `--color-ink` (fond), `--color-surface` / `--color-surface-2` (cartes),
-  `--color-line` (bordures), `--color-fg` / `--color-muted` (textes).
-- **Typographie** — Inter (texte), Space Grotesk (titres).
+- **Aplat ou texte ?** `club-primary` / `club-accent` sont des aplats, constants ;
+  `club-primary-light` / `club-accent-light` sont les versions TEXTE, qui changent avec le fond
+  (le rouge `#b5121b` tient 6,5:1 sur le papier mais 2,5:1 sur le noir).
+- **Surfaces** — `--color-canvas` (fond de page), `--color-surface` / `--color-surface-2`
+  (cartes, pastilles), `--color-line` (filets), `--color-fg` / `--color-muted` (textes).
+  `--color-ink` est un noir CONSTANT, pour les voiles sur photo.
+- **Typographie** — Barlow Condensed (titres et chiffres), Inter (texte).
+- **Texte sur photo** — toujours blanc, jamais un token de thème : `text-white` sur un fond
+  clair est invisible, et c'est la première chose à vérifier en thème clair.
+
+La variante `dark:` signifie « je rends sur un fond sombre » : elle couvre le thème sombre du
+système ET l'intérieur d'un chapitre noir.
 
 Autre variante custom : `hover-hover:` restreint les effets de survol aux périphériques dotés d'un
 vrai pointeur — sur mobile, `:hover` reste « collé » après un tap et rendrait tout contenu révélé au
@@ -145,10 +173,25 @@ images avec légende, grilles de médias, vidéos, redimensionnement au drag et 
 glisser-déposer. Le HTML produit est assaini côté client avec DOMPurify (et côté serveur avec nh3).
 Un article peut être exporté en PDF ([`src/lib/exportBlogPdf.ts`](src/lib/exportBlogPdf.ts)).
 
+### Images des articles
+
+Une image d'article (couverture ou corps) est stockée en base sous forme d'URL, de deux origines
+possibles :
+
+- un **asset Cloudinary**, envoyé depuis l'éditeur, transformé à la livraison (`srcset` à trois
+  largeurs, format négocié) ;
+- une **photo du site** référencée par son chemin (`/photos/...`), comme dans les articles
+  d'exemple du backend (`task seed:articles`), servie par ses variantes locales.
+
+`storedImageProps` ([`src/lib/cloudinary.ts`](src/lib/cloudinary.ts)) choisit entre les deux, et
+[`src/lib/blogMedia.ts`](src/lib/blogMedia.ts) l'applique au HTML de l'article avant son
+insertion dans la page. Une image dans une grille de deux s'annonce à 50vw sur téléphone : elle
+était téléchargée à la largeur de la colonne entière.
+
 ## Déploiement
 
 Le `Dockerfile` construit le site puis le sert avec Caddy, qui joue aussi le rôle de reverse proxy
 vers le backend et applique un fallback SPA (`try_files {path} /index.html`). Le workflow
 [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) se déclenche sur `main` :
 lint + build → push de l'image sur `ghcr.io/rolandkia/bec-frontend` → déploiement par SSH sur la VM.
-Procédure d'infrastructure complète : [DEPLOYMENT.md](../DEPLOYMENT.md).
+Procédure d'infrastructure complète, et mesures de performance : [DEPLOYMENT.md](../DEPLOYMENT.md).

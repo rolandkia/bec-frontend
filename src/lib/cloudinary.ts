@@ -310,3 +310,26 @@ export function sitePhotoProps(
   const srcSet = sitePhotoSrcSet(path, widths)
   return { src: sitePhoto(path, w), srcSet, sizes: srcSet ? sizes : undefined }
 }
+
+/**
+ * Trio `src` / `srcSet` / `sizes` d'une image STOCKÉE EN BASE (couverture ou
+ * corps d'article), qui peut avoir deux origines :
+ *  - un asset Cloudinary, envoyé depuis l'éditeur : transformé à la livraison ;
+ *  - une PHOTO DU SITE, référencée par son chemin public (`/photos/...`), comme
+ *    dans les articles d'exemple du backend (src/scripts/seed_articles.py) :
+ *    servie par ses variantes locales, ou par Cloudinary si le site y est
+ *    branché — exactement comme un bandeau (cf. `sitePhotoProps`).
+ * Sans ce second cas, `cldImage` rendait le chemin tel quel : chaque vignette de
+ * 96 px du Mag tirait l'original de 1 500 px.
+ *
+ * Ici et non dans lib/blogMedia.ts : les cartes d'article de l'accueil s'en
+ * servent, et l'accueil ne doit pas embarquer la réécriture du HTML d'article.
+ */
+export function storedImageProps(
+  url: string,
+  { w, widths, sizes }: { w: number; widths: readonly number[]; sizes: string },
+): { src: string; srcSet?: string; sizes?: string } {
+  if (url.startsWith('/')) return sitePhotoProps(url, { w, widths, sizes })
+  const srcSet = cldSrcSet(url, widths, { crop: 'limit', quality: 'auto', format: 'auto' })
+  return { src: cldImage(url, w), srcSet, sizes: srcSet ? sizes : undefined }
+}

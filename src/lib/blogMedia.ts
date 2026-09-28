@@ -1,4 +1,4 @@
-import { cldImage, cldPoster, cldSrcSet, cldVideo } from './cloudinary'
+import { cldPoster, cldVideo, storedImageProps } from './cloudinary'
 
 /** Largeurs du `srcset` des images d'article. Trois seulement : chaque largeur
  *  est un dérivé Cloudinary supplémentaire, et les crédits du plan gratuit
@@ -10,7 +10,24 @@ const IMAGE_WIDTHS = [480, 800, 1200] as const
  *  `width:N%`, mais surestimer d'un cran ne coûte qu'un octet de plus. */
 const IMAGE_SIZES = '(max-width: 800px) 100vw, 800px'
 
-const IMAGE_OPTS = { crop: 'limit', quality: 'auto', format: 'auto' } as const
+/**
+ * `sizes` d'une image selon sa place : pleine colonne, ou cellule d'une grille
+ * média (`.media-grid`, 2 à 4 médias à parts égales, cf. index.css).
+ *
+ * Une grille annonçait jusqu'ici la colonne entière pour chacune de ses images :
+ * sur téléphone, deux photos de ~175 px partaient chacune en 1 280 px. En
+ * colonne, la part est exacte (800 px / N). Sur téléphone, seule la grille de
+ * DEUX est comptée à 50vw : à trois ou quatre, le plancher de largeur des
+ * cellules renvoie la dernière à la ligne, en pleine largeur — l'annoncer à 33vw
+ * la rendrait floue.
+ */
+function imageSizes(img: Element): string {
+  const grid = img.closest('.media-grid')
+  const n = grid ? grid.querySelectorAll(':scope > figure').length : 1
+  if (n < 2) return IMAGE_SIZES
+  const phone = n === 2 ? '50vw' : '100vw'
+  return `(max-width: 800px) ${phone}, ${Math.round(800 / n)}px`
+}
 
 /**
  * Post-traitement du HTML d'article, APRÈS assainissement : URL de livraison
@@ -44,11 +61,15 @@ export function rewriteBlogMedia(html: string): string {
     const raw = img.getAttribute('src')
     if (!raw) continue
     img.setAttribute('data-full-src', raw)
-    img.setAttribute('src', cldImage(raw, 1200))
-    const srcset = cldSrcSet(raw, IMAGE_WIDTHS, IMAGE_OPTS)
-    if (srcset) {
-      img.setAttribute('srcset', srcset)
-      img.setAttribute('sizes', IMAGE_SIZES)
+    const { src, srcSet, sizes } = storedImageProps(raw, {
+      w: 1200,
+      widths: IMAGE_WIDTHS,
+      sizes: imageSizes(img),
+    })
+    img.setAttribute('src', src)
+    if (srcSet && sizes) {
+      img.setAttribute('srcset', srcSet)
+      img.setAttribute('sizes', sizes)
     }
     img.setAttribute('loading', 'lazy')
     img.setAttribute('decoding', 'async')

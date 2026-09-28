@@ -200,7 +200,7 @@ export function AthleteDetailPage() {
   const showPhoto = Boolean(athlete.photo_url) && !photoFailed
 
   return (
-    <div className="animate-rise">
+    <div className="animate-rise pt-6 sm:pt-8">
       <Link
         to="/athletes"
         className="mb-6 inline-flex items-center gap-1.5 text-sm text-[color:var(--color-muted)] transition hover:text-[color:var(--color-fg)]"
@@ -215,12 +215,16 @@ export function AthleteDetailPage() {
             l'identité passe en surimpression au bas du portrait (donc hors flux)
             et la fiche tient sur un écran au lieu de ~800 px empilés. */}
         <div className="relative grid md:grid-cols-[minmax(0,300px)_1fr]">
-          {/* Cadrage affiche 4/5 seulement s'il y a une photo (cf. accueil). Le
-              ratio suit `showPhoto` et non `photo_url` : une URL morte doit aussi
-              basculer en 16/10, sinon le monogramme est cadré de travers. */}
+          {/* Cadrage affiche 4/5 seulement s'il y a une photo (cf. accueil).
+              SANS photo, la plaque n'existe qu'à partir de md : sur téléphone,
+              une plaque rouge de 16/10 avec l'identité en surimpression posait
+              le nom à côté du monogramme, à moitié sur lui, pour un en-tête de
+              245 px qui ne montrait rien. Le monogramme y devient un filigrane
+              du bloc d'identité (plus bas). La condition suit `showPhoto` et non
+              `photo_url` : une URL morte doit basculer de la même façon. */}
           <div
             className={`relative overflow-hidden md:aspect-auto md:min-h-[320px] ${
-              showPhoto ? 'aspect-[4/5]' : 'aspect-[16/10]'
+              showPhoto ? 'aspect-[4/5]' : 'hidden md:block'
             }`}
           >
             {showPhoto ? (
@@ -240,7 +244,23 @@ export function AthleteDetailPage() {
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-[color:var(--color-surface)] via-[color:var(--color-surface)]/70 to-transparent md:bg-gradient-to-r md:via-transparent" />
           </div>
-          <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2 p-5 md:static md:justify-center md:gap-4 md:p-10">
+          <div
+            className={`flex flex-col gap-2 p-5 md:static md:justify-center md:gap-4 md:p-10 ${
+              showPhoto ? 'absolute inset-x-0 bottom-0' : 'relative isolate overflow-hidden'
+            }`}
+          >
+            {!showPhoto && (
+              // Filigrane : même traitement que la plaque des cartes de
+              // l'effectif (un chiffre de maillot, à peine plus dense que le
+              // fond), et `-z-10` sous `isolate` pour rester derrière le texte.
+              <span
+                aria-hidden
+                className="pointer-events-none absolute -right-3 top-1/2 -z-10 -translate-y-1/2 select-none font-display text-[8.5rem] font-bold uppercase leading-none tracking-tight md:hidden"
+                style={{ color: 'color-mix(in oklab, var(--color-club-primary) 13%, transparent)' }}
+              >
+                {initials}
+              </span>
+            )}
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-club-primary-light sm:text-xs">
               Athlète du club
             </p>
@@ -442,11 +462,13 @@ export function AthleteDetailPage() {
  */
 function AthleteSkeleton() {
   return (
-    <div className="animate-rise" aria-busy="true" aria-label="Chargement de la fiche">
+    <div className="animate-rise pt-6 sm:pt-8" aria-busy="true" aria-label="Chargement de la fiche">
       <div className="mb-6 h-5 w-36 rounded bg-[color:var(--color-surface-2)]" />
       <div className="band mb-8 border border-[color:var(--color-line)] bg-[color:var(--color-surface)] sm:mb-10">
         <div className="relative grid md:grid-cols-[minmax(0,300px)_1fr]">
-          <div className="aspect-[4/5] animate-pulse bg-[color:var(--color-surface-2)] md:aspect-auto md:min-h-[320px]" />
+          {/* Géométrie de la fiche SANS photo, le cas de tout l'effectif
+              aujourd'hui : pas de plaque sous md (cf. l'en-tête réel). */}
+          <div className="hidden animate-pulse bg-[color:var(--color-surface-2)] md:block md:min-h-[320px]" />
           <div className="flex flex-col gap-3 p-5 md:justify-center md:p-10">
             <div className="h-3 w-28 rounded bg-[color:var(--color-surface-2)]" />
             <div className="h-6 w-40 rounded bg-[color:var(--color-surface-2)]" />

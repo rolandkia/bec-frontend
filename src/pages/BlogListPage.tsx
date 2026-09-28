@@ -6,7 +6,7 @@ import type { BlogPostOut } from '../api/types'
 import { BlogCard } from '../components/blog/BlogCard'
 import { Loading, ErrorMessage } from '../components/ui/Status'
 import { motion, Reveal, RevealGroup, staggerItem } from '../components/ui/motion'
-import { cldImage, cldSrcSet } from '../lib/cloudinary'
+import { PHONE_PHOTO_CAP, storedImageProps } from '../lib/cloudinary'
 
 function formatDate(iso: string | null) {
   if (!iso) return null
@@ -30,13 +30,13 @@ function FeaturedCard({ post }: { post: BlogPostOut }) {
       <div className="relative aspect-[4/3] overflow-hidden bg-[color:var(--color-surface-2)] sm:aspect-[16/10] md:aspect-auto md:h-full">
         {post.cover_image_url ? (
           <img
-            src={cldImage(post.cover_image_url, 800)}
-            srcSet={cldSrcSet(post.cover_image_url, [480, 800, 1200], {
-              crop: 'limit',
-              quality: 'auto',
-              format: 'auto',
+            {...storedImageProps(post.cover_image_url, {
+              w: 800,
+              widths: [480, 800, 1200],
+              // Plafond de densité téléphone : couverture sous un voile, comme
+              // les bandeaux (cf. PHONE_PHOTO_CAP).
+              sizes: `${PHONE_PHOTO_CAP}, (max-width: 767px) 100vw, 50vw`,
             })}
-            sizes="(max-width: 768px) 100vw, 50vw"
             alt=""
             loading="lazy"
             decoding="async"
@@ -55,24 +55,28 @@ function FeaturedCard({ post }: { post: BlogPostOut }) {
             et la date se noyaient dans une photo lumineuse. */}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[color:var(--color-ink)] via-[color:var(--color-ink)]/60 to-[color:var(--color-ink)]/10 md:hidden" />
       </div>
+      {/* Deux fonds pour le même bloc : la PHOTO sous md (surimpression, texte
+          blanc, le rouge passant dans le repère), la CARTE à partir de md
+          (panneau, couleurs du thème). Le titre était blanc aux deux tailles :
+          invisible sur la carte blanche du thème clair. */}
       <div className="absolute inset-x-0 bottom-0 flex flex-col justify-center p-5 md:static md:p-8">
-        <span className="mb-2 inline-flex w-fit items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-club-primary-light sm:text-xs md:mb-3">
+        <span className="mb-2 inline-flex w-fit items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white sm:text-xs md:mb-3 md:text-club-primary-light">
           <span className="h-1 w-6 rounded-full bg-club-primary" /> À la une
         </span>
         {post.published_at && (
-          <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[color:var(--color-muted)] sm:text-xs md:mb-2">
+          <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/75 sm:text-xs md:mb-2 md:text-[color:var(--color-muted)]">
             {formatDate(post.published_at)}
           </p>
         )}
         <h2
-          className="font-display font-bold leading-[1.1] text-white transition-colors group-hover:text-club-primary-light md:mb-3"
+          className="font-display font-bold leading-[1.1] text-white transition-colors md:mb-3 md:text-[color:var(--color-fg)] md:group-hover:text-club-primary-light"
           style={{ fontSize: 'clamp(1.35rem, 5.5vw, 1.875rem)' }}
         >
           {post.title}
         </h2>
         {post.summary && (
           // 2 lignes en surimpression (la photo doit rester lisible), 4 en panneau.
-          <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-[color:var(--color-muted)] md:mt-0 md:line-clamp-4">
+          <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-white/80 md:mt-0 md:line-clamp-4 md:text-[color:var(--color-muted)]">
             {post.summary}
           </p>
         )}
