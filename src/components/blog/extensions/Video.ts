@@ -4,6 +4,7 @@ import { VideoView } from './VideoView'
 import type { FigureAlign } from './FigureImage'
 import { parseFigureWidth } from './mediaSizes'
 import { stripCldTransforms } from '../../../lib/cloudinary'
+import { captionMentionsAttribute, captionSpec } from './captionMentions'
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
@@ -41,6 +42,8 @@ export const Video = Node.create({
         default: '',
         parseHTML: (element) => element.querySelector('figcaption')?.textContent ?? '',
       },
+      // Mentions « @athlète » de la légende (cf. captionMentions.ts).
+      captionMentions: captionMentionsAttribute,
       width: {
         default: null,
         parseHTML: (element) => parseFigureWidth(element),
@@ -68,7 +71,7 @@ export const Video = Node.create({
   },
 
   renderHTML({ node }) {
-    const { src, caption, width, align } = node.attrs
+    const { src, caption, captionMentions, width, align } = node.attrs
     const className = `fig-${align}${width ? ' fig-sized' : ''}`
     const attrs: Record<string, string> = { class: className }
     if (width) attrs.style = `width: ${width}%`
@@ -88,7 +91,7 @@ export const Video = Node.create({
     ] as const
     // Pas de <figcaption> vide : évite une marge fantôme dans l'article publié.
     return caption
-      ? ['figure', mergeAttributes(attrs), video, ['figcaption', {}, caption]]
+      ? ['figure', mergeAttributes(attrs), video, captionSpec(caption, captionMentions ?? [])]
       : ['figure', mergeAttributes(attrs), video]
   },
 

@@ -1447,6 +1447,18 @@ body {
   @apply flex flex-wrap items-center gap-1 rounded-t-2xl border-b px-3 py-2;
   border-color: var(--color-line);
   background: var(--color-surface-2);
+  /* Collée sous l'en-tête du site : dans un article long, il fallait remonter
+     tout en haut pour mettre un mot en gras ou insérer une photo. */
+  /* Hauteur de l'en-tête une fois COMPACT (il se resserre dès qu'on défile) :
+     mesurée à 62 px au téléphone, 54 px à partir de sm. */
+  position: sticky;
+  top: 62px;
+  z-index: 25;
+}
+@media (min-width: 640px) {
+  .tiptap-toolbar {
+    top: 54px;
+  }
 }
 
 .tb-btn {
@@ -1763,6 +1775,27 @@ body {
   font-size: var(--blog-caption-size);
   color: var(--color-muted);
   cursor: text;
+}
+
+/* Rappel, sous la légende, des athlètes réellement liés (cf. CaptionInput) :
+   un <input> ne peut pas surligner « @Prénom Nom », il faut donc dire
+   ailleurs que la mention a bien été reconnue. Éditeur seulement. */
+.tiptap-caption-mentions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem 0.4rem;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+.tiptap-caption-mentions .mention {
+  padding: 0 0.3em;
+  border-radius: 0.375rem;
+  background: color-mix(in srgb, var(--color-club-primary) 20%, transparent);
+  color: var(--color-club-primary-light);
+  font-weight: 500;
 }
 
 /* En absolu sous la figure : la rangée de boutons ne participe plus à la

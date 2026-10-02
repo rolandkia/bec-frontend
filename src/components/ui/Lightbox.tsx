@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { Maximize2, Minimize2, ZoomIn, ZoomOut } from 'lucide-react'
 import { cldImage, cldPoster, cldVideo } from '../../lib/cloudinary'
 import { isFrugal } from '../../lib/prefetch'
+import { useZoomPan, ZOOM_MAX } from './useZoomPan'
 
 export interface LightboxItem {
   url: string
@@ -45,6 +47,10 @@ export interface LightboxItem {
 
 /** Largeur de livraison de la visionneuse — SOURCE UNIQUE (cf. règle 2). */
 const VIEW_WIDTH = 1920
+
+/** Largeur demandée une fois la photo zoomée (cf. `imageSrc`). Cloudinary ne
+ *  l'agrandit jamais au-delà de l'original (`c_limit`). */
+const ZOOM_WIDTH = 3200
 
 /**
  * Nombre de voisines préchargées DE CHAQUE CÔTÉ.
@@ -165,11 +171,54 @@ export function Lightbox({
     if (count > 1) onIndexChange((index + 1) % count)
   }, [count, index, onIndexChange])
 
+  const isImage = current?.type === 'image'
+  const zoom = useZoomPan({
+    enabled: isImage,
+    resetKey: index,
+    onSwipe: (dir) => (dir === 'next' ? goNext : goPrev)(),
+  })
+  const { zoomIn, zoomOut, reset: resetZoom } = zoom
+
+  /* ─── Plein écran ───────────────────────────────────────────────────────────
+     La visionneuse couvre déjà la fenêtre ; le plein écran retire en plus les
+     barres du navigateur et du système, ce qui compte pour une photo en
+     paysage sur un portable. API absente sur iPhone (Safari ne l'accorde
+     qu'aux vidéos) : le bouton n'y est simplement pas rendu. */
+  const rootRef = useRef<HTMLDivElement>(null)
+  const canFullscreen = typeof document !== 'undefined' && Boolean(document.fullscreenEnabled)
+  const [fullscreen, setFullscreen] = useState(false)
+
+  const toggleFullscreen = useCallback(() => {
+    if (!canFullscreen) return
+    if (document.fullscreenElement) void document.exitFullscreen()
+    else void rootRef.current?.requestFullscreen().catch(() => {})
+  }, [canFullscreen])
+
+  useEffect(() => {
+    // Lu ici et non dans le nettoyage : au démontage la ref est déjà vidée, et
+    // `null === null` faisait croire à un plein écran — `exitFullscreen` levait
+    // alors une erreur (« Document not active »).
+    const root = rootRef.current
+    function onChange() {
+      setFullscreen(root !== null && document.fullscreenElement === root)
+    }
+    document.addEventListener('fullscreenchange', onChange)
+    return () => {
+      document.removeEventListener('fullscreenchange', onChange)
+      // Fermer la visionneuse ne doit pas laisser l'onglet en plein écran.
+      if (root && document.fullscreenElement === root) void document.exitFullscreen().catch(() => {})
+    }
+  }, [])
+
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose()
       else if (e.key === 'ArrowLeft') goPrev()
       else if (e.key === 'ArrowRight') goNext()
+      else if (isImage && (e.key === '+' || e.key === '=')) zoomIn()
+      else if (isImage && (e.key === '-' || e.key === '_')) zoomOut()
+      else if (isImage && e.key === '0') resetZoom()
+      else if (e.key === 'f' || e.key === 'F') toggleFullscreen()
     }
     window.addEventListener('keydown', onKeyDown)
     // Empêche le défilement de la page derrière l'overlay.
@@ -179,11 +228,11 @@ export function Lightbox({
       window.removeEventListener('keydown', onKeyDown)
       document.body.style.overflow = previousOverflow
     }
-  }, [onClose, goPrev, goNext])
+  }, [onClose, goPrev, goNext, isImage, zoomIn, zoomOut, resetZoom, toggleFullscreen])
 
-  // Balayage horizontal — geste attendu sur une visionneuse mobile. Pointer
-  // events, aucune dépendance ; seuil de 50 px pour ne pas confondre avec un
-  // tap, et on ignore la souris pour ne pas gêner un cliquer-glisser.
+  // Balayage horizontal d'une VIDÉO — celui des images passe par `useZoomPan`,
+  // qui doit d'abord savoir si le geste est un pincement. Seuil de 50 px pour
+  // ne pas confondre avec un tap, et la souris est ignorée.
   const swipeStartX = useRef<number | null>(null)
 
   function onPointerDown(e: ReactPointerEvent) {
@@ -206,25 +255,87 @@ export function Lightbox({
 
   if (!current) return null
 
+  // Zoomé, la photo est agrandie jusqu'à 5× : la variante de 1 920 px devient
+  // floue. On demande alors une version plus large. Le navigateur garde
+  // l'image affichée jusqu'à l'arrivée de la nouvelle (pas de trou), et
+  // `mediaSrc` reste la seule URL préchargée : la grande n'est payée que par
+  // qui zoome vraiment. Sans effet sur une photo locale, servie entière.
+  const imageSrc = zoom.zoomed ? cldImage(current.url, ZOOM_WIDTH) : mediaSrc(current)
+
+  const barButton =
+    'tap flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20 disabled:opacity-35 disabled:hover:bg-white/10'
+
   return createPortal(
     <div
+      ref={rootRef}
       className="fixed inset-0 z-[100] flex flex-col bg-black/90"
       role="dialog"
       aria-modal="true"
       onClick={onClose}
     >
-      {/* Bouton fermer */}
-      <button
-        type="button"
-        aria-label="Fermer"
-        className="tap absolute right-3 top-[max(0.75rem,env(safe-area-inset-top))] z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-2xl text-white transition hover:bg-white/20"
-        onClick={onClose}
+      {/* Barre haute : zoom (images), plein écran, fermer. */}
+      <div
+        className="absolute right-3 top-[max(0.75rem,env(safe-area-inset-top))] z-10 flex items-center gap-2"
+        onClick={(e) => e.stopPropagation()}
       >
-        ×
-      </button>
+        {isImage && (
+          <div className="flex items-center gap-1 rounded-full bg-white/5 p-0.5">
+            <button
+              type="button"
+              aria-label="Dézoomer"
+              title="Dézoomer (−)"
+              className={barButton}
+              disabled={!zoom.zoomed}
+              onClick={zoomOut}
+            >
+              <ZoomOut className="h-5 w-5" aria-hidden />
+            </button>
+            <button
+              type="button"
+              title="Taille réelle (0)"
+              aria-label={`Zoom ${Math.round(zoom.zoom * 100)} %, revenir à 100 %`}
+              className="tap h-11 min-w-14 rounded-full px-2 text-xs font-semibold tabular-nums text-white/80 transition hover:text-white"
+              onClick={resetZoom}
+            >
+              {Math.round(zoom.zoom * 100)} %
+            </button>
+            <button
+              type="button"
+              aria-label="Zoomer"
+              title="Zoomer (+)"
+              className={barButton}
+              disabled={zoom.zoom >= ZOOM_MAX}
+              onClick={zoomIn}
+            >
+              <ZoomIn className="h-5 w-5" aria-hidden />
+            </button>
+          </div>
+        )}
+        {canFullscreen && (
+          <button
+            type="button"
+            aria-label={fullscreen ? 'Quitter le plein écran' : 'Plein écran'}
+            title={fullscreen ? 'Quitter le plein écran (F)' : 'Plein écran (F)'}
+            className={barButton}
+            onClick={toggleFullscreen}
+          >
+            {fullscreen ? (
+              <Minimize2 className="h-5 w-5" aria-hidden />
+            ) : (
+              <Maximize2 className="h-5 w-5" aria-hidden />
+            )}
+          </button>
+        )}
+        <button type="button" aria-label="Fermer" className={`${barButton} text-2xl`} onClick={onClose}>
+          ×
+        </button>
+      </div>
 
       {/* Zone média (le clic sur le média ne ferme pas) */}
-      <div className="flex flex-1 items-center justify-center overflow-hidden p-4 sm:p-10">
+      <div
+        ref={zoom.stageRef}
+        className={`flex flex-1 items-center justify-center overflow-hidden ${fullscreen ? 'p-2' : 'p-4 sm:p-10'}`}
+      >
         {count > 1 && (
           // Flèches latérales réservées à sm : à 390 px, `left-2`/`right-2` les
           // posait SUR la photo et masquait le sujet (cf. barre basse).
@@ -243,10 +354,10 @@ export function Lightbox({
 
         <div
           className="flex max-h-full max-w-full flex-col items-center"
-          style={{ touchAction: 'pan-y' }}
+          style={isImage ? undefined : { touchAction: 'pan-y' }}
           onClick={(e) => e.stopPropagation()}
-          onPointerDown={onPointerDown}
-          onPointerUp={onPointerUp}
+          onPointerDown={isImage ? undefined : onPointerDown}
+          onPointerUp={isImage ? undefined : onPointerUp}
         >
           {current.type === 'video' ? (
             <video
@@ -267,25 +378,33 @@ export function Lightbox({
               // utilisable, donc le bon moment pour laisser partir le reste.
               onLoadedMetadata={() => setLoadedKey(cldVideo(current.url))}
               onError={() => setLoadedKey(cldVideo(current.url))}
-              className="max-h-[72dvh] max-w-full rounded-lg bg-black"
+              className={`${fullscreen ? 'max-h-[88dvh]' : 'max-h-[72dvh]'} max-w-full rounded-lg bg-black`}
             />
           ) : (
             <img
+              ref={zoom.imgRef}
               key={current.url}
               // `mediaSrc` et non un `cldImage(..., 1920)` écrit ici : c'est
               // l'appel que fait aussi le préchargement, et les deux DOIVENT
-              // produire la même chaîne (cf. règle 2).
-              src={mediaSrc(current)}
+              // produire la même chaîne (cf. règle 2). Seul le zoom s'en écarte.
+              src={imageSrc}
               alt=""
+              draggable={false}
               // `onError` arme aussi : une URL morte ne doit pas bloquer
               // définitivement le préchargement du reste de l'album.
               onLoad={() => setLoadedKey(mediaSrc(current))}
               onError={() => setLoadedKey(mediaSrc(current))}
-              className="max-h-[72dvh] max-w-full rounded-lg object-contain"
+              {...zoom.handlers}
+              style={zoom.style}
+              className={`${fullscreen ? 'max-h-[88dvh]' : 'max-h-[72dvh]'} relative z-[1] max-w-full select-none rounded-lg object-contain will-change-transform`}
             />
           )}
           {renderCaption && (
-            <div className="mt-3 max-w-2xl text-center text-sm text-white/85">
+            <div
+              className={`mt-3 max-w-2xl text-center text-sm text-white/85 transition-opacity ${
+                zoom.zoomed ? 'pointer-events-none opacity-0' : ''
+              }`}
+            >
               {renderCaption(current, index)}
             </div>
           )}

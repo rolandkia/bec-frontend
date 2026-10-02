@@ -21,6 +21,9 @@ import type { MentionItem } from './MentionPopup'
  *  l'éditeur — utilisée par la navigation clavier (Entrée depuis le Résumé). */
 export interface BlogEditorHandle {
   focus: () => void
+  /** Remplace tout le contenu (restauration d'un brouillon local) ; déclenche
+   *  `onChange` comme une saisie. */
+  setContent: (html: string) => void
 }
 
 export const BlogEditor = forwardRef<
@@ -64,7 +67,21 @@ export const BlogEditor = forwardRef<
         // pour éviter que des raccourcis clavier ne produisent du HTML non souhaité.
         underline: false,
         strike: false,
-        link: false,
+        // Liens RÉACTIVÉS : désactivés, ils n'étaient pas seulement absents de
+        // la barre d'outils — un article qui en contenait (« Nous rejoindre »
+        // dans les articles d'exemple) les PERDAIT à la réouverture, puisque
+        // ProseMirror ne garde d'un <a> inconnu que son texte. Pas de
+        // `target="_blank"` : la plupart des liens du Mag sont internes
+        // (/rejoindre, /competitions) et doivent rester dans l'onglet. Les
+        // mentions d'athlète, qui sont aussi des <a>, gardent la main grâce à la
+        // priorité de leur règle de lecture (cf. AthleteMention).
+        link: {
+          openOnClick: false,
+          autolink: true,
+          linkOnPaste: true,
+          defaultProtocol: 'https',
+          HTMLAttributes: { target: null, rel: null, class: null },
+        },
         // `blockquote` reste ACTIF bien qu'absent de la barre d'outils : les deux
         // sanitizers l'autorisent, donc un article hérité peut en contenir, et le
         // désactiver le rétrogradait silencieusement en <p> dès la réouverture —
@@ -123,7 +140,14 @@ export const BlogEditor = forwardRef<
     },
   })
 
-  useImperativeHandle(ref, () => ({ focus: () => editor?.commands.focus() }), [editor])
+  useImperativeHandle(
+    ref,
+    () => ({
+      focus: () => editor?.commands.focus(),
+      setContent: (html) => editor?.commands.setContent(html),
+    }),
+    [editor],
+  )
 
   if (!editor) return null
 
@@ -141,11 +165,7 @@ export const BlogEditor = forwardRef<
         onInsertFromGallery={(items) => {
           insertMediaNodes(
             editor.view,
-            items.map((m) => ({
-              url: m.url,
-              resource_type: m.resource_type,
-              alt: m.description,
-            })),
+            items.map((m) => ({ url: m.url, resource_type: m.resource_type, alt: m.alt })),
           )
         }}
       />

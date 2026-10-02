@@ -3,6 +3,7 @@ import { ReactNodeViewRenderer } from '@tiptap/react'
 import { FigureImageView } from './FigureImageView'
 import { parseFigureWidth } from './mediaSizes'
 import { stripCldTransforms } from '../../../lib/cloudinary'
+import { captionMentionsAttribute, captionSpec } from './captionMentions'
 
 /** Placement d'un média AUTONOME : uniquement `center` désormais. L'ancien
  *  habillage flottant (`float-left`/`float-right`) est remplacé par le bloc
@@ -64,6 +65,8 @@ export const FigureImage = Node.create({
         parseHTML: (element) =>
           element.querySelector('figcaption')?.textContent ?? '',
       },
+      // Mentions « @athlète » de la légende (cf. captionMentions.ts).
+      captionMentions: captionMentionsAttribute,
       width: {
         default: null,
         parseHTML: (element) => parseFigureWidth(element),
@@ -92,14 +95,14 @@ export const FigureImage = Node.create({
   },
 
   renderHTML({ node }) {
-    const { src, alt, caption, width, align } = node.attrs
+    const { src, alt, caption, captionMentions, width, align } = node.attrs
     const className = `fig-${align}${width ? ' fig-sized' : ''}`
     const attrs: Record<string, string> = { class: className }
     if (width) attrs.style = `width: ${width}%`
     const img = ['img', mergeAttributes({ src, alt })] as const
     // Pas de <figcaption> vide : évite une marge fantôme dans l'article publié.
     return caption
-      ? ['figure', mergeAttributes(attrs), img, ['figcaption', {}, caption]]
+      ? ['figure', mergeAttributes(attrs), img, captionSpec(caption, captionMentions ?? [])]
       : ['figure', mergeAttributes(attrs), img]
   },
 

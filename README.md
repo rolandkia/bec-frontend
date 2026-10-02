@@ -173,6 +173,28 @@ images avec légende, grilles de médias, vidéos, redimensionnement au drag et 
 glisser-déposer. Le HTML produit est assaini côté client avec DOMPurify (et côté serveur avec nh3).
 Un article peut être exporté en PDF ([`src/lib/exportBlogPdf.ts`](src/lib/exportBlogPdf.ts)).
 
+Côté rédaction ([`BlogPostForm`](src/components/blog/BlogPostForm.tsx)) :
+
+- **Rédiger / Aperçu** : l'aperçu reproduit la page publiée (couverture au ratio réel, titre en
+  surimpression), en largeur téléphone ou ordinateur ;
+- **barre d'enregistrement collée en bas** de l'écran, `Ctrl/⌘ + S`, et on reste dans l'éditeur
+  après l'enregistrement ;
+- **copie de secours locale** ([`useLocalDraft`](src/components/blog/useLocalDraft.ts)) : un
+  onglet fermé avant l'enregistrement ne perd rien, la version est proposée à la réouverture ;
+- **couverture** envoyée ou choisie dans la galerie, puis cadrée sur la photo entière avec un
+  aperçu de chaque format où elle apparaît (bandeau 16:7 et 16:10, carte 4:3, vignette carrée) ;
+- **insertion depuis la galerie** : publications (filtrables par album) ET photos du club ;
+- **@athlète dans les légendes** des images et vidéos
+  ([`captionMentions.ts`](src/components/blog/extensions/captionMentions.ts)), rendu comme les
+  mentions du texte ;
+- **liens** (bouton dédié ou collage d'une adresse) et **citations**. Les liens étaient désactivés
+  dans l'éditeur, et un article qui en contenait les perdait à la réouverture.
+
+La visionneuse ([`Lightbox`](src/components/ui/Lightbox.tsx), partout sur le site) zoome jusqu'à
+5× (pincement, double-tap, molette, clic, `+`/`-`/`0`), se déplace au doigt ou à la souris, passe en
+plein écran (`F`, sauf sur iPhone qui ne le permet pas), et affiche la légende des photos
+d'article, mentions comprises.
+
 ### Images des articles
 
 Une image d'article (couverture ou corps) est stockée en base sous forme d'URL, de deux origines

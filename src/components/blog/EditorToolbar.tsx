@@ -1,9 +1,8 @@
 import { useRef, useState } from 'react'
-import { FolderOpen, ImagePlus, List, ListOrdered, Redo2, Undo2 } from 'lucide-react'
+import { FolderOpen, ImagePlus, Link2, List, ListOrdered, Quote, Redo2, Undo2 } from 'lucide-react'
 import type { Editor } from '@tiptap/react'
-import type { MediaOut } from '../../api/types'
 import { ACCEPT_MEDIA } from '../../lib/mediaKind'
-import { GalleryMediaPicker } from './GalleryMediaPicker'
+import { GalleryMediaPicker, type PickedMedia } from './GalleryMediaPicker'
 
 function ToolbarButton({
   onClick,
@@ -34,6 +33,31 @@ function ToolbarButton({
   )
 }
 
+/**
+ * Pose, modifie ou retire le lien de la sélection. Une adresse du site
+ * (« /rejoindre ») reste relative ; « bec.fr » devient « https://bec.fr ».
+ * Champ vidé ⇒ lien retiré. `prompt` plutôt qu'une bulle sur mesure : c'est un
+ * outil d'administration, et la boîte native marche aussi au doigt.
+ */
+function editLink(editor: Editor) {
+  const current = (editor.getAttributes('link').href as string | undefined) ?? ''
+  if (!current && editor.state.selection.empty) {
+    window.alert('Sélectionnez d’abord le texte à transformer en lien.')
+    return
+  }
+  const input = window.prompt('Adresse du lien (ex. /rejoindre ou https://…) :', current)
+  if (input === null) return
+  const href = input.trim()
+  const chain = editor.chain().focus().extendMarkRange('link')
+  if (!href) {
+    chain.unsetLink().run()
+    return
+  }
+  const normalized =
+    /^(\/|#|mailto:|https?:\/\/)/i.test(href) ? href : href.includes('@') ? `mailto:${href}` : `https://${href}`
+  chain.setLink({ href: normalized }).run()
+}
+
 export function EditorToolbar({
   editor,
   uploading,
@@ -48,7 +72,7 @@ export function EditorToolbar({
    *  partagé avec le drop de fichiers OS et le collage. */
   onUploadFiles: (files: File[]) => void
   /** Insère dans l'éditeur des médias déjà hébergés (choisis dans la galerie). */
-  onInsertFromGallery: (items: MediaOut[]) => void
+  onInsertFromGallery: (items: PickedMedia[]) => void
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [galleryOpen, setGalleryOpen] = useState(false)
@@ -88,6 +112,13 @@ export function EditorToolbar({
       </ToolbarButton>
       <ToolbarButton title="Liste numérotée" active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()}>
         <ListOrdered aria-hidden className="h-4 w-4" strokeWidth={2} />
+      </ToolbarButton>
+
+      <ToolbarButton title="Citation" active={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()}>
+        <Quote aria-hidden className="h-4 w-4" strokeWidth={2} />
+      </ToolbarButton>
+      <ToolbarButton title="Lien (sélectionnez d'abord le texte)" active={editor.isActive('link')} onClick={() => editLink(editor)}>
+        <Link2 aria-hidden className="h-4 w-4" strokeWidth={2} />
       </ToolbarButton>
 
       <span className="tb-sep" />

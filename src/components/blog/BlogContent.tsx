@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import DOMPurify from 'dompurify'
 import { fullSrcOf, rewriteBlogMedia } from '../../lib/blogMedia'
 import { Lightbox, type LightboxItem } from '../ui/Lightbox'
@@ -23,6 +23,26 @@ const ALLOWED_ATTR = [
   // par rewriteBlogMedia, depuis des valeurs générées (cf. blogMedia.ts).
 ]
 
+/** Morceau de légende : du texte, ou une mention d'athlète. */
+type CaptionPart = string | { id: string; label: string }
+
+/**
+ * Légende de la figure d'une image, mentions comprises, pour la visionneuse :
+ * en plein écran, la photo perdait sa légende — et avec elle le nom des
+ * athlètes qu'on y voit.
+ */
+function captionOf(img: HTMLImageElement): CaptionPart[] {
+  const caption = img.closest('figure')?.querySelector('figcaption')
+  if (!caption) return []
+  return Array.from(caption.childNodes).flatMap((node): CaptionPart[] => {
+    if (node instanceof HTMLAnchorElement && node.dataset.mention) {
+      return [{ id: node.dataset.mention, label: (node.textContent ?? '').replace(/^@/, '') }]
+    }
+    const text = node.textContent ?? ''
+    return text ? [text] : []
+  })
+}
+
 export function BlogContent({
   html,
   enableLightbox = true,
@@ -42,7 +62,11 @@ export function BlogContent({
 
   const containerRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
-  const [lightbox, setLightbox] = useState<{ items: LightboxItem[]; index: number } | null>(null)
+  const [lightbox, setLightbox] = useState<{
+    items: LightboxItem[]
+    captions: CaptionPart[][]
+    index: number
+  } | null>(null)
 
   // Un seul gestionnaire délégué : les mentions d'athlète naviguent en SPA,
   // et un clic sur une image ouvre la visionneuse plein écran.
@@ -78,7 +102,7 @@ export function BlogContent({
         type: 'image',
       }))
       const index = all.indexOf(media)
-      if (index >= 0) setLightbox({ items, index })
+      if (index >= 0) setLightbox({ items, captions: all.map(captionOf), index })
     }
   }
 
@@ -96,6 +120,24 @@ export function BlogContent({
           index={lightbox.index}
           onIndexChange={(index) => setLightbox((l) => (l ? { ...l, index } : l))}
           onClose={() => setLightbox(null)}
+          renderCaption={(_, i) => {
+            const parts = lightbox.captions[i]
+            if (!parts?.length) return null
+            return parts.map((part, k) =>
+              typeof part === 'string' ? (
+                part
+              ) : (
+                <Link
+                  key={k}
+                  to={`/athletes/${part.id}`}
+                  onClick={() => setLightbox(null)}
+                  className="font-semibold text-white underline decoration-white/40 underline-offset-2 hover:decoration-white"
+                >
+                  @{part.label}
+                </Link>
+              ),
+            )
+          }}
         />
       )}
     </div>

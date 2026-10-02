@@ -4,7 +4,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { deleteBlog, listAllBlogs } from '../api/blogs'
 import { exportBlogPdf } from '../lib/exportBlogPdf'
 import { Loading, ErrorMessage } from '../components/ui/Status'
-import type { BlogPostOut } from '../api/types'
+import { coverThumbStyle, type BlogPostOut } from '../api/types'
+import { storedImageProps } from '../lib/cloudinary'
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('fr-FR', {
@@ -60,6 +61,24 @@ export function BlogAdminPage() {
             const isPublished = post.published_at !== null
             return (
               <div key={post.id} className="card flex flex-wrap items-center gap-3 p-4">
+                {/* Vignette : on reconnaît un article à sa photo avant son titre. */}
+                <Link
+                  to={`/blog/${post.slug}/modifier`}
+                  aria-hidden
+                  tabIndex={-1}
+                  className="h-14 w-20 shrink-0 overflow-hidden rounded-md bg-[color:var(--color-surface-2)]"
+                >
+                  {post.cover_image_url && (
+                    <img
+                      {...storedImageProps(post.cover_image_url, { w: 160, widths: [160, 320], sizes: '80px' })}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                      className="h-full w-full object-cover"
+                      style={coverThumbStyle(post.cover_position)}
+                    />
+                  )}
+                </Link>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span

@@ -6,6 +6,8 @@ import { MEDIA_TEXT_NAME, parentMediaTextPos, type MediaTextSide } from './Media
 import { SIZE_OPTIONS } from './mediaSizes'
 import { MediaResizeHandles } from './MediaResizeHandles'
 import { useMediaDrag } from './useMediaDrag'
+import { captionSegments, type CaptionMention } from './captionMentions'
+import { CaptionInput } from '../CaptionInput'
 import { cldPoster, cldVideo } from '../../../lib/cloudinary'
 
 /** Choix de disposition d'un média. `center` = média seul centré ; `left`/
@@ -20,9 +22,10 @@ const LAYOUT_OPTIONS: { value: LayoutChoice; label: string; title: string }[] = 
 
 export function VideoView(props: NodeViewProps) {
   const { node, updateAttributes, editor, getPos } = props
-  const { src, caption, width, align } = node.attrs as {
+  const { src, caption, captionMentions, width, align } = node.attrs as {
     src: string
     caption: string
+    captionMentions: CaptionMention[] | null
     width: number | null
     align: FigureAlign
   }
@@ -162,14 +165,25 @@ export function VideoView(props: NodeViewProps) {
       </div>
 
       {editable ? (
-        <input
-          className="tiptap-caption-input"
+        <CaptionInput
           value={caption ?? ''}
-          placeholder="Légende (optionnelle)…"
-          onChange={(e) => updateAttributes({ caption: e.target.value })}
+          mentions={captionMentions ?? []}
+          onChange={(text, mentions) => updateAttributes({ caption: text, captionMentions: mentions })}
         />
       ) : (
-        caption && <figcaption>{caption}</figcaption>
+        caption && (
+          <figcaption>
+            {captionSegments(caption, captionMentions ?? []).map((part, i) =>
+              typeof part === 'string' ? (
+                part
+              ) : (
+                <a key={i} className="mention" href={`/athletes/${part.id}`} data-mention={part.id}>
+                  @{part.label}
+                </a>
+              ),
+            )}
+          </figcaption>
+        )
       )}
 
       {editable && isNodeSelected && (
