@@ -134,6 +134,31 @@ for (const rel of sources().sort()) {
   manifest[`/photos/${rel.split('/').join('/')}`] = { w, variants }
 }
 
+// Nettoie les variantes ORPHELINES, dont l'original a été supprimé : la boucle
+// ci-dessus ne parcourt que les sources présentes, donc elle ne les voit pas, et
+// elles restaient copiées dans chaque build (`public/` part tel quel dans dist).
+function orphans(dir, out = []) {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name)
+    if (entry.isDirectory()) orphans(full, out)
+    else if (entry.name.endsWith('.webp')) out.push(full)
+  }
+  return out
+}
+for (const target of LADDER) {
+  const dir = join(PHOTOS, `w${target}`)
+  if (!existsSync(dir)) continue
+  for (const file of orphans(dir)) {
+    if (existsSync(join(PHOTOS, relative(dir, file)))) continue
+    if (check) {
+      missing++
+      console.error(`ORPHELINE  ${relative(ROOT, file)}`)
+    } else {
+      rmSync(file)
+    }
+  }
+}
+
 const body = `/* FICHIER GÉNÉRÉ — ne pas éditer à la main.
  *
  * Produit par \`node scripts/photo-variants.mjs\`, qui écrit en même temps les

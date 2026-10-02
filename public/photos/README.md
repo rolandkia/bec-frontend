@@ -43,6 +43,7 @@ en collectif.
 | `interclub-drapeau.webp` | `photo-interclub/interclub_2025_1.jpg` (1200px, q74) | Tuile portrait « vie du club » — un athlète brandit le drapeau devant le groupe. Source portrait 1200×1600, donc pas de `-resize` utile au-delà. |
 | `interclub-drapeau-wide.webp` | `photo-interclub/interclub_2025_1.jpg` **recadrée 16/9** (1200×675, q74) | **Bandeau de l'onglet Effectif / Tous** (`/athletes`). Même cliché que ci-dessus, mais la source est en portrait : recadrée sur sa bande centrale, `y` de 420 à 1095, ce qui garde le drapeau brandi, l'effectif entier agenouillé et l'athlète debout jusqu'aux pieds, et jette le tiers de ciel vide et le tiers de pelouse vide qui écrasaient le sujet. `cwebp -q 74 -crop 0 420 1200 675 <source> -o public/photos/interclub-drapeau-wide.webp` — **sans `-resize`** : la source ne fait que 1200 px de large, viser les 1500 px des autres fonds de bandeau n'inventerait que du flou. Elle est donc un peu plus douce que ses voisines sur grand écran, c'est la limite du fichier d'origine. |
 | `jeune-medaille.webp` | `photo-info/photo-evan-athlete-enfant.png` (1400px, q74) | Section jeunes de `/rejoindre` : un enfant du club, sa médaille entre les dents. Photo de CONTENU (vrai `alt`), pas un fond. |
+| `hero-depart.webp` | `photo_starting_block/c4e317f8-….JPG` **recadrée et adoucie** (1552×1018, q74) | **Bandeau du Mag** (`/mag`), première photo du diaporama. Six sprinteurs qui sortent des blocs : un mouvement HORIZONTAL, qui remplit le ruban de 3:1 du bandeau sur ordinateur sans qu'aucun visage n'y soit agrandi. Elle remplace `podium-02.webp`, une photo quasi carrée (1200×1248) dont le bandeau ne montrait que le tiers haut : un visage, agrandi 2,5 fois sur écran Retina. La source porte un cadre décoratif de 22 px sur chaque bord, coupé à 24 px ; elle est aussi sur-accentuée, d'où un flou de 0,5 px avant encodage, invisible à l'œil (comparé à 200 % sur les visages) et qui fait passer le fichier de 209 à 168 ko. `python3 -c "from PIL import Image, ImageFilter; Image.open('<source>').convert('RGB').crop((24, 24, 1576, 1042)).filter(ImageFilter.GaussianBlur(0.5)).save('/tmp/depart.png')"` puis `cwebp -q 74 /tmp/depart.png -o public/photos/hero-depart.webp` — **sans `-resize`**, la source ne fait que 1 600 px. |
 
 ## Fonds de section et portraits (itération précédente)
 
@@ -54,7 +55,7 @@ en collectif.
 | `concentration-01/02.webp` | `photo_concentration/` | Tuiles bento (portrait) |
 | `race-portrait.webp` | `photo_inside_race/Capture…11.24.05` | Tuile bento (portrait) + encart Clément Ducos de `/palmares` — **c'est lui** (dossard « CLEMENT DUCOS », maillot Tennessee, NCAA), donc traité comme photo de contenu avec un vrai `alt` |
 | `race-01.webp` | `photo_inside_race/Capture…11.23.10` | Tuile bento (paysage) |
-| `podium-01/02.webp` | `photo_podium/` | Tuiles bento / résultats |
+| `podium-01.webp` | `photo_podium/` | Chapitre « Le podium » de l'accueil. (`podium-02.webp`, ex-bandeau du Mag, a été retiré : cf. `hero-depart.webp`.) |
 | `start-01.webp` | `photo_starting_block/Capture…11.23.20` | Tuile bento |
 | `group.webp` | `photo_partage_groupe/photo_groupe_serieux.png` | Tuile bento large |
 | `portrait-camille.webp` | `photo_profile/camille_bechet.png` | Portrait athlète |
@@ -99,6 +100,9 @@ node scripts/photo-variants.mjs --check   # vérifier (code 1 si à régénérer
 ```
 
 À LANCER après tout ajout, remplacement ou suppression d'une photo de ce dossier.
+Une photo supprimée emporte ses variantes (`--check` les signale comme
+`ORPHELINE` tant que le script n'a pas tourné) : jusqu'ici elles restaient sur
+le disque, et donc dans chaque build.
 Le script écrit aussi `src/data/photoVariants.ts`, le manifeste que consulte
 `sitePhotoSrcSet` — sans lui, aucun `srcset` n'est émis et le site retombe
 simplement sur les originaux, sans rien casser.
@@ -159,6 +163,12 @@ seules photos où le club apparaît au complet. `interclub_2024.png` étant un
 doublon binaire de `interclub_2026.png`, il n'y a que 3 fichiers pour 4 sources.
 `group-10` = soirée du club, `group-11` = portrait studio, `portrait-2` = jeune
 athlète médaillé.
+
+Doublons : `group-8` est une copie binaire de `group-10` (md5 identique), et
+`group-9` en était une de `group-11`. Les deux paires apparaissaient deux fois dans
+la galerie et dans la bande de l'accueil. `group-9` a été supprimé ; `group-8`
+reste sur le disque parce que c'est le fichier du bandeau de `/club`
+(`HERO_CLUB`), mais il n'est plus listé dans `clubPhotos.ts`.
 
 Régénérer : `cwebp -q 72 -resize 1500 0 <source> -o public/photos/gallery/<theme>-<n>.webp`.
 

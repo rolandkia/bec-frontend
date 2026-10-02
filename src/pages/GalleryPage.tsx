@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { listAlbums, listMedia } from '../api/gallery'
-import { clubPhotos } from '../data/clubPhotos'
+import { clubPhotos, type ClubPhoto } from '../data/clubPhotos'
 import { AlbumCard } from '../components/gallery/AlbumCard'
 import { AlbumStories } from '../components/gallery/AlbumStories'
 import { MediaFeed } from '../components/gallery/MediaFeed'
@@ -19,12 +19,26 @@ const TABS: { key: Tab; label: string }[] = [
   { key: 'albums', label: 'Albums' },
 ]
 
-// Rythme « bento » : quelques tuiles occupent 2 lignes / 2 colonnes.
-function tileSpan(i: number): string {
-  const m = i % 6
-  if (m === 0) return 'row-span-2'
-  if (m === 3) return 'sm:col-span-2'
-  return ''
+/**
+ * Mosaïque « bento » : la forme de chaque tuile suit sa PHOTO (cf. `tile` dans
+ * clubPhotos.ts), et non plus son rang. L'ancien rythme (`i % 6`) donnait une
+ * tuile haute à une photo en paysage et une tuile simple à une photo en
+ * portrait, donc des recadrages sévères ; et, sans `grid-flow-dense`, il
+ * laissait des cases vides dans presque chaque bande de lignes (mesuré : sept
+ * trous sur la grille à quatre colonnes).
+ */
+const TILE_SPAN: Record<NonNullable<ClubPhoto['tile']>, string> = {
+  feature: 'col-span-2 row-span-2',
+  tall: 'row-span-2',
+  wide: 'sm:col-span-2',
+}
+
+/** `sizes` par forme : une tuile 2 × 2 est deux fois plus large qu'une simple. */
+const TILE_SIZES: Record<NonNullable<ClubPhoto['tile']> | 'simple', string> = {
+  feature: '(min-width: 1024px) 50vw, (min-width: 640px) 66vw, 100vw',
+  wide: '(min-width: 1024px) 50vw, (min-width: 640px) 66vw, 50vw',
+  tall: '(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw',
+  simple: '(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw',
 }
 
 export function GalleryPage({ embedded = false }: { embedded?: boolean }) {
@@ -39,29 +53,35 @@ export function GalleryPage({ embedded = false }: { embedded?: boolean }) {
 
   return (
     <div>
-      <Reveal className={`mb-6 flex items-center ${embedded ? 'justify-end' : 'justify-between'}`}>
-        {!embedded && <h1 className="section-title">Galerie</h1>}
-        <Link to="/galerie/admin" className="btn-outline">
-          Gérer la galerie
-        </Link>
-      </Reveal>
+      {/* Intégrée au Mag, le lien d'administration est porté par la barre
+          d'onglets (cf. MagPage). */}
+      {!embedded && (
+        <Reveal className="mb-6 flex items-center justify-between">
+          <h1 className="section-title">Galerie</h1>
+          <Link to="/galerie/admin" className="btn-outline">
+            Gérer la galerie
+          </Link>
+        </Reveal>
+      )}
 
       {/* Le club en images — photos curées du club, toujours disponibles. */}
       <section className="mb-12">
         <h2 className="section-title mb-4">Le club en images</h2>
-        <div className="grid auto-rows-[150px] grid-cols-2 gap-3 sm:auto-rows-[190px] sm:grid-cols-3 lg:grid-cols-4">
+        {/* `grid-flow-dense` : une tuile simple vient boucher la case laissée
+            par une tuile double. L'ordre visuel s'écarte ainsi de l'ordre de la
+            liste (celui de la visionneuse) de deux places au plus. */}
+        <div className="grid grid-flow-row-dense auto-rows-[150px] grid-cols-2 gap-3 sm:auto-rows-[190px] sm:grid-cols-3 lg:grid-cols-4">
           {clubPhotos.map((p, i) => (
             <button
               key={p.src}
               type="button"
               onClick={() => setLightbox(i)}
               aria-label={`Agrandir : ${p.legende}`}
-              className={`group tap relative cursor-pointer overflow-hidden rounded-2xl ${tileSpan(i)}`}
+              className={`group tap relative cursor-pointer overflow-hidden rounded-2xl ${p.tile ? TILE_SPAN[p.tile] : ''}`}
             >
               <img
                 {...sitePhotoProps(p.src, {
-                  // Grille bento : de la demi-largeur au tiers selon la tuile.
-                  sizes: '(min-width: 1024px) 33vw, 50vw',
+                  sizes: TILE_SIZES[p.tile ?? 'simple'],
                   widths: [400, 800, 1200],
                   w: 1200,
                 })}

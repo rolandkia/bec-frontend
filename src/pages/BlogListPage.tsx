@@ -95,14 +95,16 @@ export function BlogListPage({ embedded = false }: { embedded?: boolean }) {
 
   return (
     <div>
-      <Reveal
-        className={`mb-6 flex flex-wrap items-center gap-3 sm:mb-8 ${embedded ? 'justify-end' : 'justify-between'}`}
-      >
-        {!embedded && <h1 className="section-title">Blog du club</h1>}
-        <Link to="/blog/admin" className="btn-outline tap">
-          Gérer les articles
-        </Link>
-      </Reveal>
+      {/* Intégré au Mag, le lien d'administration est porté par la barre
+          d'onglets (cf. MagPage) : rien à afficher ici. */}
+      {!embedded && (
+        <Reveal className="mb-6 flex flex-wrap items-center justify-between gap-3 sm:mb-8">
+          <h1 className="section-title">Blog du club</h1>
+          <Link to="/blog/admin" className="btn-outline tap">
+            Gérer les articles
+          </Link>
+        </Reveal>
+      )}
       {isLoading && <Loading />}
       {isError && <ErrorMessage message="Impossible de charger les articles." />}
       {posts && posts.length === 0 && (

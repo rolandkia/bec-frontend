@@ -194,16 +194,6 @@ export const PHOTO_VARIANTS: Record<string, { w: number; variants: readonly numb
       1280
     ]
   },
-  "/photos/gallery/group-9.webp": {
-    "w": 1500,
-    "variants": [
-      384,
-      640,
-      768,
-      1024,
-      1280
-    ]
-  },
   "/photos/gallery/interclub-1.webp": {
     "w": 1500,
     "variants": [
@@ -431,6 +421,16 @@ export const PHOTO_VARIANTS: Record<string, { w: number; variants: readonly numb
       640
     ]
   },
+  "/photos/hero-depart.webp": {
+    "w": 1552,
+    "variants": [
+      384,
+      640,
+      768,
+      1024,
+      1280
+    ]
+  },
   "/photos/hero-interclub.webp": {
     "w": 2400,
     "variants": [
@@ -486,15 +486,6 @@ export const PHOTO_VARIANTS: Record<string, { w: number; variants: readonly numb
     ]
   },
   "/photos/podium-01.webp": {
-    "w": 1200,
-    "variants": [
-      384,
-      640,
-      768,
-      1024
-    ]
-  },
-  "/photos/podium-02.webp": {
     "w": 1200,
     "variants": [
       384,

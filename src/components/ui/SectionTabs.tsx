@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 export type TabDef = { key: string; label: string }
@@ -47,12 +48,20 @@ export function SectionTabs({
   tabs,
   active,
   onChange,
+  aside,
 }: {
   tabs: TabDef[]
   active: string
   onChange: (key: string) => void
+  /**
+   * Action secondaire calée à droite, SUR LA MÊME LIGNE que les onglets (le
+   * lien d'administration du Mag). Elle occupait auparavant sa propre rangée
+   * sous la barre : une ligne entière de vide à droite d'un bouton, entre les
+   * onglets et le contenu qu'ils pilotent.
+   */
+  aside?: ReactNode
 }) {
-  return (
+  const bar = (
     // `.segmented` : pleine largeur sur mobile, état actif annoncé par
     // aria-selected, bordure alignée sur --color-line. Les 44 px de cible
     // tactile et le retour d'appui viennent du bloc `@media (hover: none)` de
@@ -63,7 +72,12 @@ export function SectionTabs({
     // `mb-6` sur téléphone (cf. PageHero) : l'espace vertical y est le budget le
     // plus rare, et c'est lui qui décidait si le contenu piloté par les onglets
     // était visible ou non sans défiler.
-    <div className="segmented mb-6 sm:mb-8 sm:w-fit" role="tablist">
+    // Avec `aside`, la marge passe à la rangée et la pilule prend la place
+    // laissée par l'action (`flex-1` au téléphone, sa largeur propre dès `sm`).
+    <div
+      className={aside ? 'segmented min-w-0 flex-1 sm:flex-none' : 'segmented mb-6 sm:mb-8 sm:w-fit'}
+      role="tablist"
+    >
       {tabs.map((t) => (
         <button
           key={t.key}
@@ -75,6 +89,15 @@ export function SectionTabs({
           {t.label}
         </button>
       ))}
+    </div>
+  )
+
+  if (!aside) return bar
+
+  return (
+    <div className="mb-6 flex items-center gap-3 sm:mb-8">
+      {bar}
+      <div className="ml-auto shrink-0">{aside}</div>
     </div>
   )
 }

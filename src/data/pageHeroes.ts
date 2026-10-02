@@ -12,7 +12,7 @@
 export const HERO_ACCUEIL = '/photos/hero-interclub.webp'
 export const HERO_CLUB = '/photos/gallery/group-8.webp'
 export const HERO_COMPETITIONS = '/photos/gallery/start-5.webp'
-export const HERO_MAG = '/photos/podium-02.webp'
+export const HERO_MAG = '/photos/hero-depart.webp'
 export const HERO_REJOINDRE = '/photos/hero-studio-team.webp'
 export const HERO_ATHLETES = '/photos/interclub-drapeau-wide.webp'
 export const HERO_ATHLETES_HOMMES = '/photos/gallery/group-4.webp'

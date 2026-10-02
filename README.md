@@ -44,7 +44,7 @@ d'ambiguïté `localhost` / `127.0.0.1` / IPv6.
 
 ### Photos éditoriales — variantes de largeur
 
-Les 58 photos de `public/photos` sont servies **en plusieurs largeurs** (`srcset`), à partir de
+Les 57 photos de `public/photos` sont servies **en plusieurs largeurs** (`srcset`), à partir de
 variantes pré-générées et commitées dans `public/photos/w<largeur>/` :
 
 ```bash
