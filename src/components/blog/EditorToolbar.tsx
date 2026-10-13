@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { FolderOpen, ImagePlus, Link2, List, ListOrdered, Quote, Redo2, Undo2 } from 'lucide-react'
+import { FolderOpen, ImagePlus, LayoutTemplate, Link2, List, ListOrdered, Quote, Redo2, Undo2 } from 'lucide-react'
 import type { Editor } from '@tiptap/react'
 import { ACCEPT_MEDIA } from '../../lib/mediaKind'
 import { GalleryMediaPicker, type PickedMedia } from './GalleryMediaPicker'
@@ -64,6 +64,7 @@ export function EditorToolbar({
   uploadError,
   onUploadFiles,
   onInsertFromGallery,
+  onOpenTemplates,
 }: {
   editor: Editor
   uploading: boolean
@@ -73,6 +74,8 @@ export function EditorToolbar({
   onUploadFiles: (files: File[]) => void
   /** Insère dans l'éditeur des médias déjà hébergés (choisis dans la galerie). */
   onInsertFromGallery: (items: PickedMedia[]) => void
+  /** Ouvre le choix d'un modèle d'article (cf. TemplatePicker). */
+  onOpenTemplates: () => void
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [galleryOpen, setGalleryOpen] = useState(false)
@@ -128,6 +131,9 @@ export function EditorToolbar({
       </ToolbarButton>
       <ToolbarButton title="Insérer depuis la galerie" onClick={() => setGalleryOpen(true)}>
         <FolderOpen aria-hidden className="h-4 w-4" strokeWidth={2} />
+      </ToolbarButton>
+      <ToolbarButton title="Partir d’un modèle" onClick={onOpenTemplates}>
+        <LayoutTemplate aria-hidden className="h-4 w-4" strokeWidth={2} />
       </ToolbarButton>
 
       <span className="tb-sep" />

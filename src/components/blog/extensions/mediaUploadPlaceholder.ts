@@ -4,7 +4,10 @@ import { Plugin, PluginKey } from '@tiptap/pm/state'
 import { Decoration, DecorationSet } from '@tiptap/pm/view'
 
 interface AddAction {
-  add: { id: string; pos: number; previewUrl: string | null }
+  /** `slot` : l'envoi remplit l'emplacement photo À `pos` (décoration de nœud,
+   *  qui suit l'emplacement et disparaît s'il est supprimé) au lieu d'insérer un
+   *  média à cette frontière de blocs. */
+  add: { id: string; pos: number; previewUrl: string | null; slot?: boolean }
 }
 interface RemoveAction {
   remove: { id: string }
@@ -29,7 +32,8 @@ function buildWidget(previewUrl: string | null): HTMLElement {
 }
 
 /** Placeholders d'upload : de simples décorations widget (aperçu estompé +
- *  spinner). La position suit les éditions concurrentes via le mapping, et
+ *  spinner), ou de nœud pour un emplacement photo. La position suit les
+ *  éditions concurrentes via le mapping, et
  *  une décoration n'apparaît jamais dans getHTML() — aucune URL blob ne peut
  *  donc fuir dans le contenu sauvegardé, même en sauvegardant pendant
  *  l'envoi. */
@@ -46,10 +50,22 @@ export const MediaUploadPlaceholder = Extension.create({
             let next = set.map(tr.mapping, tr.doc)
             const action = tr.getMeta(uploadPlaceholderKey) as AddAction | RemoveAction | undefined
             if (action && 'add' in action) {
-              const widget = Decoration.widget(action.add.pos, buildWidget(action.add.previewUrl), {
-                id: action.add.id,
-              })
-              next = next.add(tr.doc, [widget])
+              const { id, pos, previewUrl, slot } = action.add
+              const slotNode = slot ? tr.doc.nodeAt(pos) : null
+              const deco = slotNode
+                ? // Le cadre de l'emplacement montre l'aperçu estompé et le
+                  // spinner (cf. `.is-uploading` dans index.css).
+                  Decoration.node(
+                    pos,
+                    pos + slotNode.nodeSize,
+                    {
+                      class: 'is-uploading',
+                      ...(previewUrl ? { style: `--slot-preview: url("${previewUrl}")` } : {}),
+                    },
+                    { id },
+                  )
+                : Decoration.widget(pos, buildWidget(previewUrl), { id })
+              next = next.add(tr.doc, [deco])
             } else if (action && 'remove' in action) {
               next = next.remove(
                 next.find(undefined, undefined, (spec) => spec.id === action.remove.id),

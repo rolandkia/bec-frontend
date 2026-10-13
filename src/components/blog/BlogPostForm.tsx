@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Clock, ExternalLink } from 'lucide-react'
 import { coverImageStyle, type CoverPosition } from '../../api/types'
 import { cldImage } from '../../lib/cloudinary'
+import { countTemplateLeftovers } from '../../lib/templateLeftovers'
 import { BlogEditor, type BlogEditorHandle } from './BlogEditor'
 import { BlogContent } from './BlogContent'
 import { CoverField } from './CoverField'
@@ -33,6 +34,15 @@ function isEmptyHtml(html: string): boolean {
 function readingMinutes(html: string): number {
   const words = html.replace(/<[^>]+>/g, ' ').trim().split(/\s+/).filter(Boolean).length
   return Math.max(1, Math.round(words / 200))
+}
+
+/** « 2 emplacements photo et 1 zone de texte » : ce qu'un modèle laisse à remplir. */
+function describeLeftovers({ slots, fields }: { slots: number; fields: number }): string {
+  const parts = [
+    slots && `${slots} emplacement${slots > 1 ? 's' : ''} photo`,
+    fields && `${fields} zone${fields > 1 ? 's' : ''} de texte`,
+  ].filter(Boolean)
+  return parts.join(' et ')
 }
 
 function formatTime(d: Date): string {
@@ -110,6 +120,8 @@ export function BlogPostForm({
   const [fieldErrors, setFieldErrors] = useState<{ title?: string; content?: string }>({})
   const [mode, setMode] = useState<'edit' | 'preview'>('edit')
   const [previewWidth, setPreviewWidth] = useState<'phone' | 'desktop'>('desktop')
+  /** Consignes du modèle appliqué, à la place des textes d'aide par défaut. */
+  const [templateHints, setTemplateHints] = useState<{ title: string; summary: string } | null>(null)
 
   const titleRef = useRef<HTMLTextAreaElement>(null)
   const summaryRef = useRef<HTMLTextAreaElement>(null)
@@ -179,6 +191,21 @@ export function BlogPostForm({
         else contentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       })
       return
+    }
+    // Zones d'un modèle restées vides : masquées une fois publié, ce qui est
+    // voulu pour un cadre en trop, mais peut aussi être un oubli.
+    if (publish) {
+      const leftovers = countTemplateLeftovers(content)
+      if (
+        (leftovers.slots || leftovers.fields) &&
+        !window.confirm(
+          `Il reste ${describeLeftovers(leftovers)} du modèle à remplir. Ces zones n’apparaîtront pas dans l’article publié. ${
+            status === 'published' ? 'Mettre à jour' : 'Publier'
+          } quand même ?`,
+        )
+      ) {
+        return
+      }
     }
     setSaving(publish ? 'publish' : 'draft')
     setError(null)
@@ -326,7 +353,7 @@ export function BlogPostForm({
                 summaryRef.current?.focus()
               }
             }}
-            placeholder="Titre de l’article"
+            placeholder={templateHints?.title ?? 'Titre de l’article'}
             aria-invalid={Boolean(fieldErrors.title)}
             className="field-sizing-content w-full resize-none border-0 border-b-2 border-[color:var(--color-line)] bg-transparent pb-2 font-display text-3xl font-bold leading-tight text-[color:var(--color-fg)] placeholder:text-[color:var(--color-muted)]/60 focus:border-club-primary focus:outline-none sm:text-4xl"
           />
@@ -349,7 +376,10 @@ export function BlogPostForm({
                 editorRef.current?.focus()
               }
             }}
-            placeholder="Une ou deux phrases qui donnent envie de lire : affichées sous le titre et sur les cartes du Mag."
+            placeholder={
+              templateHints?.summary ??
+              'Une ou deux phrases qui donnent envie de lire : affichées sous le titre et sur les cartes du Mag.'
+            }
             className="field-sizing-content w-full resize-none rounded-lg border border-[color:var(--color-line)] bg-[color:var(--color-surface)] px-3 py-2 text-[color:var(--color-fg)] focus:border-club-primary focus:outline-none"
           />
           <p
@@ -390,6 +420,7 @@ export function BlogPostForm({
               setContent(html)
               if (fieldErrors.content) setFieldErrors((f) => ({ ...f, content: undefined }))
             }}
+            onTemplateApplied={(t) => setTemplateHints({ title: t.titleHint, summary: t.summaryHint })}
           />
           {fieldErrors.content && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.content}</p>}
         </section>

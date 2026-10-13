@@ -4,6 +4,7 @@ import type { EditorView } from '@tiptap/pm/view'
 import { mediaTooLargeMessage, uploadMedia } from '../../../api/media'
 import { mediaKind, unsupportedFileMessage } from '../../../lib/mediaKind'
 import { isMediaNode, MEDIA_GRID_NAME } from './MediaGrid'
+import { fillSlot } from './MediaSlot'
 import { findPlaceholder, uploadPlaceholderKey } from './mediaUploadPlaceholder'
 
 export interface UploadCallbacks {
@@ -70,10 +71,31 @@ let uploadSeq = 0
  *  au point d'insertion — sa position suit les éditions pendant l'envoi — puis
  *  le remplace par la figure/vidéo Cloudinary. Si la zone a été supprimée
  *  entre-temps, le résultat est abandonné. */
-export async function uploadFileAt(
+export function uploadFileAt(
   view: EditorView,
   file: File,
   pos: number,
+  callbacks?: UploadCallbacks,
+): Promise<void> {
+  return uploadTracked(view, file, { pos: clampToBlockGap(view.state.doc, pos), slot: false }, callbacks)
+}
+
+/** Envoie un fichier DANS l'emplacement photo à `slotPos` (cf. MediaSlot) :
+ *  même parcours, mais le média remplace l'emplacement au lieu d'être inséré.
+ *  Emplacement supprimé ou rempli autrement pendant l'envoi : résultat abandonné. */
+export function uploadFileIntoSlot(
+  view: EditorView,
+  file: File,
+  slotPos: number,
+  callbacks?: UploadCallbacks,
+): Promise<void> {
+  return uploadTracked(view, file, { pos: slotPos, slot: true }, callbacks)
+}
+
+async function uploadTracked(
+  view: EditorView,
+  file: File,
+  target: { pos: number; slot: boolean },
   callbacks?: UploadCallbacks,
 ): Promise<void> {
   // Échec explicite : un `return` nu ne posait ni erreur ni placeholder, le
@@ -99,7 +121,7 @@ export async function uploadFileAt(
   {
     const tr = view.state.tr
     tr.setMeta(uploadPlaceholderKey, {
-      add: { id, pos: clampToBlockGap(view.state.doc, pos), previewUrl },
+      add: { id, pos: target.pos, previewUrl, slot: target.slot },
     })
     view.dispatch(tr)
   }
@@ -109,13 +131,17 @@ export async function uploadFileAt(
     const { url, resource_type } = await uploadMedia(file)
     const placeholderPos = findPlaceholder(view.state, id)
     if (placeholderPos == null) return // zone supprimée pendant l'envoi
-    const schema = view.state.schema
-    const node =
-      resource_type === 'video'
-        ? schema.nodes.video.create({ src: url })
-        : schema.nodes.figureImage.create({ src: url, alt: file.name })
     const tr = view.state.tr
-    tr.insert(skipTrailingGap(tr.doc, clampToBlockGap(tr.doc, placeholderPos)), node)
+    if (target.slot) {
+      fillSlot(tr, placeholderPos, { url, resource_type, alt: file.name })
+    } else {
+      const schema = view.state.schema
+      const node =
+        resource_type === 'video'
+          ? schema.nodes.video.create({ src: url })
+          : schema.nodes.figureImage.create({ src: url, alt: file.name })
+      tr.insert(skipTrailingGap(tr.doc, clampToBlockGap(tr.doc, placeholderPos)), node)
+    }
     tr.setMeta(uploadPlaceholderKey, { remove: { id } })
     view.dispatch(tr)
   } catch (err) {

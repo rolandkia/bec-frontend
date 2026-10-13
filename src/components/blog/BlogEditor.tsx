@@ -1,17 +1,28 @@
 import { forwardRef, useImperativeHandle, useMemo, useRef, useState } from 'react'
-import { useEditor, EditorContent } from '@tiptap/react'
+import { useEditor, useEditorState, EditorContent } from '@tiptap/react'
+import type { EditorView } from '@tiptap/pm/view'
 import { useQuery } from '@tanstack/react-query'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
+import { LayoutTemplate } from 'lucide-react'
 import { EditorToolbar } from './EditorToolbar'
+import { TemplatePicker } from './TemplatePicker'
+import type { ArticleTemplate } from './templates'
 import { FigureImage } from './extensions/FigureImage'
 import { Video } from './extensions/Video'
 import { MediaGrid } from './extensions/MediaGrid'
 import { MediaText, MediaTextColumn } from './extensions/MediaText'
 import { MediaUploadPlaceholder } from './extensions/mediaUploadPlaceholder'
+import { MediaSlot, afterTopLevelBlock, slotPosFromEvent, slotTargets } from './extensions/MediaSlot'
+import { TemplateHint } from './extensions/TemplateHint'
 import { createAthleteMention } from './extensions/AthleteMention'
 import { collectGaps, nearestGap } from './extensions/dropTarget'
-import { insertMediaNodes, uploadFileAt, type UploadCallbacks } from './extensions/uploadToEditor'
+import {
+  insertMediaNodes,
+  uploadFileAt,
+  uploadFileIntoSlot,
+  type UploadCallbacks,
+} from './extensions/uploadToEditor'
 import { partitionMediaFiles, unsupportedFileMessage } from '../../lib/mediaKind'
 import { listAthletes } from '../../api/athletes'
 import { STATIC_DATA } from '../../api/staleTime'
@@ -31,11 +42,15 @@ export const BlogEditor = forwardRef<
   {
     initialContent: string
     onChange: (html: string) => void
+    /** Un modèle vient d'être appliqué : ses consignes de titre et de résumé
+     *  concernent le formulaire. */
+    onTemplateApplied?: (template: ArticleTemplate) => void
   }
->(function BlogEditor({ initialContent, onChange }, ref) {
+>(function BlogEditor({ initialContent, onChange, onTemplateApplied }, ref) {
   // État d'upload partagé entre la toolbar, le drop de fichiers et le collage.
   const [pendingUploads, setPendingUploads] = useState(0)
   const [uploadError, setUploadError] = useState<string | null>(null)
+  const [templatesOpen, setTemplatesOpen] = useState(false)
 
   // Liste des athlètes pour les mentions « @ ». Lue via une ref pour que
   // l'extension y accède sans recréer l'éditeur quand la requête se résout.
@@ -59,6 +74,25 @@ export const BlogEditor = forwardRef<
     onError: (message) => setUploadError(message),
     onSettled: () => setPendingUploads((n) => n - 1),
   }
+
+  /** Fichiers destinés à un emplacement photo (bouton du cadre ou dépôt dessus) :
+   *  le premier le remplit, les suivants remplissent les emplacements vides qui
+   *  le suivent dans sa grille, le reste s'insère après le bloc. */
+  function uploadIntoSlots(view: EditorView, files: File[], slotPos: number) {
+    const { supported, rejected } = partitionMediaFiles(files)
+    if (rejected.length) setUploadError(unsupportedFileMessage(rejected))
+    const targets = slotTargets(view.state.doc, slotPos)
+    const after = afterTopLevelBlock(view.state.doc, slotPos)
+    supported.forEach((file, i) => {
+      void (i < targets.length
+        ? uploadFileIntoSlot(view, file, targets[i], uploadCallbacks)
+        : uploadFileAt(view, file, after, uploadCallbacks))
+    })
+  }
+  // Lue via une ref : la configuration d'une extension est figée à la création
+  // de l'éditeur.
+  const uploadIntoSlotsRef = useRef(uploadIntoSlots)
+  uploadIntoSlotsRef.current = uploadIntoSlots
 
   const editor = useEditor({
     extensions: [
@@ -99,7 +133,19 @@ export const BlogEditor = forwardRef<
         // Trait indiquant le point d'insertion pendant le glisser-déposer d'un média.
         dropcursor: { color: 'var(--color-club-primary)', width: 3 },
       }),
-      Placeholder.configure({ placeholder: 'Écrivez votre article ici…' }),
+      // Toutes les zones vides sont marquées (`is-empty`), pas seulement celle du
+      // curseur : c'est ce qui affiche d'un coup les consignes d'un modèle
+      // (cf. TemplateHint).
+      Placeholder.configure({
+        showOnlyCurrent: false,
+        includeChildren: true,
+        // Affiché pour l'article vierge seulement : cf. index.css.
+        placeholder: 'Écrivez votre article ici…',
+      }),
+      TemplateHint,
+      MediaSlot.configure({
+        onUploadFiles: (view, pos, files) => uploadIntoSlotsRef.current(view, files, pos),
+      }),
       FigureImage,
       Video,
       MediaGrid,
@@ -120,6 +166,12 @@ export const BlogEditor = forwardRef<
         // Aucun fichier du tout : on laisse ProseMirror gérer (texte, HTML…).
         if (!dropped.length) return false
         event.preventDefault()
+        // Sur le cadre d'un emplacement photo : le fichier le remplit.
+        const slotPos = slotPosFromEvent(view, event)
+        if (slotPos != null) {
+          uploadIntoSlots(view, dropped, slotPos)
+          return true
+        }
         const { supported, rejected } = partitionMediaFiles(dropped)
         if (rejected.length) setUploadError(unsupportedFileMessage(rejected))
         const gap = nearestGap(collectGaps(view), event.clientY)
@@ -149,12 +201,29 @@ export const BlogEditor = forwardRef<
     [editor],
   )
 
+  const isEmpty = useEditorState({ editor, selector: ({ editor }) => editor?.isEmpty ?? true })
+
+  function applyTemplate(template: ArticleTemplate) {
+    if (!editor) return
+    if (
+      !editor.isEmpty &&
+      !window.confirm(`Remplacer le contenu de l’article par le modèle « ${template.name} » ?`)
+    ) {
+      return
+    }
+    setTemplatesOpen(false)
+    // `setContent` passe par l'historique : Ctrl/⌘ + Z rend le contenu remplacé.
+    editor.chain().setContent(template.html).focus('start').run()
+    onTemplateApplied?.(template)
+  }
+
   if (!editor) return null
 
   return (
     <div className="tiptap-editor card">
       <EditorToolbar
         editor={editor}
+        onOpenTemplates={() => setTemplatesOpen(true)}
         uploading={pendingUploads > 0}
         uploadError={uploadError}
         onUploadFiles={(files) => {
@@ -169,10 +238,27 @@ export const BlogEditor = forwardRef<
           )
         }}
       />
+      {/* Article vierge : le point de départ le plus visible pour un modèle. */}
+      {isEmpty && (
+        <div className="tiptap-template-cta">
+          <LayoutTemplate aria-hidden className="h-4 w-4 shrink-0" strokeWidth={2} />
+          <span>Besoin d’un point de départ ?</span>
+          <button type="button" onClick={() => setTemplatesOpen(true)}>
+            Partir d’un modèle
+          </button>
+        </div>
+      )}
       {/* `.tiptap-content` porte la colonne (max-w-3xl) ET le conteneur des
           container queries ; toute la typographie du corps est déclarée dans
           index.css, à la fois pour `.ProseMirror` et `.blog-rendered`. */}
       <EditorContent editor={editor} className="tiptap-content" />
+      {templatesOpen && (
+        <TemplatePicker
+          replacing={!isEmpty}
+          onChoose={applyTemplate}
+          onClose={() => setTemplatesOpen(false)}
+        />
+      )}
     </div>
   )
 })

@@ -1,4 +1,5 @@
 import { cldPoster, cldVideo, storedImageProps } from './cloudinary'
+import { stripTemplateLeftovers } from './templateLeftovers'
 
 /** Largeurs du `srcset` des images d'article. Trois seulement : chaque largeur
  *  est un dérivé Cloudinary supplémentaire, et les crédits du plan gratuit
@@ -42,6 +43,10 @@ function imageSizes(img: Element): string {
  *    l'effet le remplacerait — chaque image téléchargée DEUX fois.
  * Ici tout est en place avant que le HTML n'atteigne le DOM.
  *
+ * Les zones d'un modèle d'article restées vides (cf. templateLeftovers.ts)
+ * sont retirées en premier : le calcul des `sizes` compte les cellules réelles
+ * d'une grille.
+ *
  * C'est aussi ce qui répare les articles DÉJÀ PUBLIÉS sans migration : le
  * `playsinline` absent de leur HTML stocké est ajouté au rendu, de même que
  * l'image d'affiche.
@@ -56,6 +61,7 @@ export function rewriteBlogMedia(html: string): string {
   if (!html) return html
 
   const doc = new DOMParser().parseFromString(html, 'text/html')
+  stripTemplateLeftovers(doc.body)
 
   for (const img of Array.from(doc.querySelectorAll('img'))) {
     const raw = img.getAttribute('src')

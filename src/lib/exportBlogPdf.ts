@@ -5,6 +5,7 @@ import DOMPurify from 'dompurify'
 // n'émet aucun code.
 import type jsPDF from 'jspdf'
 import type { BlogPostOut } from '../api/types'
+import { stripTemplateLeftovers } from './templateLeftovers'
 
 const ALLOWED_TAGS = [
   'p', 'br', 'h1', 'h2', 'h3', 'h4', 'strong', 'em', 'u', 's',
@@ -12,7 +13,7 @@ const ALLOWED_TAGS = [
 ]
 // Pas de `width` : comme dans BlogContent, la largeur d'un média est portée par
 // sa <figure> (lue ici par `figureWidthPct`), pas par le média lui-même.
-const ALLOWED_ATTR = ['href', 'title', 'src', 'alt', 'class', 'controls', 'rel', 'target', 'style']
+const ALLOWED_ATTR = ['href', 'title', 'src', 'alt', 'class', 'controls', 'rel', 'target', 'style', 'data-hint']
 
 const MARGIN = 48
 const CLUB_RED: [number, number, number] = [216, 31, 42]
@@ -394,6 +395,8 @@ export async function exportBlogPdf(post: BlogPostOut): Promise<void> {
     ADD_ATTR: ['controls'],
   })
   const body = new DOMParser().parseFromString(clean, 'text/html').body
+  // Zones d'un modèle restées vides : absentes du PDF comme de l'article publié.
+  stripTemplateLeftovers(body)
 
   const w = new PdfWriter(JsPdf)
 

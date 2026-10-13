@@ -16,6 +16,9 @@ const ALLOWED_ATTR = [
   'data-type',
   // Mention d'athlète : <a data-mention="123">@Prénom Nom</a>.
   'data-mention',
+  // Zone d'un modèle d'article : retirée au rendu si elle est restée vide
+  // (cf. lib/templateLeftovers.ts, appelé par rewriteBlogMedia).
+  'data-hint',
   // Pas de `width` : la largeur d'un média est portée par sa <figure> (en %).
   // Un `width` en px sur l'<img>/<video> échappait à la règle mobile — qui cible
   // la figure — et produisait un rendu différent entre téléphone et ordinateur.

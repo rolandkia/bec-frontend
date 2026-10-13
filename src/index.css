@@ -1515,12 +1515,174 @@ body {
 .ProseMirror .media-grid {
   scroll-margin-block: 5rem;
 }
-.tiptap-content .ProseMirror p.is-editor-empty:first-child::before {
+/* Texte d'accueil de l'article VIERGE : un seul paragraphe, sans consigne de
+   modèle. Le test porte sur le DOM et non sur la classe `is-editor-empty` : le
+   Placeholder de TipTap calcule « éditeur vide » sur l'état d'AVANT la
+   transaction, si bien qu'après l'application d'un modèle chaque paragraphe
+   vide gardait cette classe — et `p:first-child` l'affichait dans chaque puce,
+   par-dessus la consigne. */
+.tiptap-content .ProseMirror > p.is-empty:only-child:not([data-hint])::before {
   content: attr(data-placeholder);
   float: left;
   height: 0;
   pointer-events: none;
   color: var(--color-muted);
+}
+
+/* ---------------------------------------------------------------------------
+   Modèles d'article (cf. components/blog/templates.ts) : consignes des zones de
+   texte, cadres photo, et leurs miniatures dans le choix d'un modèle. Rien de
+   tout cela n'atteint l'article publié : les zones restées vides y sont
+   retirées (lib/templateLeftovers.ts).
+   --------------------------------------------------------------------------- */
+
+/* Consigne d'une zone vide, dans la typographie de la zone (un titre garde sa
+   police de titre). En `::after` remonté d'une ligne plutôt qu'en flottant de
+   hauteur nulle comme le texte d'accueil : une consigne tient souvent sur deux
+   lignes, et un flottant de hauteur nulle déborderait sur le bloc suivant. Le
+   caret, sur la ligne du <br> de ProseMirror, reste au début de la consigne. */
+.tiptap-content .ProseMirror [data-hint].is-empty::after {
+  content: attr(data-hint);
+  display: block;
+  margin-top: -1lh;
+  pointer-events: none;
+  user-select: none;
+  color: var(--color-muted);
+}
+
+/* Cadre photo : pleine colonne par défaut, la largeur d'un bloc image + texte
+   arrive en style inline. Dans une grille, la flex-basis décide. */
+.ProseMirror figure.media-slot {
+  width: 100%;
+}
+.media-slot-box {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  /* Ratio d'une photo de sport en paysage. Sans `overflow: hidden`, le cadre
+     grandit si sa consigne et ses boutons ne tiennent pas (cellule de grille au
+     téléphone). */
+  aspect-ratio: 3 / 2;
+  padding: 0.75rem;
+  border: 2px dashed var(--color-line);
+  border-radius: 0.75rem;
+  background: color-mix(in oklab, var(--color-surface-2) 50%, transparent);
+  line-height: 1.4;
+  text-align: center;
+  transition:
+    border-color 0.15s,
+    background-color 0.15s;
+}
+.media-slot-box.is-selected {
+  outline: 2px solid var(--color-club-primary);
+  outline-offset: 3px;
+}
+.media-slot-box.is-drop-target {
+  border-color: var(--color-club-primary);
+  background: color-mix(in oklab, var(--color-club-primary) 6%, transparent);
+}
+.media-slot-icon {
+  width: 1.75rem;
+  height: 1.75rem;
+  color: var(--color-muted);
+}
+.media-slot-hint {
+  max-width: 34ch;
+  font-size: var(--blog-caption-size);
+  color: var(--color-muted);
+  text-wrap: balance;
+}
+.media-slot-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.375rem;
+}
+/* Clic sur l'icône d'un bouton : la cible doit rester le <button>, que le
+   NodeView soustrait à ProseMirror (cf. NodeView.stopEvent de TipTap). */
+.media-slot-actions svg {
+  pointer-events: none;
+}
+/* Envoi en cours (décoration de nœud, cf. mediaUploadPlaceholder) : aperçu
+   estompé du fichier dans le cadre, et le spinner des envois ordinaires. */
+.is-uploading .media-slot-box {
+  border-style: solid;
+  background: var(--slot-preview, none) center / cover no-repeat var(--color-surface-2);
+}
+.is-uploading .media-slot-box > * {
+  visibility: hidden;
+}
+.is-uploading .media-slot-box::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: color-mix(in oklab, var(--color-surface) 55%, transparent);
+}
+.is-uploading .media-slot-box::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0 -14px;
+  border-radius: 9999px;
+  border: 3px solid color-mix(in oklab, var(--color-club-primary) 25%, transparent);
+  border-top-color: var(--color-club-primary);
+  animation: tiptap-spin 0.8s linear infinite;
+}
+
+/* Invitation à partir d'un modèle, tant que l'article est vierge : alignée sur
+   la colonne d'édition (cf. `.tiptap-content`). */
+.tiptap-template-cta {
+  @apply mx-auto flex max-w-3xl flex-wrap items-center gap-x-2 gap-y-1 pt-4 text-sm;
+  color: var(--color-muted);
+}
+.tiptap-template-cta button {
+  @apply font-semibold hover:underline;
+  color: var(--color-club-primary-light);
+}
+
+/* Miniature d'un modèle : le modèle lui-même, rendu par les règles du Mag dans
+   une page large comme la colonne d'article (~768 px), puis réduite. */
+.tpl-thumb {
+  position: relative;
+  height: 15rem;
+  overflow: hidden;
+  background: var(--color-canvas);
+}
+.tpl-thumb::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 3rem;
+  background: linear-gradient(transparent, var(--color-canvas));
+}
+.tpl-thumb-page {
+  width: calc(100% / 0.42);
+  padding: 2.5rem 2rem;
+  transform: scale(0.42);
+  transform-origin: top left;
+  pointer-events: none;
+}
+.tpl-thumb-page .blog-rendered {
+  max-width: 48rem;
+  margin-inline: auto;
+}
+.tpl-preview [data-hint]:empty::before {
+  content: attr(data-hint);
+  color: var(--color-muted);
+}
+.tpl-preview figure.media-slot {
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  border: 2px dashed var(--color-line);
+  border-radius: 0.75rem;
+  background: color-mix(in oklab, var(--color-surface-2) 50%, transparent);
 }
 
 /* Conteneur du média dans l'éditeur : ancre les poignées de redimensionnement
